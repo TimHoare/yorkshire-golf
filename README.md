@@ -18,18 +18,11 @@ Open `index.html` in a browser, or serve the folder (e.g. `python3 -m http.serve
 
 ### Setting it up
 
-Everything fixed about the trip is hard-coded at the top of `app.js` — edit there before you go:
+Everything fixed about the trip is hard-coded at the top of `app.js`:
 
-- `ROUNDS` — courses, tee times, notes, par / course rating / slope (placeholders; check the scorecards).
+- `ROUNDS` — one entry per day: club, par / course rating / slope, format (`stableford` or `scramble`), whether hidden pairs run, the 18-hole scorecard (`holes`, par + stroke index) and the `groups` (tee time + player ids; on scramble day the groups are the two teams).
 - `PLAYERS` — the eight names and starting handicap indexes.
-- `RULES` — place points (8·6·4·2), allowance %, scramble points, the 32-point pivot.
+- `RULES` — week points 8/6/4/2, allowance, scramble points, the 32-point pivot, and the 25/20/15/10 % scramble team allowance.
 
-### The maths
+Scorecards, tee times, groups and course figures are placeholders — check them against the real cards and tee sheet before the trip.
 
-- Course handicap = round(index × slope ÷ 113 + (CR − par)); playing handicap applies the allowance %.
-- After each stableford round: index −0.5 per point above 32, +0.5 per point below. Applied in date order, so each day's course handicap uses the index entering that day. Scramble day doesn't move indexes.
-- Week points per round default to 8 · 6 · 4 · 2 for 1st–4th; ties share the points of the places they cover. Scramble winners get 4 each (editable).
-
-### Sharing
-
-Data is stored in the phone's localStorage. **Copy share link** in Settings puts the whole state into the URL — anyone who opens it gets an exact copy. Nominate one scorer and have them re-share after each round.
