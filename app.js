@@ -192,14 +192,17 @@ function formatChips(r) {
   if (r.format === 'scramble') return `<span class="chip gorse">2-team scramble</span>`;
   return `<span class="chip">Stableford</span>${r.pairs ? `<span class="chip heather">Hidden pairs</span>` : ''}`;
 }
-function dayRail(activeId, onSelect) {
-  return `<div class="day-rail" role="tablist">${ROUNDS.map((r) => `
-    <button class="day-tile" role="tab" aria-pressed="${r.id === activeId}" data-round="${r.id}" aria-label="Day ${r.n}, ${r.club}">
-      <span class="dot ${roundStatus(r.id)}"></span>
-      <span class="w">${r.dow}</span>
-      <span class="d">${r.dnum}</span>
-      <span class="c">${esc(r.short)}</span>
-    </button>`).join('')}</div>`;
+function dayRail(activeId) {
+  return `<div class="courses" role="tablist">${ROUNDS.map((r, i) => {
+    const c = S.courses[r.id];
+    const sub = r.format === 'scramble' ? 'scramble' : r.pairs ? 'hidden pairs' : 'stableford';
+    return `<button class="course-card" role="tab" aria-pressed="${r.id === activeId}" data-round="${r.id}" aria-label="Round ${r.n}, ${r.club}">
+      <span class="course-img g${i + 1}"><span class="day">${r.dow} ${r.dnum}</span><span class="st ${roundStatus(r.id)}"></span><span class="nm">${esc(r.short)}</span></span>
+      <small>${sub}${c.teeTime ? ` · ${esc(c.teeTime)}` : ''}</small>
+    </button>`; }).join('')}</div>`;
+}
+function avatar(p, i, badge) {
+  return `<span class="avatar" style="background:${colour(i)}">${esc(initials(p, i))}${badge ?? ''}</span>`;
 }
 function unnamedNotice() {
   const unnamed = S.players.filter((p) => !p.name.trim()).length;
@@ -210,20 +213,21 @@ function unnamedNotice() {
 function renderTrip() {
   const pp = S.settings.placePoints;
   return `
+    ${dayRail(null)}
     ${unnamedNotice()}
     <div class="section-title"><h2>Itinerary</h2><span class="eyebrow">5 rounds · 5 days</span></div>
     <div class="itin">${ROUNDS.map((r) => {
       const c = S.courses[r.id];
-      return `<article class="card itin-day">
-        <div class="itin-date"><span class="n">${r.dnum}</span><span class="m">${r.dow} ${r.mon}</span></div>
+      return `<article class="itin-day">
+        <div class="itin-date"><span class="n">${r.dnum}</span><span class="m">${r.dow}</span></div>
         <div class="itin-body">
           <h3>${esc(r.club)}</h3>
           <div class="itin-meta">${formatChips(r)}</div>
-          <div class="itin-course">${esc(r.town)} · par ${c.par} · CR ${c.cr} · slope ${c.slope}</div>
+          <div class="itin-course">${esc(r.town)} · par ${c.par} · slope ${c.slope}</div>
           <div class="itin-notes">
             <div class="itin-row">
               <label><span class="lbl">Tee time</span><input type="text" inputmode="numeric" placeholder="e.g. 10:20" value="${esc(c.teeTime)}" data-course="${r.id}" data-field="teeTime"></label>
-              <label style="grid-column:2 / span 1"><span class="lbl">Notes</span><textarea rows="1" placeholder="Meeting point, food, lifts…" data-course="${r.id}" data-field="notes">${esc(c.notes)}</textarea></label>
+              <label style="grid-column:2 / span 1"><span class="lbl">Notes</span><textarea rows="1" placeholder="Lifts, food, meeting point…" data-course="${r.id}" data-field="notes">${esc(c.notes)}</textarea></label>
             </div>
           </div>
         </div>
@@ -235,41 +239,29 @@ function renderTrip() {
       <div class="rule"><span class="k">HI</span><p class="t">Everyone starts on their <b>current handicap index</b>. Course handicaps are worked out each morning from that day's slope and rating.</p></div>
       <div class="rule"><span class="k">32</span><p class="t">After each stableford round your index moves: <b>−0.5 for every point above 32</b>, +0.5 for every point below. Scramble day doesn't move it.</p></div>
       <div class="rule"><span class="k">${pp[0]}</span><p class="t">Week points each round: <b>${pp[0]} · ${pp[1]} · ${pp[2]} · ${pp[3]}</b> for 1st to 4th. Ties share the points. Scramble winners take ${S.settings.scrambleWin} each.</p></div>
-      <div class="rule"><span class="k" style="color:var(--heather)">2×</span><p class="t">Brough and Hessle carry a <b>hidden pairs</b> side-game: pairs are drawn and locked away until the round is in, then combined points decide it.</p></div>
+      <div class="rule"><span class="k">2×</span><p class="t">Brough and Hessle carry a <b>hidden pairs</b> side-game: pairs are drawn and locked away until the round is in, then combined points decide it.</p></div>
     </div>`;
 }
 
 // --- Players ---
-function driftTrack(pid) {
-  const h = indexHistory(pid);
-  const vals = [h[0].before, ...h.map((x) => x.after)];
-  const min = Math.min(...vals), max = Math.max(...vals), span = Math.max(max - min, 1);
-  return `<span class="track" aria-hidden="true">${h.map((x) => {
-    const hgt = 4 + Math.round(((x.after - min) / span) * 14);
-    const cls = !x.applied ? (x.round.format === 'scramble' && x.round.n <= 5 ? 'pending' : 'pending') : x.after < x.before ? 'down' : x.after > x.before ? 'up' : 'same';
-    return `<b class="${cls}" style="height:${x.applied ? hgt : 4}px"></b>`;
-  }).join('')}</span>`;
-}
 function renderPlayers() {
   const nextRound = ROUNDS.find((r) => roundStatus(r.id) !== 'done') || ROUNDS[ROUNDS.length - 1];
   return `
     <div class="section-title"><h2>Players</h2><span class="eyebrow">${S.players.length} on tour</span></div>
-    <div class="notice green">Tap a name or index to edit. Index shown is <b>now</b>; the number underneath is the starting index and its move so far.</div>
+    <div class="notice">Tap a name or starting index to edit. The big number is each player's index <b>now</b>.</div>
     <div class="player-list">${S.players.map((p, i) => {
       const cur = currentIndex(p.id), d = cur - p.start;
       const ch = courseHandicap(cur, nextRound.id);
-      return `<div class="card player-row">
-        <span class="avatar" style="background:${colour(i)}">${esc(initials(p, i))}</span>
+      return `<div class="player-row">
+        ${avatar(p, i)}
         <div style="min-width:0">
           <input class="name" type="text" placeholder="Player ${i + 1}" value="${esc(p.name)}" data-player="${p.id}" data-field="name" aria-label="Name of player ${i + 1}">
           <div class="sub">Start <span class="index-edit" style="display:inline-flex;vertical-align:middle"><input type="number" step="0.1" inputmode="decimal" value="${p.start}" data-player="${p.id}" data-field="start" aria-label="Starting index" style="width:58px;padding:2px 6px;font-size:13px"></span>
-            <span class="delta ${d < 0 ? 'down' : d > 0 ? 'up' : 'flat'}">${signed(d)}</span></div>
-          <div class="sub" style="margin-top:2px">CH ${ch} at ${esc(nextRound.short)}</div>
+            <span class="delta ${d < 0 ? 'down' : d > 0 ? 'up' : 'flat'}">${signed(d)}</span> · CH ${ch} at ${esc(nextRound.short)}</div>
         </div>
         <div class="index-now">
           <div class="v">${fmt1(cur)}</div>
           <div class="l">index</div>
-          ${driftTrack(p.id)}
         </div>
       </div>`;
     }).join('')}</div>
@@ -290,10 +282,13 @@ function renderScores() {
       const idx = indexBefore(p.id, r.id), ch = courseHandicap(idx, r.id), ph = playingHandicap(idx, r.id);
       const s = scoreOf(r.id, p.id);
       const row = res.find((x) => x.pid === p.id);
-      return `<div class="card score-row">
+      return `<div class="score-row">
         <div class="who">
-          <div class="n"><span class="avatar" style="background:${colour(i)};width:22px;height:22px;font-size:10px;display:inline-grid;vertical-align:-5px;margin-right:6px">${esc(initials(p, i))}</span>${esc(playerName(p, i))}</div>
-          <div class="h">HI ${fmt1(idx)} · <b>CH ${ch}</b>${S.settings.allowance !== 100 ? ` · PH ${ph}` : ''}${row ? ` · ${row.tied ? 'T' : ''}${row.place}${ordinal(row.place)} ${row.points ? `+${trim(row.points)}` : ''}` : ''}</div>
+          ${avatar(p, i, row ? `<em class="${row.place === 1 ? 'lead' : ''}">${row.place}</em>` : '')}
+          <div style="min-width:0">
+            <div class="n">${esc(playerName(p, i))}</div>
+            <div class="h">HI ${fmt1(idx)} · <b>CH ${ch}</b>${S.settings.allowance !== 100 ? ` · PH ${ph}` : ''}${row && row.points ? ` · +${trim(row.points)} pts` : ''}</div>
+          </div>
         </div>
         <div class="stepper" aria-label="Stableford points for ${esc(playerName(p, i))}">
           <button data-step="-1" data-player="${p.id}" aria-label="Minus one">−</button>
@@ -310,7 +305,7 @@ function renderScores() {
     ${dayRail(selectedRound)}
     <div class="score-head">
       <div><span class="eyebrow">Round ${r.n} · ${r.dow} ${r.dnum} ${r.mon}</span><h2>${esc(r.club)}</h2></div>
-      <div style="text-align:right;flex:none"><div class="mono small">par ${c.par} · slope ${c.slope}</div><div style="margin-top:4px">${formatChips(r)}</div></div>
+      <div style="text-align:right;flex:none"><div class="small muted">par ${c.par} · slope ${c.slope}</div><div style="margin-top:4px">${formatChips(r)}</div></div>
     </div>
     ${body}`;
 }
@@ -336,7 +331,7 @@ function renderPairsBox(r) {
         <span class="pts">${row.complete ? row.total : `<span class="muted">${row.total}…</span>`}</span></div>`).join('')}</div>
       <div class="btn-row"><button class="btn ghost sm" data-action="redraw-pairs">Redraw</button></div>`;
   }
-  return `<div class="card pairs-box" style="margin-top:14px"><h3>Hidden pairs</h3>${inner}</div>`;
+  return `<div class="pairs-box"><h3>Hidden pairs</h3>${inner}</div>`;
 }
 
 function renderScrambleBox(r) {
@@ -348,8 +343,8 @@ function renderScrambleBox(r) {
     <div class="members">${members(t).length ? members(t).map((p) => `<div class="m">${esc(pName(p.id))}</div>`).join('') : '<div class="m empty">No one yet</div>'}</div>
     <div class="team-score"><input type="number" inputmode="numeric" placeholder="pts" value="${isNum(sc['score' + t]) ? sc['score' + t] : ''}" data-team-score="${t}" aria-label="Team ${label} points"></div>
   </div>`;
-  return `<div class="card scramble-box">
-    <h3 style="font-size:17px">Two-team scramble</h3>
+  return `<div class="scramble-box">
+    <h3>Two-team scramble</h3>
     <p class="small muted" style="margin-top:4px">Tap a name to move it between teams, then enter each team's stableford points. Winning team members each get ${S.settings.scrambleWin} week points${res.decided && res.tie ? ' — tied, so shared' : ''}.</p>
     <div class="team-grid">${team('A', 'Team A')}${team('B', 'Team B')}</div>
     <div class="assign">${S.players.map((p, i) => `<button data-assign="${p.id}" class="${sc.teams[p.id] || ''}"><span>${esc(playerName(p, i))}</span><span class="t">${sc.teams[p.id] || '—'}</span></button>`).join('')}</div>
@@ -362,15 +357,9 @@ function renderStandings() {
   const st = standings();
   const anyPts = st.some((r) => r.pts > 0);
   const top3 = st.slice(0, 3);
-  const podium = anyPts ? `<div class="podium">${top3.map((r) => `<div class="pod">
-      <div class="place">${r.rank}${ordinal(r.rank)}</div>
-      <div class="nm">${esc(pName(r.pid))}</div>
-      <div class="pts">${trim(r.pts)}</div>
-      <div class="pl">pts · ${r.stab} stab</div></div>`).join('')}</div>` : '';
   const doneCount = ROUNDS.filter((r) => roundStatus(r.id) === 'done').length;
   return `
-    <div class="section-title"><h2>Week standings</h2><span class="eyebrow">${doneCount} of 5 rounds in</span></div>
-    ${podium}
+    <div class="section-title"><h2>Standings</h2><span class="eyebrow">${doneCount} of 5 rounds in</span></div>
     ${!anyPts ? '<div class="empty">No results yet. Once a round\'s scores are in, week points appear here.</div>' : ''}
     <div class="lb">${st.map((r) => {
       const p = P(r.pid), i = playerIdx(r.pid); const cur = currentIndex(r.pid); const d = cur - p.start;
@@ -378,18 +367,18 @@ function renderStandings() {
         if (rd.format === 'scramble') { const sr = scrambleResults(rd.id).rows[r.pid]; return `<i class="${sr ? (sr.won ? 'win' : '') : ''}" title="Round ${rd.n}">${sr ? (sr.won ? 'W' : sr.tie ? '=' : 'L') : ''}</i>`; }
         const pl = roundPlace(rd.id, r.pid); return `<i class="${pl ? 'p' + Math.min(pl, 4) : ''}" title="Round ${rd.n}">${pl ?? ''}</i>`;
       }).join('');
-      return `<div class="card lb-row">
-        <div class="rk">${r.rank}</div>
+      return `<div class="lb-row">
+        ${avatar(p, i, `<em class="${r.rank === 1 && anyPts ? 'lead' : ''}">${r.rank}</em>`)}
         <div style="min-width:0">
           <div class="nm">${esc(pName(r.pid))}</div>
           <div class="meta"><span class="dots">${dots}</span>
-            <span class="idx-cell">${driftTrack(r.pid)}<span class="v">${fmt1(cur)} <small class="${d < 0 ? 'delta down' : d > 0 ? 'delta up' : ''}">${signed(d)}</small></span></span></div>
+            <span class="idx-cell"><span class="v">index ${fmt1(cur)} <small class="${d < 0 ? 'delta down' : d > 0 ? 'delta up' : ''}">${d !== 0 ? signed(d) : ''}</small></span></span></div>
         </div>
-        <div class="pts">${trim(r.pts)}<small>${r.stab} stab</small></div>
+        <div class="pts">${trim(r.pts)}<small>pts</small></div>
       </div>`;
     }).join('')}</div>
 
-    <div class="section-title"><h2>Round by round</h2><span class="eyebrow">stableford · (week pts)</span></div>
+    <div class="section-title"><h2>Round by round</h2><span class="eyebrow">stableford (week pts)</span></div>
     <div class="card table-wrap"><table class="rounds-table">
       <thead><tr><th>Player</th>${ROUNDS.map((r) => `<th>${esc(r.short)}</th>`).join('')}<th>Total</th></tr></thead>
       <tbody>${st.map((row) => `<tr><td>${esc(pName(row.pid))}</td>${ROUNDS.map((rd) => {
@@ -401,7 +390,7 @@ function renderStandings() {
 
     ${ROUNDS.filter((r) => r.pairs && S.pairs[r.id]?.revealed).map((r) => `
       <div class="section-title"><h2>Pairs · ${esc(r.short)}</h2><span class="eyebrow">combined points</span></div>
-      <div class="card pairs-box"><div class="pair-list" style="margin-top:0">${pairTotals(r.id).map((row, k) => `<div class="pair-item"><div><span class="rank">${k + 1}</span><span class="names">${esc(pName(row.pair[0]))}<span>&amp;</span>${esc(pName(row.pair[1]))}</span></div><span class="pts">${row.total}</span></div>`).join('')}</div></div>`).join('')}`;
+      <div class="pairs-box" style="margin-top:0"><div class="pair-list" style="margin-top:0">${pairTotals(r.id).map((row, k) => `<div class="pair-item"><div><span class="rank">${k + 1}</span><span class="names">${esc(pName(row.pair[0]))}<span>&amp;</span>${esc(pName(row.pair[1]))}</span></div><span class="pts">${row.total}</span></div>`).join('')}</div></div>`).join('')}`;
 }
 
 // --- Settings sheet ---
@@ -440,6 +429,7 @@ function renderSettings() {
 
 function render() {
   const view = $('#view');
+  const wc = $('#wm-count'); if (wc) wc.textContent = S.players.length;
   view.innerHTML = tab === 'trip' ? renderTrip() : tab === 'players' ? renderPlayers() : tab === 'scores' ? renderScores() : renderStandings();
   document.querySelectorAll('.tab').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
 }
