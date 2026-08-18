@@ -1,0 +1,9 @@
+{
+  "name": "Yorkshire Golf Week 2026",
+  "short_name": "Yorkshire 26",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#E8EFE6",
+  "theme_color": "#1E5B3A",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
