@@ -6,50 +6,43 @@
 const STORE_KEY = 'yorkshire-golf-2026';
 
 // ---------- Fixed trip structure ----------
+// Edit these to change the trip. Course figures are placeholders — check the scorecards.
 const ROUNDS = [
-  { id: 'd1', n: 1, dow: 'Mon', dnum: 7,  mon: 'Sept', club: 'Brough Golf Club',      short: 'Brough',      town: 'Brough, East Riding',  format: 'stableford', pairs: true  },
-  { id: 'd2', n: 2, dow: 'Tue', dnum: 8,  mon: 'Sept', club: 'Ganton Golf Club',      short: 'Ganton',      town: 'Ganton, near Scarborough', format: 'stableford', pairs: false },
-  { id: 'd3', n: 3, dow: 'Wed', dnum: 9,  mon: 'Sept', club: 'Cave Castle Golf Club', short: 'Cave Castle', town: 'South Cave, East Riding', format: 'scramble',   pairs: false },
-  { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Hessle Golf Club',      short: 'Hessle',      town: 'Cottingham, Hull',   format: 'stableford', pairs: true  },
-  { id: 'd5', n: 5, dow: 'Fri', dnum: 11, mon: 'Sept', club: 'York Golf Club',        short: 'York',        town: 'Strensall, York',    format: 'stableford', pairs: false },
+  { id: 'd1', n: 1, dow: 'Mon', dnum: 7,  mon: 'Sept', club: 'Brough Golf Club',      short: 'Brough',      town: 'Brough, East Riding',      format: 'stableford', pairs: true,  par: 68, cr: 67.7, slope: 120, teeTime: '10:00', notes: 'Meet in the car park 9:15. Bacon rolls in the clubhouse.' },
+  { id: 'd2', n: 2, dow: 'Tue', dnum: 8,  mon: 'Sept', club: 'Ganton Golf Club',      short: 'Ganton',      town: 'Ganton, near Scarborough', format: 'stableford', pairs: false, par: 71, cr: 73.2, slope: 135, teeTime: '11:20', notes: 'Jacket and tie for lunch. Leave the hotel by 9:30.' },
+  { id: 'd3', n: 3, dow: 'Wed', dnum: 9,  mon: 'Sept', club: 'Cave Castle Golf Club', short: 'Cave Castle', town: 'South Cave, East Riding',   format: 'scramble',   pairs: false, par: 72, cr: 71.8, slope: 128, teeTime: '12:00', notes: 'Two teams of four. Losing team buys the first round.' },
+  { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Hessle Golf Club',      short: 'Hessle',      town: 'Cottingham, Hull',         format: 'stableford', pairs: true,  par: 72, cr: 71.6, slope: 129, teeTime: '10:40', notes: 'Pairs drawn on the first tee.' },
+  { id: 'd5', n: 5, dow: 'Fri', dnum: 11, mon: 'Sept', club: 'York Golf Club',        short: 'York',        town: 'Strensall, York',          format: 'stableford', pairs: false, par: 70, cr: 70.9, slope: 128, teeTime: '09:30', notes: 'Final round. Prize-giving in the bar afterwards.' },
 ];
 
-// Course figures are placeholders — check against the scorecard on the day (editable in Settings).
-const DEFAULT_COURSES = {
-  d1: { par: 68, cr: 67.7, slope: 120, tee: 'White', teeTime: '', notes: '' },
-  d2: { par: 71, cr: 73.2, slope: 135, tee: 'White', teeTime: '', notes: '' },
-  d3: { par: 72, cr: 71.8, slope: 128, tee: 'White', teeTime: '', notes: '' },
-  d4: { par: 72, cr: 71.6, slope: 129, tee: 'White', teeTime: '', notes: '' },
-  d5: { par: 70, cr: 70.9, slope: 128, tee: 'White', teeTime: '', notes: '' },
-};
+// Players and starting handicap indexes — placeholders, edit before the trip.
+const PLAYERS = [
+  { id: 'p1', name: 'Tim Hoare',   start: 12.4 },
+  { id: 'p2', name: 'Player Two',  start: 18.1 },
+  { id: 'p3', name: 'Player Three', start: 7.9 },
+  { id: 'p4', name: 'Player Four', start: 22.6 },
+  { id: 'p5', name: 'Player Five', start: 15.0 },
+  { id: 'p6', name: 'Player Six',  start: 9.3 },
+  { id: 'p7', name: 'Player Seven', start: 27.5 },
+  { id: 'p8', name: 'Player Eight', start: 20.2 },
+];
+
+// Rules
+const RULES = { placePoints: [8, 6, 4, 2], allowance: 100, scrambleWin: 4, scrambleLose: 0, par: 32 };
 
 const AVATAR_COLOURS = ['#1E5B3A', '#6B4C9A', '#B8452F', '#2C6E91', '#D99A1E', '#4E8B67', '#8C3B6E', '#3F5C7A'];
 
 // ---------- State ----------
 function defaultState() {
-  return {
-    v: 1,
-    players: Array.from({ length: 8 }, (_, i) => ({ id: 'p' + (i + 1), name: '', start: 18 })),
-    settings: { placePoints: [8, 6, 4, 2], allowance: 100, scrambleWin: 4, scrambleLose: 0, par: 32 },
-    courses: JSON.parse(JSON.stringify(DEFAULT_COURSES)),
-    scores: {},      // roundId -> { playerId: points }
-    pairs: {},       // roundId -> { pairs: [[a,b],...], revealed: bool }
-    scramble: {},    // roundId -> { teams: {playerId:'A'|'B'}, scoreA: n|null, scoreB: n|null }
-  };
+  return { v: 2, scores: {}, pairs: {}, scramble: {} };
 }
 function loadState() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return defaultState();
-    return migrate(JSON.parse(raw));
-  } catch { return defaultState(); }
+  try { const raw = localStorage.getItem(STORE_KEY); return raw ? migrate(JSON.parse(raw)) : defaultState(); }
+  catch { return defaultState(); }
 }
 function migrate(s) {
   const d = defaultState();
-  s = Object.assign(d, s);
-  s.settings = Object.assign(d.settings, s.settings || {});
-  for (const r of ROUNDS) s.courses[r.id] = Object.assign({}, DEFAULT_COURSES[r.id], s.courses[r.id] || {});
-  return s;
+  return { v: 2, scores: s.scores || d.scores, pairs: s.pairs || d.pairs, scramble: s.scramble || d.scramble };
 }
 let S = loadState();
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
@@ -69,9 +62,9 @@ const initials = (p, i) => {
 const colour = (i) => AVATAR_COLOURS[i % AVATAR_COLOURS.length];
 const isNum = (v) => typeof v === 'number' && !Number.isNaN(v);
 const scoreOf = (rid, pid) => { const v = S.scores[rid]?.[pid]; return isNum(v) ? v : null; };
-const playerIdx = (pid) => S.players.findIndex((p) => p.id === pid);
-const P = (pid) => S.players[playerIdx(pid)];
-const pName = (pid) => { const i = playerIdx(pid); return i < 0 ? '?' : playerName(S.players[i], i); };
+const playerIdx = (pid) => PLAYERS.findIndex((p) => p.id === pid);
+const P = (pid) => PLAYERS[playerIdx(pid)];
+const pName = (pid) => { const i = playerIdx(pid); return i < 0 ? '?' : playerName(PLAYERS[i], i); };
 
 function toast(msg) {
   const t = $('#toast');
@@ -88,7 +81,7 @@ function indexHistory(pid) {
     let after = idx, applied = false;
     if (r.format === 'stableford') {
       const s = scoreOf(r.id, pid);
-      if (s !== null) { after = idx - 0.5 * (s - S.settings.par); applied = true; }
+      if (s !== null) { after = idx - 0.5 * (s - RULES.par); applied = true; }
     }
     out.push({ round: r, before, after, applied });
     idx = after;
@@ -98,19 +91,19 @@ function indexHistory(pid) {
 const currentIndex = (pid) => { const h = indexHistory(pid); return h[h.length - 1].after; };
 const indexBefore = (pid, rid) => indexHistory(pid).find((h) => h.round.id === rid).before;
 function courseHandicap(index, rid) {
-  const c = S.courses[rid];
+  const c = ROUNDS.find((x) => x.id === rid);
   return Math.round(index * (c.slope / 113) + (c.cr - c.par));
 }
 function playingHandicap(index, rid) {
-  return Math.round(courseHandicap(index, rid) * (S.settings.allowance / 100));
+  return Math.round(courseHandicap(index, rid) * (RULES.allowance / 100));
 }
 
 // ---------- Results ----------
 // Stableford: rank by points; ties share the place points for the positions they occupy.
 function stablefordResults(rid) {
-  const rows = S.players.map((p) => ({ pid: p.id, score: scoreOf(rid, p.id) })).filter((r) => r.score !== null);
+  const rows = PLAYERS.map((p) => ({ pid: p.id, score: scoreOf(rid, p.id) })).filter((r) => r.score !== null);
   rows.sort((a, b) => b.score - a.score);
-  const pp = S.settings.placePoints;
+  const pp = RULES.placePoints;
   let i = 0;
   while (i < rows.length) {
     let j = i; while (j + 1 < rows.length && rows[j + 1].score === rows[i].score) j++;
@@ -125,9 +118,9 @@ function scrambleResults(rid) {
   const sc = S.scramble[rid] || { teams: {}, scoreA: null, scoreB: null };
   const out = {};
   if (!isNum(sc.scoreA) || !isNum(sc.scoreB)) return { rows: out, decided: false, sc };
-  const { scrambleWin: W, scrambleLose: L } = S.settings;
+  const { scrambleWin: W, scrambleLose: L } = RULES;
   const tie = sc.scoreA === sc.scoreB;
-  for (const p of S.players) {
+  for (const p of PLAYERS) {
     const t = sc.teams[p.id]; if (!t) continue;
     const won = (t === 'A' && sc.scoreA > sc.scoreB) || (t === 'B' && sc.scoreB > sc.scoreA);
     out[p.id] = { points: tie ? (W + L) / 2 : won ? W : L, won, tie };
@@ -145,7 +138,7 @@ function roundPlace(rid, pid) {
   return row ? row.place : null;
 }
 function standings() {
-  const rows = S.players.map((p, i) => {
+  const rows = PLAYERS.map((p, i) => {
     let pts = 0, stab = 0, played = 0;
     for (const r of ROUNDS) {
       const rp = roundPoints(r.id, p.id); if (rp !== null) { pts += rp; played++; }
@@ -165,8 +158,8 @@ function roundStatus(rid) {
     const both = isNum(sc.scoreA) && isNum(sc.scoreB);
     return both ? 'done' : (Object.keys(sc.teams || {}).length || isNum(sc.scoreA) || isNum(sc.scoreB)) ? 'partial' : 'none';
   }
-  const n = S.players.filter((p) => scoreOf(rid, p.id) !== null).length;
-  return n === 0 ? 'none' : n === S.players.length ? 'done' : 'partial';
+  const n = PLAYERS.filter((p) => scoreOf(rid, p.id) !== null).length;
+  return n === 0 ? 'none' : n === PLAYERS.length ? 'done' : 'partial';
 }
 function pairTotals(rid) {
   const pr = S.pairs[rid]; if (!pr) return [];
@@ -194,7 +187,7 @@ function formatChips(r) {
 }
 function dayRail(activeId) {
   return `<div class="courses" role="tablist">${ROUNDS.map((r, i) => {
-    const c = S.courses[r.id];
+    const c = r;
     const sub = r.format === 'scramble' ? 'scramble' : r.pairs ? 'hidden pairs' : 'stableford';
     return `<button class="course-card" role="tab" aria-pressed="${r.id === activeId}" data-round="${r.id}" aria-label="Round ${r.n}, ${r.club}">
       <span class="course-img g${i + 1}"><span class="day">${r.dow} ${r.dnum}</span><span class="st ${roundStatus(r.id)}"></span><span class="nm">${esc(r.short)}</span></span>
@@ -204,32 +197,22 @@ function dayRail(activeId) {
 function avatar(p, i, badge) {
   return `<span class="avatar" style="background:${colour(i)}">${esc(initials(p, i))}${badge ?? ''}</span>`;
 }
-function unnamedNotice() {
-  const unnamed = S.players.filter((p) => !p.name.trim()).length;
-  return unnamed ? `<div class="notice green">${unnamed === S.players.length ? 'Start by adding the eight names and starting handicap indexes' : `${unnamed} player${unnamed > 1 ? 's' : ''} still unnamed`} — go to <b>Players</b>.</div>` : '';
-}
-
 // --- Trip ---
 function renderTrip() {
-  const pp = S.settings.placePoints;
+  const pp = RULES.placePoints;
   return `
     ${dayRail(null)}
-    ${unnamedNotice()}
     <div class="section-title"><h2>Itinerary</h2><span class="eyebrow">5 rounds · 5 days</span></div>
     <div class="itin">${ROUNDS.map((r) => {
-      const c = S.courses[r.id];
+      const c = r;
       return `<article class="itin-day">
         <div class="itin-date"><span class="n">${r.dnum}</span><span class="m">${r.dow}</span></div>
         <div class="itin-body">
           <h3>${esc(r.club)}</h3>
           <div class="itin-meta">${formatChips(r)}</div>
           <div class="itin-course">${esc(r.town)} · par ${c.par} · slope ${c.slope}</div>
-          <div class="itin-notes">
-            <div class="itin-row">
-              <label><span class="lbl">Tee time</span><input type="text" inputmode="numeric" placeholder="e.g. 10:20" value="${esc(c.teeTime)}" data-course="${r.id}" data-field="teeTime"></label>
-              <label style="grid-column:2 / span 1"><span class="lbl">Notes</span><textarea rows="1" placeholder="Lifts, food, meeting point…" data-course="${r.id}" data-field="notes">${esc(c.notes)}</textarea></label>
-            </div>
-          </div>
+          <div class="itin-facts"><span><b>${esc(r.teeTime)}</b> tee</span><span>${r.format === 'scramble' ? '2 teams of 4' : r.pairs ? 'Pairs drawn before tee-off' : 'Individual'}</span></div>
+          <p class="itin-note">${esc(r.notes)}</p>
         </div>
       </article>`;
     }).join('')}</div>
@@ -238,7 +221,7 @@ function renderTrip() {
     <div class="card rules">
       <div class="rule"><span class="k">HI</span><p class="t">Everyone starts on their <b>current handicap index</b>. Course handicaps are worked out each morning from that day's slope and rating.</p></div>
       <div class="rule"><span class="k">32</span><p class="t">After each stableford round your index moves: <b>−0.5 for every point above 32</b>, +0.5 for every point below. Scramble day doesn't move it.</p></div>
-      <div class="rule"><span class="k">${pp[0]}</span><p class="t">Week points each round: <b>${pp[0]} · ${pp[1]} · ${pp[2]} · ${pp[3]}</b> for 1st to 4th. Ties share the points. Scramble winners take ${S.settings.scrambleWin} each.</p></div>
+      <div class="rule"><span class="k">${pp[0]}</span><p class="t">Week points each round: <b>${pp[0]} · ${pp[1]} · ${pp[2]} · ${pp[3]}</b> for 1st to 4th. Ties share the points. Scramble winners take ${RULES.scrambleWin} each.</p></div>
       <div class="rule"><span class="k">2×</span><p class="t">Brough and Hessle carry a <b>hidden pairs</b> side-game: pairs are drawn and locked away until the round is in, then combined points decide it.</p></div>
     </div>`;
 }
@@ -247,38 +230,30 @@ function renderTrip() {
 function renderPlayers() {
   const nextRound = ROUNDS.find((r) => roundStatus(r.id) !== 'done') || ROUNDS[ROUNDS.length - 1];
   return `
-    <div class="section-title"><h2>Players</h2><span class="eyebrow">${S.players.length} on tour</span></div>
-    <div class="notice">Tap a name or starting index to edit. The big number is each player's index <b>now</b>.</div>
-    <div class="player-list">${S.players.map((p, i) => {
+    <div class="section-title"><h2>Players</h2><span class="eyebrow">${PLAYERS.length} on tour</span></div>
+    <div class="player-list">${PLAYERS.map((p, i) => {
       const cur = currentIndex(p.id), d = cur - p.start;
       const ch = courseHandicap(cur, nextRound.id);
       return `<div class="player-row">
         ${avatar(p, i)}
         <div style="min-width:0">
-          <input class="name" type="text" placeholder="Player ${i + 1}" value="${esc(p.name)}" data-player="${p.id}" data-field="name" aria-label="Name of player ${i + 1}">
-          <div class="sub">Start <span class="index-edit" style="display:inline-flex;vertical-align:middle"><input type="number" step="0.1" inputmode="decimal" value="${p.start}" data-player="${p.id}" data-field="start" aria-label="Starting index" style="width:58px;padding:2px 6px;font-size:13px"></span>
-            <span class="delta ${d < 0 ? 'down' : d > 0 ? 'up' : 'flat'}">${signed(d)}</span> · CH ${ch} at ${esc(nextRound.short)}</div>
+          <div class="pname">${esc(playerName(p, i))}</div>
+          <div class="sub">Started ${fmt1(p.start)} <span class="delta ${d < 0 ? 'down' : d > 0 ? 'up' : 'flat'}">${signed(d)}</span> · CH ${ch} at ${esc(nextRound.short)}</div>
         </div>
-        <div class="index-now">
-          <div class="v">${fmt1(cur)}</div>
-          <div class="l">index</div>
-        </div>
+        <div class="index-now"><div class="v">${fmt1(cur)}</div><div class="l">index</div></div>
       </div>`;
     }).join('')}</div>
-    <div class="btn-row">
-      <button class="btn secondary sm" data-action="add-player">Add player</button>
-      ${S.players.length > 2 ? `<button class="btn ghost sm" data-action="remove-player">Remove last player</button>` : ''}
-    </div>`;
+    <p class="small muted" style="margin-top:14px">Names and starting indexes are set in the app's code before the trip.</p>`;
 }
 
 // --- Scores ---
 function renderScores() {
   const r = ROUNDS.find((x) => x.id === selectedRound);
-  const c = S.courses[r.id];
+  const c = r;
   let body = '';
   if (r.format === 'stableford') {
     const res = stablefordResults(r.id);
-    body += `<div class="score-list">${S.players.map((p, i) => {
+    body += `<div class="score-list">${PLAYERS.map((p, i) => {
       const idx = indexBefore(p.id, r.id), ch = courseHandicap(idx, r.id), ph = playingHandicap(idx, r.id);
       const s = scoreOf(r.id, p.id);
       const row = res.find((x) => x.pid === p.id);
@@ -287,7 +262,7 @@ function renderScores() {
           ${avatar(p, i, row ? `<em class="${row.place === 1 ? 'lead' : ''}">${row.place}</em>` : '')}
           <div style="min-width:0">
             <div class="n">${esc(playerName(p, i))}</div>
-            <div class="h">HI ${fmt1(idx)} · <b>CH ${ch}</b>${S.settings.allowance !== 100 ? ` · PH ${ph}` : ''}${row && row.points ? ` · +${trim(row.points)} pts` : ''}</div>
+            <div class="h">HI ${fmt1(idx)} · <b>CH ${ch}</b>${RULES.allowance !== 100 ? ` · PH ${ph}` : ''}${row && row.points ? ` · +${trim(row.points)} pts` : ''}</div>
           </div>
         </div>
         <div class="stepper" aria-label="Stableford points for ${esc(playerName(p, i))}">
@@ -314,7 +289,7 @@ function trim(n) { return Number.isInteger(n) ? String(n) : n.toFixed(1); }
 
 function renderPairsBox(r) {
   const pr = S.pairs[r.id];
-  const even = S.players.length % 2 === 0;
+  const even = PLAYERS.length % 2 === 0;
   let inner;
   if (!pr) {
     inner = `<p class="small muted" style="margin-top:6px">Draw the pairs before tee-off. They stay sealed until you reveal them after the round.</p>
@@ -337,7 +312,7 @@ function renderPairsBox(r) {
 function renderScrambleBox(r) {
   const sc = S.scramble[r.id] || { teams: {}, scoreA: null, scoreB: null };
   const res = scrambleResults(r.id);
-  const members = (t) => S.players.filter((p) => sc.teams[p.id] === t);
+  const members = (t) => PLAYERS.filter((p) => sc.teams[p.id] === t);
   const team = (t, label) => `<div class="team">
     <h4>${label} ${res.decided && res.winner === t ? '<span class="chip gorse">Winners</span>' : ''}</h4>
     <div class="members">${members(t).length ? members(t).map((p) => `<div class="m">${esc(pName(p.id))}</div>`).join('') : '<div class="m empty">No one yet</div>'}</div>
@@ -345,9 +320,9 @@ function renderScrambleBox(r) {
   </div>`;
   return `<div class="scramble-box">
     <h3>Two-team scramble</h3>
-    <p class="small muted" style="margin-top:4px">Tap a name to move it between teams, then enter each team's stableford points. Winning team members each get ${S.settings.scrambleWin} week points${res.decided && res.tie ? ' — tied, so shared' : ''}.</p>
+    <p class="small muted" style="margin-top:4px">Tap a name to move it between teams, then enter each team's stableford points. Winning team members each get ${RULES.scrambleWin} week points${res.decided && res.tie ? ' — tied, so shared' : ''}.</p>
     <div class="team-grid">${team('A', 'Team A')}${team('B', 'Team B')}</div>
-    <div class="assign">${S.players.map((p, i) => `<button data-assign="${p.id}" class="${sc.teams[p.id] || ''}"><span>${esc(playerName(p, i))}</span><span class="t">${sc.teams[p.id] || '—'}</span></button>`).join('')}</div>
+    <div class="assign">${PLAYERS.map((p, i) => `<button data-assign="${p.id}" class="${sc.teams[p.id] || ''}"><span>${esc(playerName(p, i))}</span><span class="t">${sc.teams[p.id] || '—'}</span></button>`).join('')}</div>
     <div class="btn-row"><button class="btn ghost sm" data-action="auto-teams">Split teams by index</button></div>
   </div>`;
 }
@@ -395,41 +370,22 @@ function renderStandings() {
 
 // --- Settings sheet ---
 function renderSettings() {
-  const s = S.settings;
-  return `<h2 id="sheet-title">Settings</h2>
-    <p class="small muted">Rules and course figures. Everything recalculates immediately.</p>
-    <div class="field"><span class="lbl">Week points for 1st · 2nd · 3rd · 4th</span>
-      <div class="grid4">${[0, 1, 2, 3].map((i) => `<div class="field"><input type="number" inputmode="numeric" value="${s.placePoints[i]}" data-setting="pp${i}"></div>`).join('')}</div>
-      <p class="help">Ties share the points of the places they cover.</p></div>
-    <div class="grid3" style="margin-top:12px">
-      <div class="field"><span class="lbl">Par score</span><input type="number" value="${s.par}" data-setting="par"><p class="help">Index moves ±0.5 per point from this.</p></div>
-      <div class="field"><span class="lbl">Allowance %</span><input type="number" value="${s.allowance}" data-setting="allowance"><p class="help">100 = full course handicap.</p></div>
-      <div class="field"><span class="lbl">Scramble win / lose</span><div style="display:flex;gap:6px"><input type="number" value="${s.scrambleWin}" data-setting="scrambleWin"><input type="number" value="${s.scrambleLose}" data-setting="scrambleLose"></div><p class="help">Week points per player.</p></div>
+  return `<h2 id="sheet-title">Share &amp; back up</h2>
+    <p class="small muted">Scores live on this phone. Send the share link and whoever opens it gets an exact copy.</p>
+    <div class="btn-row"><button class="btn primary" data-action="share">Copy share link</button><button class="btn secondary" data-action="export">Copy JSON</button></div>
+    <div class="field"><span class="lbl">Paste JSON to restore</span><textarea id="import-box" placeholder="{ … }"></textarea><div class="btn-row"><button class="btn ghost sm" data-action="import">Restore from JSON</button></div></div>
+    <div class="course-edit">
+      <h3>Rules in play</h3>
+      <p class="help">Week points ${RULES.placePoints.join(' · ')} for 1st–4th (ties share) · index ±0.5 per point from ${RULES.par} · scramble winners ${RULES.scrambleWin} pts each · ${RULES.allowance}% allowance. Change these in the code.</p>
     </div>
     <div class="course-edit">
-      <h3>Courses</h3><p class="help">Par, course rating and slope from the tees you're playing. Defaults are approximate — check the scorecard.</p>
-      ${ROUNDS.map((r) => { const c = S.courses[r.id]; return `<div class="grid4" style="margin-top:8px;align-items:end">
-        <div class="field" style="grid-column:span 4"><span class="lbl">Round ${r.n} · ${esc(r.club)}</span></div>
-        <div class="field"><span class="lbl">Tees</span><input type="text" value="${esc(c.tee)}" data-course="${r.id}" data-field="tee"></div>
-        <div class="field"><span class="lbl">Par</span><input type="number" value="${c.par}" data-course="${r.id}" data-field="par"></div>
-        <div class="field"><span class="lbl">CR</span><input type="number" step="0.1" value="${c.cr}" data-course="${r.id}" data-field="cr"></div>
-        <div class="field"><span class="lbl">Slope</span><input type="number" value="${c.slope}" data-course="${r.id}" data-field="slope"></div>
-      </div>`; }).join('')}
-    </div>
-    <div class="course-edit share-box">
-      <h3>Share &amp; back up</h3>
-      <p class="help">The app keeps everything on this phone. Send the share link and whoever opens it gets an exact copy of the current scores.</p>
-      <div class="btn-row"><button class="btn" data-action="share">Copy share link</button><button class="btn secondary" data-action="export">Copy JSON</button></div>
-      <div class="field"><span class="lbl">Paste JSON to restore</span><textarea id="import-box" placeholder="{ … }"></textarea><div class="btn-row"><button class="btn ghost sm" data-action="import">Restore from JSON</button></div></div>
-    </div>
-    <div class="course-edit">
-      <div class="btn-row"><button class="btn danger sm" data-action="reset">Reset everything</button><button class="btn ghost sm" data-action="close-sheet" style="margin-left:auto">Done</button></div>
+      <div class="btn-row"><button class="btn danger sm" data-action="reset">Clear all scores</button><button class="btn ghost sm" data-action="close-sheet" style="margin-left:auto">Done</button></div>
     </div>`;
 }
 
 function render() {
   const view = $('#view');
-  const wc = $('#wm-count'); if (wc) wc.textContent = S.players.length;
+  const wc = $('#wm-count'); if (wc) wc.textContent = PLAYERS.length;
   view.innerHTML = tab === 'trip' ? renderTrip() : tab === 'players' ? renderPlayers() : tab === 'scores' ? renderScores() : renderStandings();
   document.querySelectorAll('.tab').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
 }
@@ -469,18 +425,6 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#she
 // live typing → update state without re-render; blur/change → re-render
 function handleInput(e, commit) {
   const t = e.target;
-  if (t.dataset.player && t.dataset.field) {
-    const p = P(t.dataset.player);
-    if (t.dataset.field === 'name') p.name = t.value;
-    else if (t.dataset.field === 'start') { const n = num(t.value); if (n !== null) p.start = Math.round(n * 10) / 10; }
-    save(); if (commit) render(); return;
-  }
-  if (t.dataset.course && t.dataset.field) {
-    const c = S.courses[t.dataset.course], f = t.dataset.field;
-    if (f === 'teeTime' || f === 'notes' || f === 'tee') c[f] = t.value;
-    else { const n = num(t.value); if (n !== null) c[f] = n; }
-    save(); return; // itinerary re-renders on tab change; the sheet re-renders on close
-  }
   if (t.dataset.score) {
     const n = num(t.value);
     S.scores[selectedRound] = S.scores[selectedRound] || {};
@@ -491,11 +435,6 @@ function handleInput(e, commit) {
     const sc = (S.scramble[selectedRound] = S.scramble[selectedRound] || { teams: {}, scoreA: null, scoreB: null });
     const n = num(t.value); sc['score' + t.dataset.teamScore] = n === null ? null : Math.round(n);
     save(); if (commit) render(); return;
-  }
-  if (t.dataset.setting) {
-    const k = t.dataset.setting, n = num(t.value); if (n === null) return;
-    if (k.startsWith('pp')) S.settings.placePoints[+k[2]] = n; else S.settings[k] = n;
-    save(); return;
   }
 }
 document.body.addEventListener('input', (e) => handleInput(e, false));
@@ -518,22 +457,20 @@ document.body.addEventListener('click', async (e) => {
   }
   const a = e.target.closest('[data-action]'); if (!a) return;
   switch (a.dataset.action) {
-    case 'add-player': { const n = S.players.length + 1; S.players.push({ id: 'p' + Date.now().toString(36), name: '', start: 18 }); save(); render(); toast(`Player ${n} added`); break; }
-    case 'remove-player': { const p = S.players[S.players.length - 1]; if (confirm(`Remove ${pName(p.id)}? Their scores go too.`)) { S.players.pop(); for (const r of ROUNDS) { delete S.scores[r.id]?.[p.id]; delete S.scramble[r.id]?.teams?.[p.id]; if (S.pairs[r.id]?.pairs.some((pr) => pr.includes(p.id))) delete S.pairs[r.id]; } save(); render(); } break; }
-    case 'draw-pairs': { const ids = shuffle(S.players.map((p) => p.id)); const pairs = []; for (let i = 0; i < ids.length; i += 2) pairs.push([ids[i], ids[i + 1]]); S.pairs[selectedRound] = { pairs, revealed: false }; save(); render(); toast('Pairs drawn and sealed'); break; }
+    case 'draw-pairs': { const ids = shuffle(PLAYERS.map((p) => p.id)); const pairs = []; for (let i = 0; i < ids.length; i += 2) pairs.push([ids[i], ids[i + 1]]); S.pairs[selectedRound] = { pairs, revealed: false }; save(); render(); toast('Pairs drawn and sealed'); break; }
     case 'redraw-pairs': { if (confirm('Redraw the pairs for this round?')) { delete S.pairs[selectedRound]; save(); render(); } break; }
     case 'reveal-pairs': { S.pairs[selectedRound].revealed = true; save(); render(); toast('Pairs revealed'); break; }
     case 'auto-teams': {
       // snake draft by index so teams are balanced
       const sc = (S.scramble[selectedRound] = S.scramble[selectedRound] || { teams: {}, scoreA: null, scoreB: null });
-      const sorted = [...S.players].sort((x, y) => indexBefore(x.id, selectedRound) - indexBefore(y.id, selectedRound));
+      const sorted = [...PLAYERS].sort((x, y) => indexBefore(x.id, selectedRound) - indexBefore(y.id, selectedRound));
       sc.teams = {}; sorted.forEach((p, i) => { sc.teams[p.id] = (i % 4 === 0 || i % 4 === 3) ? 'A' : 'B'; });
       save(); render(); toast('Teams split by handicap'); break;
     }
     case 'share': { const url = location.origin + location.pathname + '#s=' + encodeState(); await copy(url, 'Share link copied'); break; }
     case 'export': { await copy(JSON.stringify(S, null, 2), 'JSON copied'); break; }
     case 'import': { try { S = migrate(JSON.parse($('#import-box').value)); save(); closeSheet(); toast('Restored'); } catch { toast('That JSON didn\'t parse'); } break; }
-    case 'reset': { if (confirm('Wipe all players, scores and settings on this phone?')) { S = defaultState(); save(); closeSheet(); toast('Reset'); } break; }
+    case 'reset': { if (confirm('Clear every score, pair draw and scramble result on this phone?')) { S = defaultState(); save(); closeSheet(); toast('Reset'); } break; }
     case 'close-sheet': closeSheet(); break;
   }
 });

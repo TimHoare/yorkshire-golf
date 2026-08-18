@@ -253,3 +253,9 @@ p { margin: 0; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media (min-width: 640px) { .view { padding: 8px 24px 32px; } .courses { margin: 0 -24px; padding: 6px 24px 8px; scroll-padding-inline: 24px; } }
+
+/* static itinerary facts */
+.itin-facts { display: flex; gap: 14px; font-size: 13.5px; color: var(--ink-2); margin-top: 8px; }
+.itin-facts b { color: var(--ink); font-weight: 800; }
+.itin-note { font-size: 14px; color: var(--ink-2); margin-top: 6px; }
+.pname { font-weight: 800; font-size: 16px; }

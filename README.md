@@ -10,11 +10,19 @@ Open `index.html` in a browser, or serve the folder (e.g. `python3 -m http.serve
 
 ## How it works
 
-- **Trip** — itinerary for the five rounds with editable tee times and notes, plus the rules.
-- **Players** — names and starting handicap index; shows current index, movement so far, and course handicap for the next round.
+- **Trip** — itinerary for the five rounds (tee times, notes, course figures), plus the rules.
+- **Players** — current index, movement so far, and course handicap for the next round.
 - **Scores** — pick a day, enter stableford points per player. Hidden-pairs days have a sealed draw and reveal; scramble day has team assignment and team scores.
 - **Standings** — week points, per-round places, index drift, round-by-round table, pairs results.
-- **Settings (⚙)** — place points, allowance %, scramble points, course par/CR/slope, share link, JSON backup, reset.
+- **⚙** — share link, JSON backup/restore, clear scores.
+
+### Setting it up
+
+Everything fixed about the trip is hard-coded at the top of `app.js` — edit there before you go:
+
+- `ROUNDS` — courses, tee times, notes, par / course rating / slope (placeholders; check the scorecards).
+- `PLAYERS` — the eight names and starting handicap indexes.
+- `RULES` — place points (8·6·4·2), allowance %, scramble points, the 32-point pivot.
 
 ### The maths
 
