@@ -42,7 +42,7 @@ const PLAYERS = [
 // Rules
 const RULES = { placePoints: [8, 6, 4, 2], allowance: 100, scrambleWin: 4, scrambleLose: 0, par: 32, scrambleAllowance: [25, 20, 15, 10] };
 
-const AVATAR_COLOURS = ['#1E5B3A', '#6B4C9A', '#B8452F', '#2C6E91', '#D99A1E', '#4E8B67', '#8C3B6E', '#3F5C7A'];
+const AVATAR_COLOURS = ['#22402F', '#5F4E8C', '#8A4A2F', '#3A5A6E', '#A8894B', '#4E6E4E', '#7A3A55', '#54604A'];
 
 // ---------- State ----------
 // scores[rid][pid] = 18 gross strokes (null = not entered); scramble[rid][teamIdx] = 18 team gross strokes.
