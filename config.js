@@ -7,6 +7,6 @@
    controlled by the database policies in supabase-schema.sql.
    Leave both empty and the app runs in single-phone mode (localStorage only). */
 window.YG_CONFIG = {
-  supabaseUrl: '',      // e.g. 'https://abcdefghijkl.supabase.co'
-  supabaseAnonKey: '',  // sb_publishable_... (or legacy anon key)
+  supabaseUrl: 'https://fflgoopfjczuwhxrnktg.supabase.co',
+  supabaseAnonKey: 'sb_publishable_lDRaNJVqV9ICTze1pDor8w_F0DrZGKI',
 };

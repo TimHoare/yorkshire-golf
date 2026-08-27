@@ -29,16 +29,16 @@ const ROUNDS = [
 ];
 function card(pars, sis) { return pars.map((par, i) => ({ n: i + 1, par, si: sis[i] })); }
 
-// Players and starting handicap indexes — placeholders, edit before the trip.
+// Players and starting handicap indexes.
 const PLAYERS = [
-  { id: 'p1', name: 'Tim Hoare',    start: 12.4 },
-  { id: 'p2', name: 'Player Two',   start: 18.1 },
-  { id: 'p3', name: 'Player Three', start: 7.9 },
-  { id: 'p4', name: 'Player Four',  start: 22.6 },
-  { id: 'p5', name: 'Player Five',  start: 15.0 },
-  { id: 'p6', name: 'Player Six',   start: 9.3 },
-  { id: 'p7', name: 'Player Seven', start: 27.5 },
-  { id: 'p8', name: 'Player Eight', start: 20.2 },
+  { id: 'p1', name: 'Tim Hoare',         start: 14.0 },
+  { id: 'p2', name: 'Matthew Braybrook', start: 18.3 },
+  { id: 'p3', name: 'Adam Gooch',        start: 16.7 },
+  { id: 'p4', name: 'Joshua Watts',      start: 17.2 },
+  { id: 'p5', name: 'Liam Kevern',       start: 9.1 },
+  { id: 'p6', name: 'Rob Ellis',         start: 3.8 },
+  { id: 'p7', name: 'Harry Gooch',       start: 23.9 },
+  { id: 'p8', name: 'Liam Cameron',      start: 9.1 },
 ];
 
 // Rules
