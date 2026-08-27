@@ -1,5 +1,7 @@
 /* Yorkshire Golf Week 2026 — single-file app, no build step.
-   State lives in localStorage; a share link carries the whole state in the URL hash. */
+   State lives in localStorage and, when config.js has Supabase keys, syncs live
+   between every phone through the shared database (offline entries queue and
+   send when signal returns). Without keys it falls back to single-phone mode. */
 (() => {
 'use strict';
 
@@ -27,16 +29,16 @@ const ROUNDS = [
 ];
 function card(pars, sis) { return pars.map((par, i) => ({ n: i + 1, par, si: sis[i] })); }
 
-// Players and starting handicap indexes — placeholders, edit before the trip.
+// Players and starting handicap indexes.
 const PLAYERS = [
-  { id: 'p1', name: 'Tim Hoare',    start: 12.4 },
-  { id: 'p2', name: 'Player Two',   start: 18.1 },
-  { id: 'p3', name: 'Player Three', start: 7.9 },
-  { id: 'p4', name: 'Player Four',  start: 22.6 },
-  { id: 'p5', name: 'Player Five',  start: 15.0 },
-  { id: 'p6', name: 'Player Six',   start: 9.3 },
-  { id: 'p7', name: 'Player Seven', start: 27.5 },
-  { id: 'p8', name: 'Player Eight', start: 20.2 },
+  { id: 'p1', name: 'Tim Hoare',         start: 14.0 },
+  { id: 'p2', name: 'Matthew Braybrook', start: 18.3 },
+  { id: 'p3', name: 'Adam Gooch',        start: 16.7 },
+  { id: 'p4', name: 'Joshua Watts',      start: 17.2 },
+  { id: 'p5', name: 'Liam Kevern',       start: 9.1 },
+  { id: 'p6', name: 'Rob Ellis',         start: 3.8 },
+  { id: 'p7', name: 'Harry Gooch',       start: 23.9 },
+  { id: 'p8', name: 'Liam Cameron',      start: 9.1 },
 ];
 
 // Rules
@@ -58,6 +60,11 @@ function migrate(s) {
 }
 let S = loadState();
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
+
+// Who this phone belongs to: a player id, 'watcher', or null (not chosen yet).
+const ME_KEY = STORE_KEY + '-me';
+let me = localStorage.getItem(ME_KEY) || null;
+if (me && me !== 'watcher' && !PLAYERS.some((p) => p.id === me)) me = null;
 
 // ---------- Helpers ----------
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -81,6 +88,136 @@ function toast(msg) {
   const t = $('#toast');
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ---------- Sync (Supabase) ----------
+// Scores write to localStorage first (instant, works with no signal), then queue
+// in an outbox that upserts to Supabase. Realtime subscription applies everyone
+// else's changes as they land. Server rows win on first load; local-only scores
+// get pushed up. With no keys in config.js all of this is skipped.
+const CFG = window.YG_CONFIG || {};
+const hasSync = !!(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase);
+let sb = null;
+let syncStatus = hasSync ? 'connecting' : 'local'; // connecting | live | offline | local
+const OUTBOX_KEY = STORE_KEY + '-outbox';
+let outbox = [];
+try { outbox = JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); } catch { outbox = []; }
+function saveOutbox() { localStorage.setItem(OUTBOX_KEY, JSON.stringify(outbox)); }
+function setSyncStatus(st) { syncStatus = st; renderSyncPill(); }
+function renderSyncPill() {
+  const el = $('#sync-pill'); if (!el) return;
+  el.hidden = !hasSync;
+  el.dataset.state = syncStatus;
+  el.querySelector('b').textContent =
+    syncStatus === 'live' ? 'Live' :
+    syncStatus === 'connecting' ? 'Connecting' :
+    outbox.length ? `Offline · ${outbox.length} to send` : 'Offline';
+}
+
+// One op per (table, key): later writes to the same hole replace the queued one.
+function pushOp(t, k, v) {
+  if (!hasSync) return;
+  const key = t + '|' + k.join('|');
+  outbox = outbox.filter((o) => o.key !== key);
+  outbox.push({ t, k, v, key });
+  saveOutbox(); renderSyncPill();
+  flushOutbox();
+}
+let flushing = false, retryT = null;
+async function flushOutbox() {
+  if (!sb || flushing) return;
+  flushing = true;
+  try {
+    while (outbox.length) {
+      const op = outbox[0];
+      const now = new Date().toISOString();
+      let q;
+      if (op.t === 'hole') q = sb.from('hole_scores').upsert({ round_id: op.k[0], player_id: op.k[1], hole: op.k[2], gross: op.v, updated_at: now });
+      else if (op.t === 'team') q = sb.from('team_scores').upsert({ round_id: op.k[0], team: op.k[1], hole: op.k[2], gross: op.v, updated_at: now });
+      else if (op.v === null) q = sb.from('pair_draws').delete().eq('round_id', op.k[0]);
+      else q = sb.from('pair_draws').upsert({ round_id: op.k[0], pairs: op.v.pairs, revealed: op.v.revealed, updated_at: now });
+      const { error } = await q;
+      if (error) throw error;
+      outbox.shift(); saveOutbox();
+    }
+    if (syncStatus !== 'connecting') setSyncStatus('live'); else renderSyncPill();
+  } catch {
+    setSyncStatus('offline');
+    clearTimeout(retryT); retryT = setTimeout(flushOutbox, 5000);
+  }
+  flushing = false;
+}
+
+// Apply a value into local state without touching the outbox.
+function applyHole(rid, pid, hole, gross) {
+  if (!R(rid) || !PL(pid)) return;
+  S.scores[rid] = S.scores[rid] || {};
+  const arr = S.scores[rid][pid] || blank18(); arr[hole - 1] = gross; S.scores[rid][pid] = arr;
+}
+function applyTeamHole(rid, t, hole, gross) {
+  if (!R(rid)) return;
+  S.scramble[rid] = S.scramble[rid] || {};
+  const arr = S.scramble[rid][t] || blank18(); arr[hole - 1] = gross; S.scramble[rid][t] = arr;
+}
+
+// Re-render on incoming changes, but never yank a field out from under a typer.
+function syncRender() {
+  const ae = document.activeElement;
+  if (ae && ae.tagName === 'INPUT') { syncRender.pending = true; return; }
+  render();
+}
+document.body.addEventListener('focusout', () => {
+  if (syncRender.pending) { syncRender.pending = false; setTimeout(render, 50); }
+});
+
+function onRowChange(table, type, row) {
+  if (table === 'hole_scores') applyHole(row.round_id, row.player_id, row.hole, type === 'DELETE' ? null : row.gross);
+  else if (table === 'team_scores') applyTeamHole(row.round_id, Number(row.team), row.hole, type === 'DELETE' ? null : row.gross);
+  else if (table === 'pair_draws') {
+    if (type === 'DELETE') delete S.pairs[row.round_id];
+    else S.pairs[row.round_id] = { pairs: row.pairs, revealed: row.revealed };
+  }
+  save(); syncRender();
+}
+
+async function hydrateFromServer() {
+  const [hs, ts, pd] = await Promise.all([
+    sb.from('hole_scores').select('*'),
+    sb.from('team_scores').select('*'),
+    sb.from('pair_draws').select('*'),
+  ]);
+  if (hs.error || ts.error || pd.error) throw (hs.error || ts.error || pd.error);
+  const seen = new Set();
+  for (const r of hs.data) { seen.add(`hole|${r.round_id}|${r.player_id}|${r.hole}`); applyHole(r.round_id, r.player_id, r.hole, r.gross); }
+  for (const r of ts.data) { seen.add(`team|${r.round_id}|${r.team}|${r.hole}`); applyTeamHole(r.round_id, Number(r.team), r.hole, r.gross); }
+  for (const r of pd.data) { seen.add(`pair|${r.round_id}`); S.pairs[r.round_id] = { pairs: r.pairs, revealed: r.revealed }; }
+  // Push anything this phone has that the server doesn't (first phone to connect seeds it).
+  for (const [rid, byP] of Object.entries(S.scores)) for (const [pid, arr] of Object.entries(byP))
+    arr.forEach((g, i) => { if (g !== null && !seen.has(`hole|${rid}|${pid}|${i + 1}`)) pushOp('hole', [rid, pid, i + 1], g); });
+  for (const [rid, byT] of Object.entries(S.scramble)) for (const [t, arr] of Object.entries(byT))
+    arr.forEach((g, i) => { if (g !== null && !seen.has(`team|${rid}|${t}|${i + 1}`)) pushOp('team', [rid, Number(t), i + 1], g); });
+  for (const [rid, pr] of Object.entries(S.pairs))
+    if (!seen.has(`pair|${rid}`)) pushOp('pair', [rid], pr);
+  save(); render();
+}
+
+function initSync() {
+  if (!hasSync) { renderSyncPill(); return; }
+  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+  renderSyncPill();
+  const hydrate = () => hydrateFromServer()
+    .then(() => { setSyncStatus('live'); flushOutbox(); })
+    .catch(() => { setSyncStatus('offline'); setTimeout(hydrate, 5000); });
+  hydrate();
+  sb.channel('yg-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_scores' }, (p) => onRowChange('hole_scores', p.eventType, p.new?.round_id ? p.new : p.old))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'team_scores' }, (p) => onRowChange('team_scores', p.eventType, p.new?.round_id ? p.new : p.old))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'pair_draws' }, (p) => onRowChange('pair_draws', p.eventType, p.new?.round_id ? p.new : p.old))
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') { setSyncStatus('live'); flushOutbox(); }
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setSyncStatus('offline');
+    });
+  window.addEventListener('online', flushOutbox);
 }
 
 // ---------- Handicap maths ----------
@@ -317,7 +454,7 @@ function renderPlayers() {
       return `<div class="player-row">
         ${avatar(p)}
         <div style="min-width:0">
-          <div class="pname">${esc(p.name)}</div>
+          <div class="pname">${esc(p.name)}${p.id === me ? ' <span class="chip you">you</span>' : ''}</div>
           <div class="sub">Started ${fmt1(p.start)} <span class="delta ${d < 0 ? 'down' : d > 0 ? 'up' : 'flat'}">${signed(d)}</span> · CH ${ch} at ${esc(nextRound.short)}</div>
         </div>
         <div class="index-now"><div class="v">${fmt1(cur)}</div><div class="l">index</div></div>
@@ -373,7 +510,7 @@ function renderStandings() {
       return `<div class="lb-row">
         ${avatar(p, `<em class="${r.rank === 1 && anyPts ? 'lead' : ''}">${r.rank}</em>`)}
         <div style="min-width:0">
-          <div class="nm">${esc(pName(r.pid))}</div>
+          <div class="nm">${esc(pName(r.pid))}${r.pid === me ? ' <span class="chip you">you</span>' : ''}</div>
           <div class="meta"><span class="dots">${dots}</span>
             <span class="idx-cell"><span class="v">index ${fmt1(cur)} <small class="${d < 0 ? 'delta down' : d > 0 ? 'delta up' : ''}">${d !== 0 ? signed(d) : ''}</small></span></span></div>
         </div>
@@ -399,9 +536,17 @@ function renderStandings() {
 
 // --- Settings sheet ---
 function renderSettings() {
-  return `<h2 id="sheet-title">Share &amp; back up</h2>
-    <p class="small muted">Scores live on this phone. Send the share link and whoever opens it gets an exact copy.</p>
-    <div class="btn-row"><button class="btn primary" data-action="share">Copy share link</button><button class="btn secondary" data-action="export">Copy JSON</button></div>
+  const whoami = me && me !== 'watcher'
+    ? `You're scoring as <b>${esc(pName(me))}</b> on this phone.`
+    : `You're <b>just watching</b> on this phone.`;
+  const syncLine = hasSync
+    ? (syncStatus === 'live' ? 'Scores sync live between every phone through the trip database.'
+      : 'Offline right now — scores save here and send to the other phones when signal returns.')
+    : 'Scores live on this phone only. Send the share link and whoever opens it gets an exact copy.';
+  return `<h2 id="sheet-title">You &amp; sharing</h2>
+    <p class="small muted">${whoami} <button class="linklike" data-action="switch-player">Switch</button></p>
+    <p class="small muted">${syncLine}</p>
+    <div class="btn-row"><button class="btn primary" data-action="share">Copy ${hasSync ? 'app' : 'share'} link</button><button class="btn secondary" data-action="export">Copy JSON</button></div>
     <div class="field"><span class="lbl">Paste JSON to restore</span><textarea id="import-box" placeholder="{ … }"></textarea><div class="btn-row"><button class="btn ghost sm" data-action="import">Restore from JSON</button></div></div>
     <div class="course-edit">
       <h3>Rules in play</h3>
@@ -419,6 +564,19 @@ function render() {
   document.querySelectorAll('.tab').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   const chip = $('.hole-chip.on'); if (chip) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
+function showWelcome() {
+  if ($('#welcome')) return;
+  const el = document.createElement('div');
+  el.className = 'welcome'; el.id = 'welcome';
+  el.innerHTML = `<div class="welcome-card">
+    <span class="eyebrow">Yorkshire 2026 · Mon 7 – Fri 11 Sept</span>
+    <h2>Who's this?</h2>
+    <p class="small muted">Pick your name once — score entry opens on your group each day, and this phone remembers you.</p>
+    <div class="welcome-list">${PLAYERS.map((p) => `<button data-me="${p.id}">${avatar(p, '', 'sm')}<span><b>${esc(p.name)}</b><small>index ${fmt1(p.start)}</small></span></button>`).join('')}</div>
+    <div class="btn-row"><button class="btn ghost sm" data-me="watcher">I'm just watching</button></div>
+  </div>`;
+  document.body.appendChild(el);
+}
 function openSheet() { $('#sheet').innerHTML = renderSettings(); $('#sheet-backdrop').hidden = false; }
 function closeSheet() { $('#sheet-backdrop').hidden = true; render(); }
 function openRoundPage(rid) {
@@ -426,7 +584,9 @@ function openRoundPage(rid) {
   const r = R(rid);
   // land on the first hole this group hasn't finished
   const done = (n) => r.format === 'scramble' ? teamHoles(rid, selGroup)[n - 1] !== null : r.groups[selGroup].players.every((pid) => holesOf(rid, pid)[n - 1] !== null);
-  selGroup = 0; selHole = 1;
+  // open on my group if I'm playing in this round
+  selGroup = Math.max(0, r.groups.findIndex((g) => g.players.includes(me)));
+  selHole = 1;
   for (let n = 1; n <= 18; n++) { if (!done(n)) { selHole = n; break; } if (n === 18) selHole = 18; }
   render(); window.scrollTo({ top: 0 });
 }
@@ -458,9 +618,11 @@ function setGross(el, value) {
   if (el.dataset.team !== undefined) {
     const t = Number(el.dataset.team);
     S.scramble[rid] = S.scramble[rid] || {}; const arr = S.scramble[rid][t] || blank18(); arr[i] = v; S.scramble[rid][t] = arr;
+    pushOp('team', [rid, t, selHole], v);
   } else {
     const pid = el.dataset.player;
     S.scores[rid] = S.scores[rid] || {}; const arr = S.scores[rid][pid] || blank18(); arr[i] = v; S.scores[rid][pid] = arr;
+    pushOp('hole', [rid, pid, selHole], v);
   }
   save();
 }
@@ -497,18 +659,43 @@ document.body.addEventListener('click', async (e) => {
   }
   const a = e.target.closest('[data-action]'); if (!a) return;
   switch (a.dataset.action) {
-    case 'draw-pairs': { const ids = shuffle(PLAYERS.map((p) => p.id)); const pairs = []; for (let i = 0; i < ids.length; i += 2) pairs.push([ids[i], ids[i + 1]]); S.pairs[openRound] = { pairs, revealed: false }; save(); render(); toast('Pairs drawn and sealed'); break; }
-    case 'redraw-pairs': { if (confirm('Redraw the pairs for this round?')) { delete S.pairs[openRound]; save(); render(); } break; }
-    case 'reveal-pairs': { S.pairs[openRound].revealed = true; save(); render(); toast('Pairs revealed'); break; }
-    case 'share': { const url = location.origin + location.pathname + '#s=' + encodeState(); await copy(url, 'Share link copied'); break; }
+    case 'draw-pairs': { const ids = shuffle(PLAYERS.map((p) => p.id)); const pairs = []; for (let i = 0; i < ids.length; i += 2) pairs.push([ids[i], ids[i + 1]]); S.pairs[openRound] = { pairs, revealed: false }; pushOp('pair', [openRound], S.pairs[openRound]); save(); render(); toast('Pairs drawn and sealed'); break; }
+    case 'redraw-pairs': { if (confirm('Redraw the pairs for this round?')) { delete S.pairs[openRound]; pushOp('pair', [openRound], null); save(); render(); } break; }
+    case 'reveal-pairs': { S.pairs[openRound].revealed = true; pushOp('pair', [openRound], S.pairs[openRound]); save(); render(); toast('Pairs revealed'); break; }
+    case 'share': { const url = hasSync ? location.origin + location.pathname : location.origin + location.pathname + '#s=' + encodeState(); await copy(url, hasSync ? 'App link copied — anyone who opens it joins the live scores' : 'Share link copied'); break; }
     case 'export': { await copy(JSON.stringify(S, null, 2), 'JSON copied'); break; }
     case 'import': { try { S = migrate(JSON.parse($('#import-box').value)); save(); closeSheet(); toast('Restored'); } catch { toast('That JSON didn\'t parse'); } break; }
-    case 'reset': { if (confirm('Clear every score, pair draw and scramble result on this phone?')) { S = defaultState(); save(); closeSheet(); toast('Reset'); } break; }
+    case 'reset': {
+      const msg = hasSync ? 'Clear every score, pair draw and scramble result for EVERYONE — this wipes the shared database, not just this phone. Sure?' : 'Clear every score, pair draw and scramble result on this phone?';
+      if (!confirm(msg)) break;
+      S = defaultState(); outbox = []; saveOutbox(); save();
+      if (sb) {
+        try {
+          await Promise.all([
+            sb.from('hole_scores').delete().neq('round_id', ''),
+            sb.from('team_scores').delete().neq('round_id', ''),
+            sb.from('pair_draws').delete().neq('round_id', ''),
+          ]);
+        } catch { toast('Cleared here, but the shared database didn\'t respond — try again with signal'); }
+      }
+      closeSheet(); toast('Reset'); break;
+    }
+    case 'switch-player': { localStorage.removeItem(ME_KEY); me = null; closeSheet(); showWelcome(); break; }
     case 'close-sheet': closeSheet(); break;
   }
+});
+
+document.body.addEventListener('click', (e) => {
+  const mb = e.target.closest('[data-me]'); if (!mb) return;
+  me = mb.dataset.me; localStorage.setItem(ME_KEY, me);
+  $('#welcome')?.remove(); render();
+  toast(me === 'watcher' ? 'Welcome — enjoy the golf' : `Welcome, ${first(me)}`);
 });
 
 // ---------- Boot ----------
 checkHashImport();
 render();
+renderSyncPill();
+if (!me) showWelcome();
+initSync();
 })();
