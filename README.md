@@ -1,38 +1,32 @@
 # Yorkshire Golf Week 2026
 
-Mobile-first web app for the 7–11 September trip: itinerary, players and handicap indexes, score entry, automatic index/course-handicap maths, and the week's leaderboard.
+Mobile-first web app for the 7–11 September trip: itinerary, real course data, players and handicap indexes, swipeable score entry, automatic index/course-handicap maths, live standings — synced live between every phone.
 
-Plain HTML/CSS/JS — no build step. Live multi-phone score sync via Supabase (optional; without it the app runs single-phone from localStorage).
+**Stack:** React 19 + TypeScript + React Router 7, built with Vite, tested with Vitest. Supabase (Postgres + realtime) for multi-phone sync. Deployed to GitHub Pages by GitHub Actions on every push to `main`.
 
-## Run it
+Live at: https://timhoare.github.io/yorkshire-golf/
 
-Open `index.html` in a browser, or serve the folder (e.g. `python3 -m http.server`) and open it on your phone. Host it anywhere static (GitHub Pages works: Settings → Pages → deploy from `main`). On iPhone/Android use "Add to Home Screen" for an app-like install.
+## Develop
 
-## Live sync (everyone scores on their own phone)
+```
+npm install
+npm run dev      # local dev server with hot reload
+npm test         # vitest: scoring engine, app flow, sync engine
+npm run build    # type-check + production build to dist/
+```
 
-1. Create a free project at [supabase.com](https://supabase.com) (any name/region; note the database password it asks you to set — you won't need it day to day).
-2. In the dashboard: **SQL Editor** → paste the contents of `supabase-schema.sql` → **Run**.
-3. Copy the **Project URL** (Settings → Data API) and the **publishable key** `sb_publishable_...` (Settings → API Keys; the legacy *anon public* key also works) into `config.js`, commit and push. Never use the secret / service_role key.
+## Structure
 
-That's it — every phone with the link now shares one live scoreboard. Scores entered with no signal queue on the phone (the header pill shows *Offline · n to send*) and send automatically when signal returns. Both `config.js` values are public by design; access control is the RLS policies in the schema (anyone with the link can score — it's a mates' trip).
+- `src/data/trip.ts` — everything fixed about the trip: rounds, real scorecards (men's yellow tees from each club's published card), players, rules. Tee times and groups are placeholders until the tee sheet is settled.
+- `src/lib/scoring.ts` — pure scoring engine: WHS course/playing handicaps, stableford tallies, index drift (±0.5 per point from 32), week points, scramble, hidden pairs.
+- `src/lib/store.ts` — app store with localStorage persistence and Supabase live sync: local-first writes, an offline outbox that retries, realtime subscription applying other phones' changes.
+- `src/pages/` — Trip, Round (info: course facts, map, handicaps, course card), Scoring (swipe between holes, +/- against par), Players, Standings.
+- Routes: `#/trip`, `#/players`, `#/standings`, `#/round/:rid`, `#/round/:rid/score/:hole`. The last route is remembered so a PWA cold start reopens where you were.
 
-On first open each phone asks "Who's this?" — picking a name makes score entry default to your group and tags your rows; it's remembered per phone and switchable from the ⚙ sheet.
+## Sync setup
 
-## How it works
+Already configured for the trip's Supabase project in `src/config.ts` (public URL + publishable key — safe to commit; access control is the RLS policies). To point at a fresh project: run `supabase-schema.sql` in the Supabase SQL editor, then put the new Project URL and publishable key in `src/config.ts`. Empty values = single-phone localStorage mode.
 
-- **Trip** — itinerary for the five rounds (tee times, notes, course figures), plus the rules.
-- **Players** — current index, movement so far, and course handicap for the next round.
-- **Scores** — pick a day, enter stableford points per player. Hidden-pairs days have a sealed draw and reveal; scramble day has team assignment and team scores.
-- **Standings** — week points, per-round places, index drift, round-by-round table, pairs results.
-- **⚙** — share link, JSON backup/restore, clear scores.
+## Deploy
 
-### Setting it up
-
-Everything fixed about the trip is hard-coded at the top of `app.js`:
-
-- `ROUNDS` — one entry per day: club, par / course rating / slope, format (`stableford` or `scramble`), whether hidden pairs run, the 18-hole scorecard (`holes`, par + stroke index) and the `groups` (tee time + player ids; on scramble day the groups are the two teams).
-- `PLAYERS` — the eight names and starting handicap indexes.
-- `RULES` — week points 8/6/4/2, allowance, scramble points, the 32-point pivot, and the 25/20/15/10 % scramble team allowance.
-
-Course data (par, yardages, stroke indexes, course rating and slope) is the real thing for all five clubs — men's yellow tees, taken from each club's published scorecard. Tee times and groups are still placeholders — check them against the tee sheet before the trip.
-
+Push to `main`. The `Deploy to GitHub Pages` action runs tests, builds, and publishes `dist/`. First-time repo setup: Settings → Pages → Source: **GitHub Actions**.

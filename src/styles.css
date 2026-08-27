@@ -29,6 +29,10 @@
 }
 
 * { box-sizing: border-box; }
+/* Router links render as anchors; keep them looking like the app chrome. */
+a.tab, a.itin-day, a.back, a.btn, a.cf { text-decoration: none; color: inherit; }
+a.back { color: var(--pine); }
+a.btn.primary { color: #F6F1E4; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
