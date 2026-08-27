@@ -34,5 +34,5 @@ Everything fixed about the trip is hard-coded at the top of `app.js`:
 - `PLAYERS` — the eight names and starting handicap indexes.
 - `RULES` — week points 8/6/4/2, allowance, scramble points, the 32-point pivot, and the 25/20/15/10 % scramble team allowance.
 
-Scorecards, tee times, groups and course figures are placeholders — check them against the real cards and tee sheet before the trip.
+Course data (par, yardages, stroke indexes, course rating and slope) is the real thing for all five clubs — men's yellow tees, taken from each club's published scorecard. Tee times and groups are still placeholders — check them against the tee sheet before the trip.
 

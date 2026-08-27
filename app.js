@@ -8,26 +8,32 @@
 const STORE_KEY = 'yorkshire-golf-2026';
 
 // ---------- Fixed trip structure ----------
-// Edit these to change the trip. Course figures, scorecards, groups and tee times are
-// placeholders — check them against the real cards and the tee sheet.
+// Course data is the real thing: men's yellow tees, taken from each club's
+// published scorecard (par / yards / SI verified to sum). Groups and tee times
+// are still placeholders — check them against the tee sheet.
 const ROUNDS = [
-  { id: 'd1', n: 1, dow: 'Mon', dnum: 7,  mon: 'Sept', club: 'Brough Golf Club',      short: 'Brough',      town: 'Brough, East Riding',      format: 'stableford', pairs: true,  par: 68, cr: 67.7, slope: 120,
-    holes: card([4,3,4,4,3,5,4,3,4, 4,4,3,4,5,4,3,4,3], [7,15,3,11,17,1,9,13,5, 8,4,18,10,2,12,16,6,14]),
+  { id: 'd1', n: 1, dow: 'Mon', dnum: 7,  mon: 'Sept', club: 'Brough Golf Club',      short: 'Brough',      town: 'Brough, East Riding',      format: 'stableford', pairs: true,  par: 68, cr: 68.8, slope: 123, tees: 'yellow',
+    address: 'Cave Road, Brough, HU15 1HB',
+    holes: card([4,4,3,4,4,3,4,4,3, 5,4,4,3,4,4,4,3,4], [11,17,13,3,7,15,1,5,9, 12,4,6,16,18,8,2,14,10], [352,248,192,416,374,141,449,431,178, 525,382,362,162,289,365,454,175,372]),
     groups: [{ tee: '10:00', players: ['p1','p2','p3','p4'] }, { tee: '10:10', players: ['p5','p6','p7','p8'] }] },
-  { id: 'd2', n: 2, dow: 'Tue', dnum: 8,  mon: 'Sept', club: 'Ganton Golf Club',      short: 'Ganton',      town: 'Ganton, near Scarborough', format: 'stableford', pairs: false, par: 71, cr: 73.2, slope: 135,
-    holes: card([4,4,5,4,3,4,4,4,3, 3,4,4,4,4,4,5,4,4], [9,5,13,1,17,7,3,11,15, 18,6,2,10,14,4,12,8,16]),
+  { id: 'd2', n: 2, dow: 'Tue', dnum: 8,  mon: 'Sept', club: 'Ganton Golf Club',      short: 'Ganton',      town: 'Ganton, near Scarborough', format: 'stableford', pairs: false, par: 71, cr: 72.2, slope: 133, tees: 'yellow',
+    address: 'Ganton, Scarborough, YO12 4PA',
+    holes: card([4,4,4,4,3,4,4,4,5, 3,4,4,5,4,4,4,3,4], [11,5,15,3,17,1,7,13,9, 18,4,12,6,16,2,8,14,10], [360,398,290,369,150,442,423,372,476, 165,402,357,499,280,429,429,208,391]),
     groups: [{ tee: '11:20', players: ['p1','p5','p2','p6'] }, { tee: '11:30', players: ['p3','p7','p4','p8'] }] },
-  { id: 'd3', n: 3, dow: 'Wed', dnum: 9,  mon: 'Sept', club: 'Cave Castle Golf Club', short: 'Cave Castle', town: 'South Cave, East Riding',   format: 'scramble',   pairs: false, par: 72, cr: 71.8, slope: 128,
-    holes: card([4,5,3,4,4,5,3,4,4, 4,3,5,4,4,3,5,4,4], [5,11,17,1,9,13,15,3,7, 2,18,12,4,8,16,10,6,14]),
+  { id: 'd3', n: 3, dow: 'Wed', dnum: 9,  mon: 'Sept', club: 'Cave Castle Golf Club', short: 'Cave Castle', town: 'South Cave, East Riding',   format: 'scramble',   pairs: false, par: 72, cr: 69.6, slope: 122, tees: 'yellow',
+    address: 'Church Hill, South Cave, HU15 2EU',
+    holes: card([4,5,5,4,3,4,4,4,4, 4,4,4,5,3,4,4,3,4], [18,16,10,4,12,2,6,14,8, 1,3,7,9,15,13,11,17,5], [274,459,459,357,187,396,341,367,386, 453,453,383,513,137,326,315,136,327]),
     groups: [{ tee: '12:00', name: 'Team A', players: ['p1','p3','p5','p7'] }, { tee: '12:10', name: 'Team B', players: ['p2','p4','p6','p8'] }] },
-  { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Hessle Golf Club',      short: 'Hessle',      town: 'Cottingham, Hull',         format: 'stableford', pairs: true,  par: 72, cr: 71.6, slope: 129,
-    holes: card([5,4,3,4,4,3,5,4,4, 4,4,5,3,4,4,3,5,4], [3,7,15,1,11,17,9,5,13, 6,10,2,18,4,8,16,12,14]),
+  { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Hessle Golf Club',      short: 'Hessle',      town: 'Cottingham, Hull',         format: 'stableford', pairs: true,  par: 72, cr: 71.9, slope: 129, tees: 'yellow',
+    address: 'Westfield Road, Raywell, Cottingham, HU16 5ZA',
+    holes: card([4,3,5,4,4,4,4,3,5, 4,3,4,4,5,4,3,4,5], [7,11,13,1,3,5,9,17,15, 10,14,12,6,18,2,8,4,16], [355,187,503,394,423,377,339,130,477, 340,154,361,365,470,396,195,385,489]),
     groups: [{ tee: '10:40', players: ['p1','p6','p4','p7'] }, { tee: '10:50', players: ['p2','p5','p3','p8'] }] },
-  { id: 'd5', n: 5, dow: 'Fri', dnum: 11, mon: 'Sept', club: 'York Golf Club',        short: 'York',        town: 'Strensall, York',          format: 'stableford', pairs: false, par: 70, cr: 70.9, slope: 128,
-    holes: card([4,4,3,5,4,3,4,4,4, 4,3,4,5,4,4,3,4,4], [7,3,17,1,9,15,5,11,13, 6,18,4,2,10,8,16,12,14]),
+  { id: 'd5', n: 5, dow: 'Fri', dnum: 11, mon: 'Sept', club: 'York Golf Club',        short: 'York',        town: 'Strensall, York',          format: 'stableford', pairs: false, par: 70, cr: 69.6, slope: 123, tees: 'yellow',
+    address: 'Lords Moor Lane, Strensall, York, YO32 5XF',
+    holes: card([4,3,5,4,4,4,3,4,4, 4,3,4,4,4,5,4,3,4], [7,17,9,11,1,5,13,3,15, 4,18,12,2,16,6,10,14,8], [431,140,500,345,392,414,145,450,336, 394,115,352,367,370,503,379,176,373]),
     groups: [{ tee: '09:30', players: ['p1','p2','p3','p4'] }, { tee: '09:40', players: ['p5','p6','p7','p8'] }] },
 ];
-function card(pars, sis) { return pars.map((par, i) => ({ n: i + 1, par, si: sis[i] })); }
+function card(pars, sis, yds) { return pars.map((par, i) => ({ n: i + 1, par, si: sis[i], yds: yds ? yds[i] : null })); }
 
 // Players and starting handicap indexes.
 const PLAYERS = [
@@ -327,6 +333,7 @@ function pairTotals(rid) {
 // ---------- Rendering ----------
 let tab = 'trip';
 let openRound = null;          // rid when a round page is open
+let scoringOpen = false;       // true when the score-entry page is open (within a round)
 let selGroup = 0;              // group / team being scored
 let selHole = 1;               // hole being scored
 
@@ -338,21 +345,13 @@ function avatar(p, badge, size) {
   const i = playerIdx(p.id);
   return `<span class="avatar${size ? ' ' + size : ''}" style="background:${colour(i)}">${esc(initials(p))}${badge ?? ''}</span>`;
 }
-function dayRail() {
-  return `<div class="courses">${ROUNDS.map((r, i) => `<button class="course-card" data-open="${r.id}" aria-label="Round ${r.n}, ${r.club}">
-      <span class="course-img g${i + 1}"><span class="day">${r.dow} ${r.dnum}</span><span class="st ${roundStatus(r.id)}"></span><span class="nm">${esc(r.short)}</span></span>
-      <small>par ${r.par} · ${r.format === 'scramble' ? 'scramble' : r.pairs ? 'hidden pairs' : 'stableford'}</small>
-    </button>`).join('')}</div>`;
-}
-
 // --- Trip ---
 function renderTrip() {
   const pp = RULES.placePoints;
   return `
-    ${dayRail()}
-    <div class="section-title"><h2>Rounds</h2><span class="eyebrow">tap a round for the card</span></div>
+    <div class="section-title"><h2>Rounds</h2><span class="eyebrow">tap a round for details</span></div>
     <div class="itin">${ROUNDS.map((r) => `<button class="itin-day" data-open="${r.id}">
-        <div class="itin-date"><span class="n">${r.dnum}</span><span class="m">${r.dow}</span></div>
+        <div class="itin-date"><span class="n">${r.dnum}</span><span class="m">${r.dow}</span><span class="st ${roundStatus(r.id)}"></span></div>
         <div class="itin-body">
           <h3>${esc(r.club)}</h3>
           <div class="itin-meta"><span class="chip">Par ${r.par}</span>${formatChips(r)}</div>
@@ -363,62 +362,52 @@ function renderTrip() {
     <p class="small muted rules-note">Week points ${pp.join(' · ')} for 1st–4th each round (ties share); scramble winners ${RULES.scrambleWin} each. Handicap index moves ±0.5 per stableford point either side of ${RULES.par} after every completed round.</p>`;
 }
 
-// --- Round page ---
+const gname = (grp, t) => grp.name || `Group ${t + 1}`;
+const backBtn = (label) => `<button class="back" data-back><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>${label}</button>`;
+function roundHead(r) {
+  const status = roundStatus(r.id);
+  return `<div class="round-head">
+      <span class="eyebrow">Round ${r.n} · ${r.dow} ${r.dnum} ${r.mon} · ${esc(r.town)}</span>
+      <h2>${esc(r.club)}</h2>
+      <div class="itin-meta"><span class="chip">Par ${r.par}</span>${formatChips(r)}<span class="chip ghost">${status === 'done' ? 'Round complete' : status === 'partial' ? 'In progress' : 'Not started'}</span></div>
+    </div>`;
+}
+
+// --- Round info page ---
 function renderRound(rid) {
   const r = R(rid);
   const scramble = r.format === 'scramble';
-  const g = r.groups[selGroup] || r.groups[0];
-  const gname = (grp, t) => grp.name || `Group ${t + 1}`;
-  const status = roundStatus(rid);
+  const yardsKnown = r.holes.every((h) => h.yds);
+  const totalYds = yardsKnown ? r.holes.reduce((a, h) => a + h.yds, 0) : null;
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.club + ', ' + (r.address || r.town))}`;
 
-  // Groups
-  const groups = `<div class="section-title"><h2>${scramble ? 'Teams' : 'Groups'}</h2><span class="eyebrow">tee times</span></div>
+  // My course handicap, big and obvious
+  const mine = me && me !== 'watcher' && r.groups.some((g) => g.players.includes(me))
+    ? `<div class="my-ch"><div><span class="eyebrow">Your course handicap here</span><div class="v">${courseHandicap(indexBefore(me, rid), rid)}</div></div><div class="my-ch-sub">off a ${fmt1(indexBefore(me, rid))} index${scramble ? '' : ` · playing hcp ${phFor(me, rid)}`}</div></div>`
+    : '';
+
+  const facts = `<div class="course-facts card">
+      <div class="cf"><span class="l">Par</span><b>${r.par}</b></div>
+      ${totalYds ? `<div class="cf"><span class="l">${esc(r.tees || 'Yellow')} tees</span><b>${totalYds.toLocaleString()} yds</b></div>` : ''}
+      <div class="cf"><span class="l">Rating</span><b>${r.cr}</b></div>
+      <div class="cf"><span class="l">Slope</span><b>${r.slope}</b></div>
+      <a class="cf maplink" href="${mapsUrl}" target="_blank" rel="noopener"><span class="l">Getting there</span><b>Map ↗</b></a>
+    </div>`;
+
+  const groups = `<div class="section-title"><h2>${scramble ? 'Teams' : 'Groups'}</h2><span class="eyebrow">tee times · course hcp</span></div>
     <div class="groups">${r.groups.map((grp, t) => `<div class="group-card">
       <div class="tee">${esc(grp.tee)}</div>
       <div class="gbody"><div class="gname">${esc(gname(grp, t))}${scramble ? ` <span class="chip gorse">team hcp ${teamHandicap(rid, t)}</span>` : ''}</div>
-        <div class="gmembers">${grp.players.map((pid) => `<span class="gm">${avatar(PL(pid), '', 'sm')}<span><b>${esc(first(pid))}</b> <small>${courseHandicap(indexBefore(pid, rid), rid)}</small></span></span>`).join('')}</div>
+        <div class="gmembers">${grp.players.map((pid) => `<span class="gm ${pid === me ? 'me' : ''}">${avatar(PL(pid), '', 'sm')}<span><b>${esc(first(pid))}</b> <small>${courseHandicap(indexBefore(pid, rid), rid)}</small></span></span>`).join('')}</div>
       </div></div>`).join('')}</div>`;
 
-  // Entry rows for the selected hole
-  const h = r.holes[selHole - 1];
-  const holeChips = r.holes.map((hh) => {
-    const filled = scramble ? teamHoles(rid, selGroup)[hh.n - 1] !== null : g.players.every((pid) => holesOf(rid, pid)[hh.n - 1] !== null);
-    const some = scramble ? filled : g.players.some((pid) => holesOf(rid, pid)[hh.n - 1] !== null);
-    return `<button class="hole-chip ${hh.n === selHole ? 'on' : ''} ${filled ? 'done' : some ? 'part' : ''}" data-hole="${hh.n}">${hh.n}</button>`;
-  }).join('');
-  const rowsHtml = scramble
-    ? (() => { const t = teamTally(rid, selGroup); const row = t.rows[selHole - 1]; const gross = row.gross;
-        return `<div class="score-row">
-          <div class="who"><div class="team-dot t${selGroup}">${selGroup === 0 ? 'A' : 'B'}</div><div style="min-width:0"><div class="n">${esc(gname(g, selGroup))}</div><div class="h">${g.players.map(first).map(esc).join(' · ')}<br>${row.shots ? `<b>${row.shots} shot${row.shots > 1 ? 's' : ''}</b> here · ` : ''}team hcp ${teamHandicap(rid, selGroup)}</div></div></div>
-          ${stepper('team', selGroup, gross, h.par + row.shots)}
-          <div class="hp ${gross === null ? 'off' : ''}">${gross === null ? '–' : row.pts}<small>pts</small></div>
-        </div>`; })()
-    : g.players.map((pid) => { const t = playerTally(rid, pid); const row = t.rows[selHole - 1]; const gross = row.gross;
-        return `<div class="score-row">
-          <div class="who">${avatar(PL(pid))}<div style="min-width:0"><div class="n">${esc(pName(pid))}</div><div class="h">${row.shots ? `<b>${row.shots} shot${row.shots > 1 ? 's' : ''}</b> here · ` : 'no shot · '}${t.pts} pts thru ${t.played}</div></div></div>
-          ${stepper('player', pid, gross, h.par + row.shots)}
-          <div class="hp ${gross === null ? 'off' : ''}">${gross === null ? '–' : row.pts}<small>pts</small></div>
-        </div>`; }).join('');
-
-  const entry = `<div class="section-title"><h2>Enter scores</h2>
-      ${scramble || r.groups.length < 2 ? '' : `<div class="seg">${r.groups.map((grp, t) => `<button class="${t === selGroup ? 'on' : ''}" data-group="${t}">${esc(gname(grp, t))}</button>`).join('')}</div>`}
-      ${scramble ? `<div class="seg">${r.groups.map((grp, t) => `<button class="${t === selGroup ? 'on' : ''}" data-group="${t}">${esc(gname(grp, t))}</button>`).join('')}</div>` : ''}
-    </div>
-    <div class="hole-chips">${holeChips}</div>
-    <div class="hole-head"><div><span class="eyebrow">Hole</span><div class="hn">${selHole}</div></div><div class="hf"><span>Par <b>${h.par}</b></span><span>SI <b>${h.si}</b></span></div>
-      <div class="hnav"><button class="btn ghost sm" data-hole="${selHole - 1}" ${selHole === 1 ? 'disabled' : ''} aria-label="Previous hole">‹</button><button class="btn ghost sm" data-hole="${selHole + 1}" ${selHole === 18 ? 'disabled' : ''} aria-label="Next hole">›</button></div></div>
-    <div class="score-list">${rowsHtml}</div>`;
-
-  // Scorecard table
-  const cols = scramble ? r.groups.map((grp, t) => ({ label: gname(grp, t).replace('Team ', ''), tally: teamTally(rid, t) })) : g.players.map((pid) => ({ label: first(pid), tally: playerTally(rid, pid) }));
-  const cell = (row) => row.gross === null ? '<td class="e">·</td>' : `<td class="${row.pts === 0 ? 'z' : row.pts >= 3 ? 'g' : ''}">${row.gross}<sup>${row.pts}</sup></td>`;
-  const sumRow = (label, from, to) => `<tr class="sum"><td>${label}</td><td>${r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td><td></td>${cols.map((c) => { const rs = c.tally.rows.slice(from, to); const pl = rs.filter((x) => x.gross !== null); return `<td>${pl.length ? `${pl.reduce((a, x) => a + x.gross, 0)}<sup>${pl.reduce((a, x) => a + x.pts, 0)}</sup>` : '·'}</td>`; }).join('')}</tr>`;
-  const scorecard = `<div class="section-title"><h2>Scorecard</h2><span class="eyebrow">${scramble ? 'team gross · points' : esc(gname(g, selGroup)) + ' · gross · points'}</span></div>
-    <div class="sc-wrap"><table class="sc">
-      <thead><tr><th>Hole</th><th>Par</th><th>SI</th>${cols.map((c) => `<th>${esc(c.label)}${scramble ? '' : ''}</th>`).join('')}</tr>
-      ${scramble ? '' : `<tr class="ph"><td colspan="3">playing hcp</td>${g.players.map((pid) => `<td>${phFor(pid, rid)}</td>`).join('')}</tr>`}</thead>
-      <tbody>${r.holes.map((hh, i) => `<tr class="${hh.n === selHole ? 'cur' : ''}" data-hole="${hh.n}"><td>${hh.n}</td><td>${hh.par}</td><td>${hh.si}</td>${cols.map((c) => cell(c.tally.rows[i])).join('')}</tr>${i === 8 ? sumRow('Out', 0, 9) : ''}`).join('')}
-      ${sumRow('In', 9, 18)}${sumRow('Total', 0, 18)}</tbody>
+  // Course scorecard: par, yards, SI
+  const nine = (label, from, to) => `<tr class="sum"><td>${label}</td><td>${r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td><td>${yardsKnown ? r.holes.slice(from, to).reduce((a, x) => a + x.yds, 0).toLocaleString() : ''}</td><td></td></tr>`;
+  const courseCard = `<div class="section-title"><h2>Course</h2><span class="eyebrow">${yardsKnown ? esc(r.tees || 'yellow') + ' tees' : 'par · stroke index'}</span></div>
+    <div class="sc-wrap"><table class="sc course-sc">
+      <thead><tr><th>Hole</th><th>Par</th><th>${yardsKnown ? 'Yards' : ''}</th><th>SI</th></tr></thead>
+      <tbody>${r.holes.map((h, i) => `<tr><td>${h.n}</td><td>${h.par}</td><td>${h.yds ? h.yds : ''}</td><td>${h.si}</td></tr>${i === 8 ? nine('Out', 0, 9) : ''}`).join('')}
+      ${nine('In', 9, 18)}${nine('Total', 0, 18)}</tbody>
     </table></div>`;
 
   let extra = '';
@@ -426,16 +415,83 @@ function renderRound(rid) {
   if (scramble) extra += renderScrambleResult(r);
 
   return `
-    <button class="back" data-back><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>Trip</button>
-    <div class="round-head">
-      <span class="eyebrow">Round ${r.n} · ${r.dow} ${r.dnum} ${r.mon} · ${esc(r.town)}</span>
-      <h2>${esc(r.club)}</h2>
-      <div class="itin-meta"><span class="chip">Par ${r.par}</span>${formatChips(r)}<span class="chip ghost">${status === 'done' ? 'Round complete' : status === 'partial' ? 'In progress' : 'Not started'}</span></div>
-    </div>
-    ${groups}${entry}${scorecard}${extra}`;
+    ${backBtn('Trip')}
+    ${roundHead(r)}
+    <div class="btn-row" style="margin:14px 0 4px"><button class="btn primary block" data-action="open-scoring">Enter scores</button></div>
+    ${mine}
+    ${facts}
+    ${groups}${courseCard}${extra}`;
 }
-function stepper(kind, key, gross, defaultVal) {
-  const attr = kind === 'team' ? `data-team="${key}"` : `data-player="${key}"`;
+
+// --- Score entry page (swipe between holes, England Golf style) ---
+function relPar(diff) {
+  if (diff <= -3) return ['albatross', 'under'];
+  if (diff === -2) return ['eagle', 'under'];
+  if (diff === -1) return ['birdie', 'under'];
+  if (diff === 0) return ['par', 'level'];
+  if (diff === 1) return ['bogey', 'over'];
+  return ['+' + diff, 'over'];
+}
+function renderScoring(rid) {
+  const r = R(rid);
+  const scramble = r.format === 'scramble';
+  const g = r.groups[selGroup] || r.groups[0];
+
+  const holeChips = r.holes.map((hh) => {
+    const filled = scramble ? teamHoles(rid, selGroup)[hh.n - 1] !== null : g.players.every((pid) => holesOf(rid, pid)[hh.n - 1] !== null);
+    const some = scramble ? filled : g.players.some((pid) => holesOf(rid, pid)[hh.n - 1] !== null);
+    return `<button class="hole-chip ${hh.n === selHole ? 'on' : ''} ${filled ? 'done' : some ? 'part' : ''}" data-hole="${hh.n}">${hh.n}</button>`;
+  }).join('');
+
+  const slide = (h) => {
+    const i = h.n - 1;
+    const rows = scramble
+      ? (() => { const t = teamTally(rid, selGroup); const row = t.rows[i]; const gross = row.gross;
+          const rel = gross === null ? null : relPar(gross - h.par);
+          return `<div class="score-row">
+            <div class="who"><div class="team-dot t${selGroup}">${selGroup === 0 ? 'A' : 'B'}</div><div style="min-width:0"><div class="n">${esc(gname(g, selGroup))}</div><div class="h">${rel ? `<b class="rel ${rel[1]}">${rel[0]}</b> · ` : ''}${row.shots ? `<b>${row.shots} shot${row.shots > 1 ? 's' : ''}</b> · ` : ''}${t.pts} pts thru ${t.played}</div></div></div>
+            ${stepper('team', selGroup, gross, h.par, i)}
+            <div class="hp ${gross === null ? 'off' : ''}">${gross === null ? '–' : row.pts}<small>pts</small></div>
+          </div>`; })()
+      : g.players.map((pid) => { const t = playerTally(rid, pid); const row = t.rows[i]; const gross = row.gross;
+          const rel = gross === null ? null : relPar(gross - h.par);
+          return `<div class="score-row">
+            <div class="who">${avatar(PL(pid))}<div style="min-width:0"><div class="n">${esc(first(pid))}</div><div class="h">${rel ? `<b class="rel ${rel[1]}">${rel[0]}</b> · ` : ''}${row.shots ? `<b>${row.shots} shot${row.shots > 1 ? 's' : ''}</b> · ` : 'no shot · '}${t.pts} pts thru ${t.played}</div></div></div>
+            ${stepper('player', pid, gross, h.par, i)}
+            <div class="hp ${gross === null ? 'off' : ''}">${gross === null ? '–' : row.pts}<small>pts</small></div>
+          </div>`; }).join('');
+    return `<section class="slide" data-slide="${h.n}">
+      <div class="hole-head"><div><span class="eyebrow">Hole</span><div class="hn">${h.n}</div></div>
+        <div class="hf"><span>Par <b>${h.par}</b></span>${h.yds ? `<span><b>${h.yds}</b> yds</span>` : ''}<span>SI <b>${h.si}</b></span></div>
+        <div class="hnav"><button class="btn ghost sm" data-hole="${h.n - 1}" ${h.n === 1 ? 'disabled' : ''} aria-label="Previous hole">‹</button><button class="btn ghost sm" data-hole="${h.n + 1}" ${h.n === 18 ? 'disabled' : ''} aria-label="Next hole">›</button></div></div>
+      <div class="score-list">${rows}</div>
+    </section>`;
+  };
+
+  // Live scorecard for the selected group
+  const cols = scramble ? r.groups.map((grp, t) => ({ label: gname(grp, t).replace('Team ', ''), tally: teamTally(rid, t) })) : g.players.map((pid) => ({ label: first(pid), tally: playerTally(rid, pid) }));
+  const cell = (row) => row.gross === null ? '<td class="e">·</td>' : `<td class="${row.pts === 0 ? 'z' : row.pts >= 3 ? 'g' : ''}">${row.gross}<sup>${row.pts}</sup></td>`;
+  const sumRow = (label, from, to) => `<tr class="sum"><td>${label}</td><td>${r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td><td></td>${cols.map((c) => { const rs = c.tally.rows.slice(from, to); const pl = rs.filter((x) => x.gross !== null); return `<td>${pl.length ? `${pl.reduce((a, x) => a + x.gross, 0)}<sup>${pl.reduce((a, x) => a + x.pts, 0)}</sup>` : '·'}</td>`; }).join('')}</tr>`;
+  const scorecard = `<div class="section-title"><h2>Scorecard</h2><span class="eyebrow">${scramble ? 'team gross · points' : esc(gname(g, selGroup)) + ' · gross · points'}</span></div>
+    <div class="sc-wrap"><table class="sc">
+      <thead><tr><th>Hole</th><th>Par</th><th>SI</th>${cols.map((c) => `<th>${esc(c.label)}</th>`).join('')}</tr>
+      ${scramble ? '' : `<tr class="ph"><td colspan="3">playing hcp</td>${g.players.map((pid) => `<td>${phFor(pid, rid)}</td>`).join('')}</tr>`}</thead>
+      <tbody>${r.holes.map((hh, i) => `<tr class="${hh.n === selHole ? 'cur' : ''}" data-hole="${hh.n}"><td>${hh.n}</td><td>${hh.par}</td><td>${hh.si}</td>${cols.map((c) => cell(c.tally.rows[i])).join('')}</tr>${i === 8 ? sumRow('Out', 0, 9) : ''}`).join('')}
+      ${sumRow('In', 9, 18)}${sumRow('Total', 0, 18)}</tbody>
+    </table></div>`;
+
+  return `
+    ${backBtn(esc(r.short))}
+    <div class="score-page-head"><h2>Enter scores</h2>
+      ${r.groups.length < 2 ? '' : `<div class="seg">${r.groups.map((grp, t) => `<button class="${t === selGroup ? 'on' : ''}" data-group="${t}">${esc(gname(grp, t))}</button>`).join('')}</div>`}
+    </div>
+    <div class="hole-chips">${holeChips}</div>
+    <p class="swipe-hint small muted">Swipe between holes · − and + set the score against par</p>
+    <div class="swipe" id="swipe">${r.holes.map(slide).join('')}</div>
+    ${scorecard}`;
+}
+function stepper(kind, key, gross, defaultVal, holeIdx) {
+  const attr = `${kind === 'team' ? `data-team="${key}"` : `data-player="${key}"`} data-h="${holeIdx}"`;
   return `<div class="stepper" aria-label="Strokes">
     <button data-step="-1" ${attr} aria-label="One stroke fewer">−</button>
     <input type="number" inputmode="numeric" min="1" max="20" placeholder="${defaultVal}" value="${gross ?? ''}" data-gross ${attr}>
@@ -560,10 +616,23 @@ function renderSettings() {
 function render() {
   const view = $('#view');
   const wc = $('#wm-count'); if (wc) wc.textContent = PLAYERS.length;
-  view.innerHTML = tab === 'trip' ? (openRound ? renderRound(openRound) : renderTrip()) : tab === 'players' ? renderPlayers() : renderStandings();
+  view.innerHTML = tab === 'trip' ? (openRound ? (scoringOpen ? renderScoring(openRound) : renderRound(openRound)) : renderTrip()) : tab === 'players' ? renderPlayers() : renderStandings();
   document.querySelectorAll('.tab').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   const chip = $('.hole-chip.on'); if (chip) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
+  const sw = $('#swipe'); if (sw) sw.scrollLeft = (selHole - 1) * sw.clientWidth;
 }
+
+// Swiping the hole carousel updates the selected hole once the scroll settles.
+let swipeT = null;
+document.addEventListener('scroll', (e) => {
+  if (!e.target || e.target.id !== 'swipe') return;
+  clearTimeout(swipeT);
+  swipeT = setTimeout(() => {
+    const el = e.target;
+    const n = Math.round(el.scrollLeft / el.clientWidth) + 1;
+    if (n >= 1 && n <= 18 && n !== selHole) { selHole = n; render(); }
+  }, 120);
+}, true);
 function showWelcome() {
   if ($('#welcome')) return;
   const el = document.createElement('div');
@@ -580,14 +649,18 @@ function showWelcome() {
 function openSheet() { $('#sheet').innerHTML = renderSettings(); $('#sheet-backdrop').hidden = false; }
 function closeSheet() { $('#sheet-backdrop').hidden = true; render(); }
 function openRoundPage(rid) {
-  openRound = rid; tab = 'trip';
-  const r = R(rid);
+  openRound = rid; scoringOpen = false; tab = 'trip';
+  // open on my group if I'm playing in this round
+  selGroup = Math.max(0, R(rid).groups.findIndex((g) => g.players.includes(me)));
+  render(); window.scrollTo({ top: 0 });
+}
+function openScoring() {
+  const rid = openRound; const r = R(rid);
+  scoringOpen = true;
   // land on the first hole this group hasn't finished
   const done = (n) => r.format === 'scramble' ? teamHoles(rid, selGroup)[n - 1] !== null : r.groups[selGroup].players.every((pid) => holesOf(rid, pid)[n - 1] !== null);
-  // open on my group if I'm playing in this round
-  selGroup = Math.max(0, r.groups.findIndex((g) => g.players.includes(me)));
-  selHole = 1;
-  for (let n = 1; n <= 18; n++) { if (!done(n)) { selHole = n; break; } if (n === 18) selHole = 18; }
+  selHole = 18;
+  for (let n = 1; n <= 18; n++) if (!done(n)) { selHole = n; break; }
   render(); window.scrollTo({ top: 0 });
 }
 
@@ -613,27 +686,28 @@ function checkHashImport() {
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function num(v) { const n = parseFloat(v); return Number.isNaN(n) ? null : n; }
 function setGross(el, value) {
-  const rid = openRound; const i = selHole - 1;
+  const rid = openRound;
+  const i = el.dataset.h !== undefined ? Number(el.dataset.h) : selHole - 1;
   const v = value === null ? null : Math.min(20, Math.max(1, Math.round(value)));
   if (el.dataset.team !== undefined) {
     const t = Number(el.dataset.team);
     S.scramble[rid] = S.scramble[rid] || {}; const arr = S.scramble[rid][t] || blank18(); arr[i] = v; S.scramble[rid][t] = arr;
-    pushOp('team', [rid, t, selHole], v);
+    pushOp('team', [rid, t, i + 1], v);
   } else {
     const pid = el.dataset.player;
     S.scores[rid] = S.scores[rid] || {}; const arr = S.scores[rid][pid] || blank18(); arr[i] = v; S.scores[rid][pid] = arr;
-    pushOp('hole', [rid, pid, selHole], v);
+    pushOp('hole', [rid, pid, i + 1], v);
   }
   save();
 }
 function grossOf(el) {
-  const i = selHole - 1;
+  const i = el.dataset.h !== undefined ? Number(el.dataset.h) : selHole - 1;
   return el.dataset.team !== undefined ? teamHoles(openRound, Number(el.dataset.team))[i] : holesOf(openRound, el.dataset.player)[i];
 }
 
 document.querySelector('.tabs').addEventListener('click', (e) => {
   const b = e.target.closest('.tab'); if (!b) return;
-  if (b.dataset.tab === 'trip' && tab === 'trip') openRound = null;
+  if (b.dataset.tab === 'trip' && tab === 'trip') { openRound = null; scoringOpen = false; }
   tab = b.dataset.tab; render(); window.scrollTo({ top: 0 });
 });
 $('#btn-settings').addEventListener('click', openSheet);
@@ -645,7 +719,7 @@ document.body.addEventListener('change', (e) => { const t = e.target; if (t.data
 
 document.body.addEventListener('click', async (e) => {
   const op = e.target.closest('[data-open]'); if (op) { openRoundPage(op.dataset.open); return; }
-  if (e.target.closest('[data-back]')) { openRound = null; render(); window.scrollTo({ top: 0 }); return; }
+  if (e.target.closest('[data-back]')) { if (scoringOpen) scoringOpen = false; else openRound = null; render(); window.scrollTo({ top: 0 }); return; }
   const gb = e.target.closest('[data-group]'); if (gb) { selGroup = Number(gb.dataset.group); render(); return; }
   const hb = e.target.closest('[data-hole]'); if (hb && !hb.disabled) { const n = Number(hb.dataset.hole); if (n >= 1 && n <= 18) { selHole = n; render(); if (hb.tagName === 'TR') $('.hole-head')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
   const st = e.target.closest('[data-step]');
@@ -653,12 +727,14 @@ document.body.addEventListener('click', async (e) => {
     const cur = grossOf(st);
     const def = Number(st.parentElement.querySelector('input').placeholder) || R(openRound).holes[selHole - 1].par;
     const step = Number(st.dataset.step);
-    let next = cur === null ? (step > 0 ? def : null) : cur + step;
+    // from empty: + records par, − records a birdie; then ±1 per tap
+    let next = cur === null ? (step > 0 ? def : def - 1) : cur + step;
     if (next !== null && next < 1) next = null;
     setGross(st, next); render(); return;
   }
   const a = e.target.closest('[data-action]'); if (!a) return;
   switch (a.dataset.action) {
+    case 'open-scoring': openScoring(); break;
     case 'draw-pairs': { const ids = shuffle(PLAYERS.map((p) => p.id)); const pairs = []; for (let i = 0; i < ids.length; i += 2) pairs.push([ids[i], ids[i + 1]]); S.pairs[openRound] = { pairs, revealed: false }; pushOp('pair', [openRound], S.pairs[openRound]); save(); render(); toast('Pairs drawn and sealed'); break; }
     case 'redraw-pairs': { if (confirm('Redraw the pairs for this round?')) { delete S.pairs[openRound]; pushOp('pair', [openRound], null); save(); render(); } break; }
     case 'reveal-pairs': { S.pairs[openRound].revealed = true; pushOp('pair', [openRound], S.pairs[openRound]); save(); render(); toast('Pairs revealed'); break; }
