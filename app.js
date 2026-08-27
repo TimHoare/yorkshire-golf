@@ -337,6 +337,43 @@ let scoringOpen = false;       // true when the score-entry page is open (within
 let selGroup = 0;              // group / team being scored
 let selHole = 1;               // hole being scored
 
+// ---------- Router ----------
+// Every page has a URL: #/trip, #/players, #/standings, #/round/d2,
+// #/round/d2/score/7. Refresh restores the page; browser back goes up a level.
+function firstUnfinishedHole(rid) {
+  const r = R(rid);
+  const done = (n) => r.format === 'scramble' ? teamHoles(rid, selGroup)[n - 1] !== null : r.groups[selGroup].players.every((pid) => holesOf(rid, pid)[n - 1] !== null);
+  for (let n = 1; n <= 18; n++) if (!done(n)) return n;
+  return 18;
+}
+function parseRoute() {
+  const p = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  tab = 'trip'; openRound = null; scoringOpen = false;
+  if (p[0] === 'players' || p[0] === 'standings') { tab = p[0]; return; }
+  if (p[0] === 'round' && R(p[1])) {
+    openRound = p[1];
+    selGroup = Math.max(0, R(p[1]).groups.findIndex((g) => g.players.includes(me)));
+    if (p[2] === 'score') {
+      scoringOpen = true;
+      const n = Number(p[3]);
+      selHole = n >= 1 && n <= 18 ? n : firstUnfinishedHole(p[1]);
+    }
+  }
+}
+function nav(hash) {
+  if (location.hash !== hash) history.pushState(null, '', hash);
+  parseRoute(); render(); window.scrollTo({ top: 0 });
+}
+window.addEventListener('hashchange', () => {
+  if (/^#s=/.test(location.hash)) { checkHashImport(); }
+  parseRoute(); render(); window.scrollTo({ top: 0 });
+});
+// Swiping / tapping between holes rewrites the hole in the URL without
+// stacking a history entry per hole.
+function replaceHoleInUrl() {
+  if (scoringOpen && openRound) history.replaceState(null, '', `#/round/${openRound}/score/${selHole}`);
+}
+
 function formatChips(r) {
   if (r.format === 'scramble') return `<span class="chip gorse">2-team scramble</span>`;
   return `<span class="chip">Stableford</span>${r.pairs ? `<span class="chip heather">Hidden pairs</span>` : ''}`;
@@ -620,6 +657,8 @@ function render() {
   document.querySelectorAll('.tab').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   const chip = $('.hole-chip.on'); if (chip) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
   const sw = $('#swipe'); if (sw) sw.scrollLeft = (selHole - 1) * sw.clientWidth;
+  const r = openRound && R(openRound);
+  document.title = (tab === 'players' ? 'Players' : tab === 'standings' ? 'Standings' : r ? (scoringOpen ? 'Scores · ' + r.short : r.short) : 'Trip') + ' · Yorkshire 2026';
 }
 
 // Swiping the hole carousel updates the selected hole once the scroll settles.
@@ -630,7 +669,7 @@ document.addEventListener('scroll', (e) => {
   swipeT = setTimeout(() => {
     const el = e.target;
     const n = Math.round(el.scrollLeft / el.clientWidth) + 1;
-    if (n >= 1 && n <= 18 && n !== selHole) { selHole = n; render(); }
+    if (n >= 1 && n <= 18 && n !== selHole) { selHole = n; render(); replaceHoleInUrl(); }
   }, 120);
 }, true);
 function showWelcome() {
@@ -648,21 +687,8 @@ function showWelcome() {
 }
 function openSheet() { $('#sheet').innerHTML = renderSettings(); $('#sheet-backdrop').hidden = false; }
 function closeSheet() { $('#sheet-backdrop').hidden = true; render(); }
-function openRoundPage(rid) {
-  openRound = rid; scoringOpen = false; tab = 'trip';
-  // open on my group if I'm playing in this round
-  selGroup = Math.max(0, R(rid).groups.findIndex((g) => g.players.includes(me)));
-  render(); window.scrollTo({ top: 0 });
-}
-function openScoring() {
-  const rid = openRound; const r = R(rid);
-  scoringOpen = true;
-  // land on the first hole this group hasn't finished
-  const done = (n) => r.format === 'scramble' ? teamHoles(rid, selGroup)[n - 1] !== null : r.groups[selGroup].players.every((pid) => holesOf(rid, pid)[n - 1] !== null);
-  selHole = 18;
-  for (let n = 1; n <= 18; n++) if (!done(n)) { selHole = n; break; }
-  render(); window.scrollTo({ top: 0 });
-}
+const openRoundPage = (rid) => nav(`#/round/${rid}`);
+const openScoring = () => nav(`#/round/${openRound}/score`); // route parse lands on first unfinished hole
 
 // ---------- Share / import ----------
 function encodeState() { return btoa(unescape(encodeURIComponent(JSON.stringify(S)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
@@ -707,8 +733,7 @@ function grossOf(el) {
 
 document.querySelector('.tabs').addEventListener('click', (e) => {
   const b = e.target.closest('.tab'); if (!b) return;
-  if (b.dataset.tab === 'trip' && tab === 'trip') { openRound = null; scoringOpen = false; }
-  tab = b.dataset.tab; render(); window.scrollTo({ top: 0 });
+  nav('#/' + b.dataset.tab);
 });
 $('#btn-settings').addEventListener('click', openSheet);
 $('#sheet-backdrop').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSheet(); });
@@ -719,9 +744,9 @@ document.body.addEventListener('change', (e) => { const t = e.target; if (t.data
 
 document.body.addEventListener('click', async (e) => {
   const op = e.target.closest('[data-open]'); if (op) { openRoundPage(op.dataset.open); return; }
-  if (e.target.closest('[data-back]')) { if (scoringOpen) scoringOpen = false; else openRound = null; render(); window.scrollTo({ top: 0 }); return; }
+  if (e.target.closest('[data-back]')) { nav(scoringOpen ? `#/round/${openRound}` : '#/trip'); return; }
   const gb = e.target.closest('[data-group]'); if (gb) { selGroup = Number(gb.dataset.group); render(); return; }
-  const hb = e.target.closest('[data-hole]'); if (hb && !hb.disabled) { const n = Number(hb.dataset.hole); if (n >= 1 && n <= 18) { selHole = n; render(); if (hb.tagName === 'TR') $('.hole-head')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
+  const hb = e.target.closest('[data-hole]'); if (hb && !hb.disabled) { const n = Number(hb.dataset.hole); if (n >= 1 && n <= 18) { selHole = n; render(); replaceHoleInUrl(); if (hb.tagName === 'TR') $('.hole-head')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
   const st = e.target.closest('[data-step]');
   if (st) {
     const cur = grossOf(st);
@@ -770,6 +795,7 @@ document.body.addEventListener('click', (e) => {
 
 // ---------- Boot ----------
 checkHashImport();
+parseRoute();
 render();
 renderSyncPill();
 if (!me) showWelcome();
