@@ -1,8 +1,17 @@
 // The scoring engine: handicap maths, stableford tallies, results and
 // standings. Pure functions over the trip data and a TripState — no globals,
 // no DOM, fully unit-testable.
-import { ROUNDS, PLAYERS, RULES, R, PL, type Round } from '../data/trip';
+import { ROUNDS, PLAYERS, RULES, R, PL, type Group, type Round } from '../data/trip';
 import type { TripState, HoleScores } from './state';
+
+// The groups actually playing a round: the placeholder draw from trip.ts,
+// with players replaced by the stored draw when one has been made.
+export function groupsFor(S: TripState, rid: string): Group[] {
+  const r = R(rid)!;
+  const ov = S.groups[rid];
+  if (!ov) return r.groups;
+  return r.groups.map((g, i) => ({ ...g, players: ov[i] || g.players }));
+}
 
 export const blank18 = (): HoleScores => Array(18).fill(null);
 export const holesOf = (S: TripState, rid: string, pid: string): HoleScores => S.scores[rid]?.[pid] || blank18();
@@ -72,7 +81,7 @@ export const playerTally = (S: TripState, rid: string, pid: string) =>
 
 // Scramble team playing handicap: 35/15 % of the members' course handicaps, lowest first.
 export function teamHandicap(S: TripState, rid: string, t: number) {
-  const g = R(rid)!.groups[t];
+  const g = groupsFor(S, rid)[t];
   const chs = g.players.map((pid) => courseHandicap(indexBefore(S, pid, rid), rid)).sort((a, b) => a - b);
   return Math.round(chs.reduce((a, ch, i) => a + ch * (RULES.scrambleAllowance[i] ?? 0) / 100, 0));
 }
@@ -99,16 +108,16 @@ export function stablefordResults(S: TripState, rid: string): StablefordRow[] {
 
 export interface ScrambleOutcome { points: number; won: boolean; tie: boolean }
 export function scrambleResults(S: TripState, rid: string) {
-  const r = R(rid)!;
+  const groups = groupsFor(S, rid);
   const out: Record<string, ScrambleOutcome> = {};
-  const ts = r.groups.map((_, t) => teamTally(S, rid, t));
+  const ts = groups.map((_, t) => teamTally(S, rid, t));
   const decided = ts.every((t) => t.complete);
   if (!decided) return { rows: out, decided, ts, winner: null as number | null };
   const best = Math.max(...ts.map((t) => t.pts));
   const winners = ts.map((t, i) => (t.pts === best ? i : -1)).filter((i) => i >= 0);
   const tie = winners.length > 1;
   const { scrambleWin: W, scrambleLose: L } = RULES;
-  r.groups.forEach((g, t) => g.players.forEach((pid) => {
+  groups.forEach((g, t) => g.players.forEach((pid) => {
     const won = winners.includes(t);
     out[pid] = { points: tie ? (W + L) / 2 : won ? W : L, won: won && !tie, tie };
   }));
@@ -145,7 +154,7 @@ export function standings(S: TripState): StandingsRow[] {
 export function roundStatus(S: TripState, rid: string): 'done' | 'partial' | 'none' {
   const r = R(rid)!;
   const ts = r.format === 'scramble'
-    ? r.groups.map((_, t) => teamTally(S, rid, t))
+    ? groupsFor(S, rid).map((_, t) => teamTally(S, rid, t))
     : PLAYERS.map((p) => playerTally(S, rid, p.id));
   if (ts.every((t) => t.complete)) return 'done';
   return ts.some((t) => t.played > 0) ? 'partial' : 'none';
@@ -166,7 +175,7 @@ export function firstUnfinishedHole(S: TripState, rid: string, group: number) {
   const r = R(rid)!;
   const done = (n: number) => r.format === 'scramble'
     ? teamHoles(S, rid, group)[n - 1] !== null
-    : r.groups[group].players.every((pid) => holesOf(S, rid, pid)[n - 1] !== null);
+    : groupsFor(S, rid)[group].players.every((pid) => holesOf(S, rid, pid)[n - 1] !== null);
   for (let n = 1; n <= 18; n++) if (!done(n)) return n;
   return 18;
 }

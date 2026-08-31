@@ -14,7 +14,7 @@ import { blank18 } from './scoring';
 
 export type SyncStatus = 'local' | 'connecting' | 'live' | 'offline';
 
-interface Op { t: 'hole' | 'team' | 'pair'; k: (string | number)[]; v: unknown; key: string }
+interface Op { t: 'hole' | 'team' | 'pair' | 'group'; k: (string | number)[]; v: unknown; key: string }
 
 export interface Snapshot {
   S: TripState;
@@ -85,6 +85,12 @@ export function setPairDraw(rid: string, draw: PairDraw | null) {
   save(); emit();
 }
 
+export function setGroupDraw(rid: string, groups: string[][] | null) {
+  if (groups) S.groups[rid] = groups; else delete S.groups[rid];
+  pushOp('group', [rid], groups);
+  save(); emit();
+}
+
 export function setMe(id: string | null) {
   me = id;
   if (id) localStorage.setItem(ME_KEY, id); else localStorage.removeItem(ME_KEY);
@@ -105,6 +111,7 @@ export async function resetAll() {
       sb.from('hole_scores').delete().neq('round_id', ''),
       sb.from('team_scores').delete().neq('round_id', ''),
       sb.from('pair_draws').delete().neq('round_id', ''),
+      sb.from('group_draws').delete().neq('round_id', ''),
     ]);
   }
 }
@@ -135,6 +142,10 @@ export async function flushOutbox() {
         ({ error } = await sb.from('hole_scores').upsert({ round_id: op.k[0], player_id: op.k[1], hole: op.k[2], gross: op.v, updated_at: now }));
       } else if (op.t === 'team') {
         ({ error } = await sb.from('team_scores').upsert({ round_id: op.k[0], team: op.k[1], hole: op.k[2], gross: op.v, updated_at: now }));
+      } else if (op.t === 'group') {
+        ({ error } = op.v === null
+          ? await sb.from('group_draws').delete().eq('round_id', op.k[0])
+          : await sb.from('group_draws').upsert({ round_id: op.k[0], groups: op.v, updated_at: now }));
       } else if (op.v === null) {
         ({ error } = await sb.from('pair_draws').delete().eq('round_id', op.k[0]));
       } else {
@@ -169,28 +180,36 @@ function applyTeamHole(rid: string, t: number, hole: number, gross: number | nul
   S.scramble[rid][t] = arr;
 }
 
-interface Row { round_id: string; player_id?: string; team?: number; hole?: number; gross?: number | null; pairs?: string[][]; revealed?: boolean }
+interface Row { round_id: string; player_id?: string; team?: number; hole?: number; gross?: number | null; pairs?: string[][]; revealed?: boolean; groups?: string[][] }
 function onRowChange(table: string, type: string, row: Row) {
   if (table === 'hole_scores') applyHole(row.round_id, row.player_id!, row.hole!, type === 'DELETE' ? null : row.gross ?? null);
   else if (table === 'team_scores') applyTeamHole(row.round_id, Number(row.team), row.hole!, type === 'DELETE' ? null : row.gross ?? null);
   else if (table === 'pair_draws') {
     if (type === 'DELETE') delete S.pairs[row.round_id];
     else S.pairs[row.round_id] = { pairs: row.pairs!, revealed: !!row.revealed };
+  } else if (table === 'group_draws') {
+    if (type === 'DELETE') delete S.groups[row.round_id];
+    else S.groups[row.round_id] = row.groups!;
   }
   save(); emit();
 }
 
 async function hydrateFromServer(client: SupabaseClient) {
-  const [hs, ts, pd] = await Promise.all([
+  const [hs, ts, pd, gd] = await Promise.all([
     client.from('hole_scores').select('*'),
     client.from('team_scores').select('*'),
     client.from('pair_draws').select('*'),
+    client.from('group_draws').select('*'),
   ]);
   if (hs.error || ts.error || pd.error) throw hs.error || ts.error || pd.error;
+  // group_draws arrived later than the other tables — a database that predates
+  // it should still sync everything else rather than sit offline.
+  const gdRows: Row[] = gd.error ? [] : (gd.data as Row[]);
   const seen = new Set<string>();
   for (const r of hs.data as Row[]) { seen.add(`hole|${r.round_id}|${r.player_id}|${r.hole}`); applyHole(r.round_id, r.player_id!, r.hole!, r.gross ?? null); }
   for (const r of ts.data as Row[]) { seen.add(`team|${r.round_id}|${r.team}|${r.hole}`); applyTeamHole(r.round_id, Number(r.team), r.hole!, r.gross ?? null); }
   for (const r of pd.data as Row[]) { seen.add(`pair|${r.round_id}`); S.pairs[r.round_id] = { pairs: r.pairs!, revealed: !!r.revealed }; }
+  for (const r of gdRows) { seen.add(`group|${r.round_id}`); S.groups[r.round_id] = r.groups!; }
   // Push anything this phone has that the server doesn't (first phone to connect seeds it).
   for (const [rid, byP] of Object.entries(S.scores)) for (const [pid, arr] of Object.entries(byP))
     arr.forEach((g, i) => { if (g !== null && !seen.has(`hole|${rid}|${pid}|${i + 1}`)) pushOp('hole', [rid, pid, i + 1], g); });
@@ -198,6 +217,8 @@ async function hydrateFromServer(client: SupabaseClient) {
     (arr as HoleScores).forEach((g, i) => { if (g !== null && !seen.has(`team|${rid}|${t}|${i + 1}`)) pushOp('team', [rid, Number(t), i + 1], g); });
   for (const [rid, pr] of Object.entries(S.pairs))
     if (!seen.has(`pair|${rid}`)) pushOp('pair', [rid], pr);
+  for (const [rid, g] of Object.entries(S.groups))
+    if (!seen.has(`group|${rid}`)) pushOp('group', [rid], g);
   save(); emit();
 }
 
@@ -213,6 +234,7 @@ export function initSync(create: typeof createClient = createClient) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_scores' }, (p) => onRowChange('hole_scores', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'team_scores' }, (p) => onRowChange('team_scores', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'pair_draws' }, (p) => onRowChange('pair_draws', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'group_draws' }, (p) => onRowChange('group_draws', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
     .subscribe((status: string) => {
       if (status === 'SUBSCRIBED') { setSyncStatus('live'); void flushOutbox(); }
       else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setSyncStatus('offline');

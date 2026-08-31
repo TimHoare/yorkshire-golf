@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { PL, gname } from '../data/trip';
 import {
-  courseHandicap, fmt1, indexHistory, playerTally, roundPlace, roundPoints,
+  courseHandicap, fmt1, groupsFor, indexHistory, playerTally, roundPlace, roundPoints,
   roundStatus, scrambleResults, signed, standings, teamHandicap, trim,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
@@ -44,20 +44,21 @@ export function PlayerPage() {
       <div className="section-title"><h2>The week</h2><span className="eyebrow">tap a round</span></div>
       <div className="pweek">
         {hist.map(({ round: r, before, after, applied }) => {
-          const grp = r.groups.find((g) => g.players.includes(pid));
-          const t = r.groups.indexOf(grp!);
+          const groups = groupsFor(S, r.id);
+          const grp = groups.find((g) => g.players.includes(pid));
+          const t = groups.indexOf(grp!);
           const status = roundStatus(S, r.id);
           const line: ReactNode[] = [];
           if (r.format === 'scramble') {
             const res = scrambleResults(S, r.id);
             const mine = res.rows[pid];
             const tt = res.ts[t];
-            line.push(<span key="t">{gname(grp!, t)} · team hcp {teamHandicap(S, r.id, t)}</span>);
+            line.push(<span key="t">{gname(grp!, t)} · team HCP {teamHandicap(S, r.id, t)}</span>);
             if (tt.played > 0) line.push(<span key="s"> · {tt.pts} pts{tt.complete ? '' : ` thru ${tt.played}`}</span>);
             if (mine) line.push(<b key="r"> · {mine.tie ? 'tied' : mine.won ? 'won' : 'lost'} · {trim(mine.points)} week pts</b>);
           } else {
             const tl = playerTally(S, r.id, pid);
-            line.push(<span key="h">ch {courseHandicap(before, r.id)}</span>);
+            line.push(<span key="h">CH {courseHandicap(before, r.id)}</span>);
             if (tl.played > 0) {
               line.push(<span key="s"> · <b>{tl.pts} pts</b>{tl.complete ? ` · ${tl.strokes} strokes` : ` thru ${tl.played}`}</span>);
               const pl = roundPlace(S, r.id, pid), wp = roundPoints(S, r.id, pid);

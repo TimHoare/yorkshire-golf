@@ -155,6 +155,19 @@ p { margin: 0; }
 .delta.up { color: var(--up); }
 .delta.flat { color: var(--ink-3); }
 
+/* ---------- Group draw ---------- */
+.draw-groups { display: grid; gap: 12px; margin-top: 14px; }
+.draw-group .eyebrow { display: block; margin-bottom: 6px; }
+.draw-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.draw-slot { display: flex; align-items: center; gap: 10px; background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; min-height: 48px; font-size: 15px; }
+.draw-slot.locked { background: var(--card); animation: land .3s cubic-bezier(.2,.8,.2,1); }
+.draw-slot.spinning { border-color: var(--brass); background: var(--brass-soft); }
+.draw-slot .flick { font-family: var(--serif); font-size: 19px; color: var(--brass); }
+.draw-slot .tbd { color: var(--ink-3); font-weight: 700; }
+.draw-slot.pick { text-align: left; }
+.draw-slot.pick.sel { border-color: var(--pine); background: var(--brass-soft); box-shadow: 0 0 0 1px var(--pine); }
+@keyframes land { from { transform: scale(.9); opacity: .3; } to { transform: scale(1); opacity: 1; } }
+
 /* ---------- Scores ---------- */
 .score-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin: 14px 0 6px; }
 .score-head h2 { font-size: 24px; line-height: 1.1; color: var(--pine); }

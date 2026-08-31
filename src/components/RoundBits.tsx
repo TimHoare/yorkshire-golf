@@ -3,7 +3,7 @@
 import { PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
-  pairTotals, playerTally, teamTally, phFor, scrambleResults, type Tally,
+  groupsFor, pairTotals, playerTally, teamTally, phFor, scrambleResults, type Tally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -94,7 +94,7 @@ export function ScrambleResult({ r }: { r: Round }) {
     <div className="scramble-box">
       <h3>Result</h3>
       <div className="team-grid">
-        {r.groups.map((grp, t) => {
+        {groupsFor(S, r.id).map((grp, t) => {
           const tt = res.ts[t];
           const won = res.decided && res.winner === t;
           return (
@@ -118,9 +118,10 @@ export function ScrambleResult({ r }: { r: Round }) {
 export function LiveScorecard({ r, group, selHole, onHole }: { r: Round; group: number; selHole?: number; onHole?: (n: number) => void }) {
   const { S } = useStore();
   const scramble = r.format === 'scramble';
-  const g = r.groups[group] || r.groups[0];
+  const groups = groupsFor(S, r.id);
+  const g = groups[group] || groups[0];
   const cols: { label: string; tally: Tally }[] = scramble
-    ? r.groups.map((grp, t) => ({ label: gname(grp, t).replace('Team ', ''), tally: teamTally(S, r.id, t) }))
+    ? groups.map((grp, t) => ({ label: gname(grp, t).replace('Team ', ''), tally: teamTally(S, r.id, t) }))
     : g.players.map((pid) => ({ label: first(pid), tally: playerTally(S, r.id, pid) }));
 
   const cell = (row: Tally['rows'][number], key: number) =>
