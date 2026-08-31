@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { PLAYERS, ROUNDS } from '../data/trip';
 import { courseHandicap, currentIndex, fmt1, roundStatus, signed } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
@@ -15,7 +16,7 @@ export function PlayersPage() {
           const d = cur - p.start;
           const ch = courseHandicap(cur, nextRound.id);
           return (
-            <div className="player-row" key={p.id}>
+            <Link className="player-row" to={`/player/${p.id}`} key={p.id}>
               <Avatar p={p} />
               <div style={{ minWidth: 0 }}>
                 <div className="pname">{p.name}{p.id === me && <> <span className="chip you">you</span></>}</div>
@@ -24,7 +25,8 @@ export function PlayersPage() {
                 </div>
               </div>
               <div className="index-now"><div className="v">{fmt1(cur)}</div><div className="l">index</div></div>
-            </div>
+              <svg className="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+            </Link>
           );
         })}
       </div>
