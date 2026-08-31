@@ -1,6 +1,7 @@
 // Everything fixed about the trip. Course data is the real thing: men's yellow
 // tees from each club's published scorecard (par / yards / SI verified to sum).
-// Groups and tee times are placeholders — check them against the tee sheet.
+// Elsham tee times (12:28 / 12:36) are confirmed; Beverley's are TBC. Other
+// groups and tee times are placeholders — check them against the tee sheet.
 
 export interface Hole { n: number; par: number; si: number; yds: number | null }
 export interface Group { tee: string; name?: string; players: string[] }
@@ -18,10 +19,10 @@ function card(pars: number[], sis: number[], yds: number[]): Hole[] {
 }
 
 export const ROUNDS: Round[] = [
-  { id: 'd1', n: 1, dow: 'Mon', dnum: 7,  mon: 'Sept', club: 'Brough Golf Club',      short: 'Brough',      town: 'Brough, East Riding',      format: 'stableford', pairs: true,  par: 68, cr: 68.8, slope: 123, tees: 'yellow',
-    address: 'Cave Road, Brough, HU15 1HB',
-    holes: card([4,4,3,4,4,3,4,4,3, 5,4,4,3,4,4,4,3,4], [11,17,13,3,7,15,1,5,9, 12,4,6,16,18,8,2,14,10], [352,248,192,416,374,141,449,431,178, 525,382,362,162,289,365,454,175,372]),
-    groups: [{ tee: '10:00', players: ['p1','p2','p3','p4'] }, { tee: '10:10', players: ['p5','p6','p7','p8'] }] },
+  { id: 'd1', n: 1, dow: 'Mon', dnum: 7,  mon: 'Sept', club: 'Elsham Golf Club',      short: 'Elsham',      town: 'Elsham, near Brigg',       format: 'stableford', pairs: true,  par: 71, cr: 71.2, slope: 132, tees: 'yellow',
+    address: 'Barton Road, Elsham, Brigg, DN20 0LS',
+    holes: card([4,4,4,5,5,3,4,4,3, 5,4,3,4,3,4,4,4,4], [14,6,4,8,12,16,18,2,10, 15,7,11,1,17,5,9,3,13], [311,340,354,506,462,149,297,439,164, 503,362,168,420,163,389,391,411,331]),
+    groups: [{ tee: '12:28', players: ['p1','p2','p3','p4'] }, { tee: '12:36', players: ['p5','p6','p7','p8'] }] },
   { id: 'd2', n: 2, dow: 'Tue', dnum: 8,  mon: 'Sept', club: 'Ganton Golf Club',      short: 'Ganton',      town: 'Ganton, near Scarborough', format: 'stableford', pairs: false, par: 71, cr: 72.2, slope: 133, tees: 'yellow',
     address: 'Ganton, Scarborough, YO12 4PA',
     holes: card([4,4,4,4,3,4,4,4,5, 3,4,4,5,4,4,4,3,4], [11,5,15,3,17,1,7,13,9, 18,4,12,6,16,2,8,14,10], [360,398,290,369,150,442,423,372,476, 165,402,357,499,280,429,429,208,391]),
@@ -30,10 +31,10 @@ export const ROUNDS: Round[] = [
     address: 'Church Hill, South Cave, HU15 2EU',
     holes: card([4,5,5,4,3,4,4,4,4, 4,4,4,5,3,4,4,3,4], [18,16,10,4,12,2,6,14,8, 1,3,7,9,15,13,11,17,5], [274,459,459,357,187,396,341,367,386, 453,453,383,513,137,326,315,136,327]),
     groups: [{ tee: '12:00', name: 'Team A', players: ['p1','p3','p5','p7'] }, { tee: '12:10', name: 'Team B', players: ['p2','p4','p6','p8'] }] },
-  { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Hessle Golf Club',      short: 'Hessle',      town: 'Cottingham, Hull',         format: 'stableford', pairs: true,  par: 72, cr: 71.9, slope: 129, tees: 'yellow',
-    address: 'Westfield Road, Raywell, Cottingham, HU16 5ZA',
-    holes: card([4,3,5,4,4,4,4,3,5, 4,3,4,4,5,4,3,4,5], [7,11,13,1,3,5,9,17,15, 10,14,12,6,18,2,8,4,16], [355,187,503,394,423,377,339,130,477, 340,154,361,365,470,396,195,385,489]),
-    groups: [{ tee: '10:40', players: ['p1','p6','p4','p7'] }, { tee: '10:50', players: ['p2','p5','p3','p8'] }] },
+  { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Beverley & East Riding Golf Club', short: 'Beverley', town: 'Beverley, East Riding',  format: 'stableford', pairs: true,  par: 69, cr: 68.1, slope: 120, tees: 'yellow',
+    address: 'Anti Mill, The Westwood, Beverley, HU17 8RG',
+    holes: card([4,4,5,3,4,3,4,3,4, 4,4,4,4,4,5,3,4,3], [11,3,13,7,9,17,1,15,5, 14,16,10,8,2,12,6,4,18], [333,435,558,183,319,178,402,171,362, 320,315,316,301,337,477,186,324,136]),
+    groups: [{ tee: 'TBC', players: ['p1','p6','p4','p7'] }, { tee: 'TBC', players: ['p2','p5','p3','p8'] }] },
   { id: 'd5', n: 5, dow: 'Fri', dnum: 11, mon: 'Sept', club: 'York Golf Club',        short: 'York',        town: 'Strensall, York',          format: 'stableford', pairs: false, par: 70, cr: 69.6, slope: 123, tees: 'yellow',
     address: 'Lords Moor Lane, Strensall, York, YO32 5XF',
     holes: card([4,3,5,4,4,4,3,4,4, 4,3,4,4,4,5,4,3,4], [7,17,9,11,1,5,13,3,15, 4,18,12,2,16,6,10,14,8], [431,140,500,345,392,414,145,450,336, 394,115,352,367,370,503,379,176,373]),

@@ -35,7 +35,7 @@ describe('app flow', () => {
   it('trip page lists all five rounds', () => {
     setMe('p1');
     mount();
-    for (const club of ['Brough Golf Club', 'Ganton Golf Club', 'Cave Castle Golf Club', 'Hessle Golf Club', 'York Golf Club']) {
+    for (const club of ['Elsham Golf Club', 'Ganton Golf Club', 'Cave Castle Golf Club', 'Beverley & East Riding Golf Club', 'York Golf Club']) {
       expect(screen.getByText(club)).toBeTruthy();
     }
   });
