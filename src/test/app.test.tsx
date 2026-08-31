@@ -42,6 +42,11 @@ describe('app flow', () => {
 
   it('player page shows their index and a row per round', () => {
     setMe('p1');
+    localStorage.setItem('yorkshire-golf-2026', JSON.stringify({
+      v: 3, scores: {}, pairs: {}, scramble: {},
+      groups: { d3: [['p1', 'p3'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']] },
+    }));
+    reloadFromStorage();
     mount('/player/p6');
     expect(screen.getByText('Rob Ellis')).toBeTruthy();
     expect(screen.getByText('The week')).toBeTruthy();
