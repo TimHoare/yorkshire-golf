@@ -78,7 +78,7 @@ function Slide({ S, r, group, h }: { S: TripState; r: Round; group: number; h: H
               const t = teamTally(S, r.id, group);
               const tr = t.rows[i];
               return row(
-                <div className={`team-dot t${group}`}>{group === 0 ? 'A' : 'B'}</div>,
+                <div className={`team-dot t${group}`}>{String.fromCharCode(65 + group)}</div>,
                 gname(g, group),
                 <>{g.players.map(first).join(' · ')}<br />{relBit(tr.gross)}{shotsBit(tr.shots)}team hcp {teamHandicap(S, r.id, group)}</>,
                 { team: group }, tr.gross, tr.pts,
@@ -155,7 +155,9 @@ export function ScoringPage() {
         {r.groups.length > 1 && (
           <div className="seg">
             {r.groups.map((grp, t) => (
-              <button key={t} className={t === group ? 'on' : ''} onClick={() => setGroup(t)}>{gname(grp, t)}</button>
+              <button key={t} className={t === group ? 'on' : ''} onClick={() => setGroup(t)}>
+                {r.groups.length > 2 ? gname(grp, t).replace(/^Team /, '') : gname(grp, t)}
+              </button>
             ))}
           </div>
         )}
