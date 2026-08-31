@@ -15,11 +15,17 @@ export function GroupsTools({ r }: { r: Round }) {
   const [mode, setMode] = useState<'draw' | 'edit' | null>(null);
   const drawn = !!S.groups[r.id];
   const label = r.format === 'scramble' ? 'teams' : 'groups';
+  const clear = () => {
+    if (!confirm(`Clear the ${label} for this round?`)) return;
+    setGroupDraw(r.id, null);
+    toast(`${label[0].toUpperCase() + label.slice(1)} cleared`);
+  };
   return (
     <>
       <div className="btn-row" style={{ marginTop: 10 }}>
-        <button className="btn secondary sm" onClick={() => setMode('draw')}>{drawn ? `Redraw ${label}` : `Draw ${label}`}</button>
+        <button className="btn primary sm" onClick={() => setMode('draw')}>{drawn ? `Redraw ${label}` : `Draw ${label}`}</button>
         <button className="btn ghost sm" onClick={() => setMode('edit')}>Set manually</button>
+        {drawn && <button className="btn ghost sm" onClick={clear}>Clear</button>}
       </div>
       {mode === 'draw' && <DrawSheet r={r} onClose={() => setMode(null)} />}
       {mode === 'edit' && <EditSheet r={r} onClose={() => setMode(null)} />}
@@ -64,7 +70,7 @@ function DrawSheet({ r, onClose }: { r: Round; onClose: () => void }) {
 
   let n = 0;
   return (
-    <div className="sheet-backdrop" onClick={(e) => { if (e.target === e.currentTarget && done) onClose(); }}>
+    <div className="sheet-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="sheet" role="dialog" aria-modal="true">
         <h2>The draw</h2>
         <p className="small muted">
@@ -99,9 +105,12 @@ function DrawSheet({ r, onClose }: { r: Round; onClose: () => void }) {
                 <button className="btn primary grow" onClick={seal}>Seal the draw</button>
                 <button className="btn ghost" onClick={onClose}>Discard</button>
               </>
-            : <button className="btn primary grow" onClick={drawNext} disabled={spinning}>
-                {spinning ? 'Drawing…' : locked === 0 ? 'Draw the first name' : 'Draw the next name'}
-              </button>}
+            : <>
+                <button className="btn primary grow" onClick={drawNext} disabled={spinning}>
+                  {spinning ? 'Drawing…' : locked === 0 ? 'Draw the first name' : 'Draw the next name'}
+                </button>
+                <button className="btn ghost" onClick={onClose}>Cancel</button>
+              </>}
         </div>
       </div>
     </div>

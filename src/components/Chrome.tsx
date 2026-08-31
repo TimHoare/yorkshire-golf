@@ -1,6 +1,6 @@
 // App chrome: header (wordmark, sync pill, settings), bottom tabs, toast.
 import { useEffect, useRef, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { PLAYERS } from '../data/trip';
 import { hasSync } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -22,10 +22,10 @@ export function Header({ onSettings }: { onSettings: () => void }) {
   return (
     <header className="top">
       <div className="top-inner">
-        <div className="wordmark">
+        <Link className="wordmark" to="/trip" aria-label="Home">
           <span className="wm-line1">Yorkshire <i>2026</i></span>
           <span className="wm-line2">Mon 7 – Fri 11 September · {PLAYERS.length} golfers</span>
-        </div>
+        </Link>
         <div className="top-actions">
           <SyncPill />
           <button className="icon-btn" onClick={onSettings} aria-label="Settings">

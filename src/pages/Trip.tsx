@@ -26,7 +26,7 @@ export function TripPage() {
                     <b>{g.tee}</b>
                     <span>
                       {g.name ? <><i>{gname(g, t)}</i> · </> : null}
-                      {S.groups[r.id] ? g.players.map(first).join(', ') : <span className="muted">to be drawn</span>}
+                      {S.groups[r.id] ? g.players.map(first).join(', ') : <span className="muted">To be drawn</span>}
                     </span>
                   </div>
                 ))}

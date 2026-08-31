@@ -64,6 +64,9 @@ export const RULES = {
   scrambleAllowance: [35, 15], // % of course handicaps, lowest first (2-man teams)
 };
 
+// Trip organiser — the only player who can wipe the shared database.
+export const ORGANISER = 'p1';
+
 export const AVATAR_COLOURS = ['#22402F', '#5F4E8C', '#8A4A2F', '#3A5A6E', '#A8894B', '#4E6E4E', '#7A3A55', '#54604A'];
 
 export const R = (rid: string) => ROUNDS.find((x) => x.id === rid);
