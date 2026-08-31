@@ -1,7 +1,7 @@
 // Everything fixed about the trip. Course data is the real thing: men's yellow
 // tees from each club's published scorecard (par / yards / SI verified to sum).
-// Elsham tee times (12:28 / 12:36) are confirmed; Beverley's are TBC. Other
-// groups and tee times are placeholders — check them against the tee sheet.
+// Tee times are confirmed for Elsham, Ganton and York; Beverley's are TBC.
+// Cave Castle times and all groups are placeholders — check the tee sheet.
 
 export interface Hole { n: number; par: number; si: number; yds: number | null }
 export interface Group { tee: string; name?: string; players: string[] }
@@ -26,7 +26,7 @@ export const ROUNDS: Round[] = [
   { id: 'd2', n: 2, dow: 'Tue', dnum: 8,  mon: 'Sept', club: 'Ganton Golf Club',      short: 'Ganton',      town: 'Ganton, near Scarborough', format: 'stableford', pairs: false, par: 71, cr: 72.2, slope: 133, tees: 'yellow',
     address: 'Ganton, Scarborough, YO12 4PA',
     holes: card([4,4,4,4,3,4,4,4,5, 3,4,4,5,4,4,4,3,4], [11,5,15,3,17,1,7,13,9, 18,4,12,6,16,2,8,14,10], [360,398,290,369,150,442,423,372,476, 165,402,357,499,280,429,429,208,391]),
-    groups: [{ tee: '11:20', players: ['p1','p5','p2','p6'] }, { tee: '11:30', players: ['p3','p7','p4','p8'] }] },
+    groups: [{ tee: '14:00', players: ['p1','p5','p2','p6'] }, { tee: '14:07', players: ['p3','p7','p4','p8'] }] },
   { id: 'd3', n: 3, dow: 'Wed', dnum: 9,  mon: 'Sept', club: 'Cave Castle Golf Club', short: 'Cave Castle', town: 'South Cave, East Riding',   format: 'scramble',   pairs: false, par: 72, cr: 69.6, slope: 122, tees: 'yellow',
     address: 'Church Hill, South Cave, HU15 2EU',
     holes: card([4,5,5,4,3,4,4,4,4, 4,4,4,5,3,4,4,3,4], [18,16,10,4,12,2,6,14,8, 1,3,7,9,15,13,11,17,5], [274,459,459,357,187,396,341,367,386, 453,453,383,513,137,326,315,136,327]),
@@ -38,7 +38,7 @@ export const ROUNDS: Round[] = [
   { id: 'd5', n: 5, dow: 'Fri', dnum: 11, mon: 'Sept', club: 'York Golf Club',        short: 'York',        town: 'Strensall, York',          format: 'stableford', pairs: false, par: 70, cr: 69.6, slope: 123, tees: 'yellow',
     address: 'Lords Moor Lane, Strensall, York, YO32 5XF',
     holes: card([4,3,5,4,4,4,3,4,4, 4,3,4,4,4,5,4,3,4], [7,17,9,11,1,5,13,3,15, 4,18,12,2,16,6,10,14,8], [431,140,500,345,392,414,145,450,336, 394,115,352,367,370,503,379,176,373]),
-    groups: [{ tee: '09:30', players: ['p1','p2','p3','p4'] }, { tee: '09:40', players: ['p5','p6','p7','p8'] }] },
+    groups: [{ tee: '11:03', players: ['p1','p2','p3','p4'] }, { tee: '11:12', players: ['p5','p6','p7','p8'] }] },
 ];
 
 export const PLAYERS: Player[] = [
