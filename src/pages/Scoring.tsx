@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
-  firstUnfinishedHole, holesOf, playerTally, relPar, teamHandicap, teamHoles, teamTally,
+  firstUnfinishedHole, groupsFor, holesOf, playerTally, relPar, teamHandicap, teamHoles, teamTally,
 } from '../lib/scoring';
 import { setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -42,7 +42,7 @@ function Stepper({ rid, target, holeIdx, gross, par }: { rid: string; target: Ta
 function Slide({ S, r, group, h }: { S: TripState; r: Round; group: number; h: Hole }) {
   const i = h.n - 1;
   const scramble = r.format === 'scramble';
-  const g = r.groups[group];
+  const g = groupsFor(S, r.id)[group];
 
   const row = (who: React.ReactNode, name: string, sub: React.ReactNode, target: Target, gross: number | null, pts: number | null) => (
     <div className="score-row" key={name}>
@@ -105,10 +105,11 @@ export function ScoringPage() {
   const { S, me } = useStore();
   const r = rid ? R(rid) : undefined;
 
-  const myGroup = r ? Math.max(0, r.groups.findIndex((g) => !!me && g.players.includes(me))) : 0;
+  const groups = r ? groupsFor(S, r.id) : [];
+  const myGroup = r ? Math.max(0, groups.findIndex((g) => !!me && g.players.includes(me))) : 0;
   const [group, setGroup] = useState(myGroup);
   const scramble = r?.format === 'scramble';
-  const g = r?.groups[group] || r?.groups[0];
+  const g = groups[group] || groups[0];
 
   const holeN = Number(hole);
   const valid = holeN >= 1 && holeN <= 18;
@@ -152,11 +153,11 @@ export function ScoringPage() {
       <BackButton to={`/round/${r.id}`} label={r.short} />
       <div className="score-page-head">
         <h2>Enter scores</h2>
-        {r.groups.length > 1 && (
+        {groups.length > 1 && (
           <div className="seg">
-            {r.groups.map((grp, t) => (
+            {groups.map((grp, t) => (
               <button key={t} className={t === group ? 'on' : ''} onClick={() => setGroup(t)}>
-                {r.groups.length > 2 ? gname(grp, t).replace(/^Team /, '') : gname(grp, t)}
+                {groups.length > 2 ? gname(grp, t).replace(/^Team /, '') : gname(grp, t)}
               </button>
             ))}
           </div>

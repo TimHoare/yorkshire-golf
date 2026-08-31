@@ -30,12 +30,20 @@ create table if not exists pair_draws (
   updated_at timestamptz not null default now()
 );
 
+-- Group draw per round: player ids per tee group, overriding the placeholders.
+create table if not exists group_draws (
+  round_id   text primary key,
+  groups     jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
 -- Access model: the app URL is the secret. Anyone with the link can read and
 -- write scores (it's a mates' trip, not a bank). RLS is on with open policies
 -- so the anon key can't touch anything except these three tables.
 alter table hole_scores enable row level security;
 alter table team_scores enable row level security;
 alter table pair_draws  enable row level security;
+alter table group_draws enable row level security;
 
 drop policy if exists "open access" on hole_scores;
 create policy "open access" on hole_scores for all using (true) with check (true);
@@ -43,6 +51,8 @@ drop policy if exists "open access" on team_scores;
 create policy "open access" on team_scores for all using (true) with check (true);
 drop policy if exists "open access" on pair_draws;
 create policy "open access" on pair_draws for all using (true) with check (true);
+drop policy if exists "open access" on group_draws;
+create policy "open access" on group_draws for all using (true) with check (true);
 
 -- Realtime: broadcast row changes to connected phones.
 do $$
@@ -58,5 +68,10 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table pair_draws;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table group_draws;
 exception when duplicate_object then null;
 end $$;

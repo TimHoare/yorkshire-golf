@@ -2,11 +2,12 @@
 // everyone's course handicaps, the course card, and pairs/scramble widgets.
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname } from '../data/trip';
-import { courseHandicap, indexBefore, phFor, roundStatus, teamHandicap, fmt1 } from '../lib/scoring';
+import { courseHandicap, groupsFor, indexBefore, phFor, roundStatus, teamHandicap, fmt1 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { PairsBox, RoundHead, ScrambleResult } from '../components/RoundBits';
+import { GroupsTools } from '../components/GroupsDraw';
 
 export function RoundPage() {
   const { rid } = useParams();
@@ -18,7 +19,9 @@ export function RoundPage() {
   const yardsKnown = r.holes.every((h) => h.yds);
   const totalYds = yardsKnown ? r.holes.reduce((a, h) => a + (h.yds ?? 0), 0) : null;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.club + ', ' + r.address)}`;
-  const playing = me && me !== 'watcher' && r.groups.some((g) => g.players.includes(me));
+  const groups = groupsFor(S, r.id);
+  const status = roundStatus(S, r.id);
+  const playing = me && me !== 'watcher' && groups.some((g) => g.players.includes(me));
 
   const nine = (label: string, from: number, to: number) => (
     <tr className="sum" key={label}>
@@ -58,8 +61,9 @@ export function RoundPage() {
       </div>
 
       <div className="section-title"><h2>{scramble ? 'Teams' : 'Groups'}</h2><span className="eyebrow">tee times · course hcp</span></div>
+      {status === 'none' && <GroupsTools r={r} />}
       <div className="groups">
-        {r.groups.map((grp, t) => (
+        {groups.map((grp, t) => (
           <div className="group-card" key={t}>
             <div className="tee">{grp.tee}</div>
             <div className="gbody">

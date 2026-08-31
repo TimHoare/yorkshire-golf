@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ROUNDS, RULES, first, gname } from '../data/trip';
-import { roundStatus } from '../lib/scoring';
+import { groupsFor, roundStatus } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { FormatChips } from '../components/RoundBits';
 
@@ -21,7 +21,7 @@ export function TripPage() {
               <h3>{r.club}</h3>
               <div className="itin-meta"><span className="chip">Par {r.par}</span><FormatChips r={r} /></div>
               <div className="itin-groups">
-                {r.groups.map((g, t) => (
+                {groupsFor(S, r.id).map((g, t) => (
                   <div className="itin-group" key={t}>
                     <b>{g.tee}</b>
                     <span>{g.name ? <><i>{gname(g, t)}</i> · </> : null}{g.players.map(first).join(', ')}</span>
