@@ -37,3 +37,11 @@ createRoot(document.getElementById('root')!).render(
 );
 
 initSync();
+
+// Installable PWA: register the offline-shell service worker (production only —
+// in dev it would cache Vite's transient module URLs).
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => { /* not fatal */ });
+  });
+}
