@@ -24,7 +24,10 @@ export function TripPage() {
                 {groupsFor(S, r.id).map((g, t) => (
                   <div className="itin-group" key={t}>
                     <b>{g.tee}</b>
-                    <span>{g.name ? <><i>{gname(g, t)}</i> · </> : null}{g.players.map(first).join(', ')}</span>
+                    <span>
+                      {g.name ? <><i>{gname(g, t)}</i> · </> : null}
+                      {S.groups[r.id] ? g.players.map(first).join(', ') : <span className="muted">to be drawn</span>}
+                    </span>
                   </div>
                 ))}
               </div>

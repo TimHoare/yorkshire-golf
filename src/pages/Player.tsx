@@ -45,6 +45,7 @@ export function PlayerPage() {
       <div className="pweek">
         {hist.map(({ round: r, before, after, applied }) => {
           const groups = groupsFor(S, r.id);
+          const drawn = !!S.groups[r.id];
           const grp = groups.find((g) => g.players.includes(pid));
           const t = groups.indexOf(grp!);
           const status = roundStatus(S, r.id);
@@ -53,7 +54,8 @@ export function PlayerPage() {
             const res = scrambleResults(S, r.id);
             const mine = res.rows[pid];
             const tt = res.ts[t];
-            line.push(<span key="t">{gname(grp!, t)} · team HCP {teamHandicap(S, r.id, t)}</span>);
+            if (drawn) line.push(<span key="t">{gname(grp!, t)} · team HCP {teamHandicap(S, r.id, t)}</span>);
+            else line.push(<span key="t">teams to be drawn</span>);
             if (tt.played > 0) line.push(<span key="s"> · {tt.pts} pts{tt.complete ? '' : ` thru ${tt.played}`}</span>);
             if (mine) line.push(<b key="r"> · {mine.tie ? 'tied' : mine.won ? 'won' : 'lost'} · {trim(mine.points)} week pts</b>);
           } else {
@@ -75,7 +77,7 @@ export function PlayerPage() {
               </div>
               <div className="pw-body">
                 <h3>{r.short}</h3>
-                <div className="pw-sub">{grp ? <b className="tee">{grp.tee}</b> : null}{grp ? ' · ' : ''}{line}</div>
+                <div className="pw-sub">{drawn && grp ? <><b className="tee">{grp.tee}</b> · </> : null}{line}</div>
               </div>
               <svg className="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </Link>

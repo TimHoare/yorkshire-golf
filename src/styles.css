@@ -162,7 +162,7 @@ p { margin: 0; }
 .draw-slot { display: flex; align-items: center; gap: 10px; background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; min-height: 48px; font-size: 15px; }
 .draw-slot.locked { background: var(--card); animation: land .3s cubic-bezier(.2,.8,.2,1); }
 .draw-slot.spinning { border-color: var(--brass); background: var(--brass-soft); }
-.draw-slot .flick { font-family: var(--serif); font-size: 19px; color: var(--brass); }
+.draw-slot .flick { font-weight: 700; font-size: 15px; color: var(--brass); }
 .draw-slot .tbd { color: var(--ink-3); font-weight: 700; }
 .draw-slot.pick { text-align: left; }
 .draw-slot.pick.sel { border-color: var(--pine); background: var(--brass-soft); box-shadow: 0 0 0 1px var(--pine); }
@@ -242,6 +242,7 @@ p { margin: 0; }
 /* ---------- Buttons ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: var(--radius-sm); padding: 11px 18px; font-weight: 700; font-size: 14px; background: var(--pine); color: #F6F1E4; min-height: 42px; }
 .btn:active { transform: translateY(1px); background: var(--pine-deep); }
+.btn:disabled { opacity: .55; }
 .btn.primary, .btn.heather, .btn.gorse { background: var(--pine); color: #F6F1E4; }
 .btn.secondary { background: var(--soft); color: var(--ink); }
 .btn.ghost { background: transparent; color: var(--pine); border: 1px solid var(--line-2); }

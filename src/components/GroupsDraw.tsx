@@ -28,7 +28,7 @@ export function GroupsTools({ r }: { r: Round }) {
 }
 
 // ---------- The dramatic draw ----------
-const SPIN_MS = 1400;   // per name, before it locks
+const SPIN_MS = 1600;   // per name, before it locks
 const TICK0 = 60;       // flicker interval at full speed
 
 function DrawSheet({ r, onClose }: { r: Round; onClose: () => void }) {
@@ -36,28 +36,29 @@ function DrawSheet({ r, onClose }: { r: Round; onClose: () => void }) {
   const [result] = useState(() => drawGroups(S, r.id));
   const slots = result.flat();
   const [locked, setLocked] = useState(0);
+  const [spinning, setSpinning] = useState(false);
   const [flick, setFlick] = useState('');
-  const skipped = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
   const scramble = r.format === 'scramble';
 
-  useEffect(() => {
-    if (locked >= slots.length) return;
+  // One press, one name: flicker through the names still in the hat, slowing
+  // until the next one lands.
+  const drawNext = () => {
+    if (spinning || locked >= slots.length) return;
+    setSpinning(true);
     const pool = slots.slice(locked);
-    let i = 0, elapsed = 0, t: ReturnType<typeof setTimeout>;
+    let i = 0, elapsed = 0;
     const tick = () => {
-      if (skipped.current) return;
-      // ease out: flicker slows as the name is about to land
-      const speed = TICK0 + Math.pow(elapsed / SPIN_MS, 2) * 220;
+      const speed = TICK0 + Math.pow(elapsed / SPIN_MS, 2) * 260;
       setFlick(first(pool[i++ % pool.length]));
       elapsed += speed;
-      if (elapsed < SPIN_MS) t = setTimeout(tick, speed);
-      else t = setTimeout(() => { setFlick(''); setLocked((n) => n + 1); }, 180);
+      if (elapsed < SPIN_MS) timer.current = setTimeout(tick, speed);
+      else timer.current = setTimeout(() => { setFlick(''); setSpinning(false); setLocked((n) => n + 1); }, 160);
     };
-    const start = setTimeout(tick, locked === 0 ? 600 : 220);
-    return () => { clearTimeout(start); clearTimeout(t); };
-  }, [locked, slots.length]); // eslint-disable-line react-hooks/exhaustive-deps
+    tick();
+  };
 
-  const skip = () => { skipped.current = true; setFlick(''); setLocked(slots.length); };
   const done = locked >= slots.length;
   const seal = () => { setGroupDraw(r.id, result); toast(`${scramble ? 'Teams' : 'Groups'} drawn — on every phone now`); onClose(); };
 
@@ -79,7 +80,7 @@ function DrawSheet({ r, onClose }: { r: Round; onClose: () => void }) {
                 {grp.map((pid) => {
                   const k = n++;
                   const isLocked = k < locked;
-                  const isSpinning = k === locked && !done;
+                  const isSpinning = k === locked && spinning;
                   return (
                     <div className={`draw-slot${isLocked ? ' locked' : ''}${isSpinning ? ' spinning' : ''}`} key={pid}>
                       {isLocked ? <><Avatar p={PL(pid)} size="sm" /><b>{first(pid)}</b></>
@@ -98,7 +99,9 @@ function DrawSheet({ r, onClose }: { r: Round; onClose: () => void }) {
                 <button className="btn primary grow" onClick={seal}>Seal the draw</button>
                 <button className="btn ghost" onClick={onClose}>Discard</button>
               </>
-            : <button className="btn ghost grow" onClick={skip}>Skip the theatre</button>}
+            : <button className="btn primary grow" onClick={drawNext} disabled={spinning}>
+                {spinning ? 'Drawing…' : locked === 0 ? 'Draw the first name' : 'Draw the next name'}
+              </button>}
         </div>
       </div>
     </div>

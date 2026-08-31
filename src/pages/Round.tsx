@@ -20,6 +20,7 @@ export function RoundPage() {
   const totalYds = yardsKnown ? r.holes.reduce((a, h) => a + (h.yds ?? 0), 0) : null;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.club + ', ' + r.address)}`;
   const groups = groupsFor(S, r.id);
+  const drawn = !!S.groups[r.id];
   const status = roundStatus(S, r.id);
   const playing = me && me !== 'watcher' && groups.some((g) => g.players.includes(me));
 
@@ -61,27 +62,31 @@ export function RoundPage() {
       </div>
 
       <div className="section-title"><h2>{scramble ? 'Teams' : 'Groups'}</h2><span className="eyebrow">tee times · course hcp</span></div>
-      {status === 'none' && <GroupsTools r={r} />}
       <div className="groups">
         {groups.map((grp, t) => (
           <div className="group-card" key={t}>
             <div className="tee">{grp.tee}</div>
             <div className="gbody">
               <div className="gname">
-                {gname(grp, t)}{scramble && <> <span className="chip gorse">team hcp {teamHandicap(S, r.id, t)}</span></>}
+                {gname(grp, t)}{scramble && drawn && <> <span className="chip gorse">team hcp {teamHandicap(S, r.id, t)}</span></>}
               </div>
-              <div className="gmembers">
-                {grp.players.map((pid) => (
-                  <span className={`gm${pid === me ? ' me' : ''}`} key={pid}>
-                    <Avatar p={PL(pid)} size="sm" />
-                    <span><b>{first(pid)}</b> <small>{courseHandicap(indexBefore(S, pid, r.id), r.id)}</small></span>
-                  </span>
-                ))}
-              </div>
+              {drawn ? (
+                <div className="gmembers">
+                  {grp.players.map((pid) => (
+                    <span className={`gm${pid === me ? ' me' : ''}`} key={pid}>
+                      <Avatar p={PL(pid)} size="sm" />
+                      <span><b>{first(pid)}</b> <small>{courseHandicap(indexBefore(S, pid, r.id), r.id)}</small></span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="small muted" style={{ marginTop: 4 }}>To be drawn</div>
+              )}
             </div>
           </div>
         ))}
       </div>
+      {status === 'none' && <GroupsTools r={r} />}
 
       <div className="section-title"><h2>Course</h2><span className="eyebrow">{yardsKnown ? r.tees + ' tees' : 'par · stroke index'}</span></div>
       <div className="sc-wrap">
