@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { R } from './data/trip';
+import { PL, R } from './data/trip';
 import { ROUTE_KEY } from './lib/state';
 import { useStore } from './lib/useStore';
 import { Header, Tabs, Toast } from './components/Chrome';
 import { Welcome } from './components/Welcome';
 import { SettingsSheet } from './components/SettingsSheet';
 import { TripPage } from './pages/Trip';
+import { PlayerPage } from './pages/Player';
 import { RoundPage } from './pages/Round';
 import { ScoringPage } from './pages/Scoring';
 import { PlayersPage } from './pages/Players';
@@ -16,6 +17,7 @@ function titleFor(path: string) {
   const p = path.split('/').filter(Boolean);
   const base =
     p[0] === 'players' ? 'Players' :
+    p[0] === 'player' && PL(p[1]) ? PL(p[1]).name :
     p[0] === 'standings' ? 'Standings' :
     p[0] === 'round' && R(p[1]) ? (p[2] === 'score' ? 'Scores · ' + R(p[1])!.short : R(p[1])!.short) :
     'Trip';
@@ -56,6 +58,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/trip" replace />} />
           <Route path="/trip" element={<TripPage />} />
           <Route path="/players" element={<PlayersPage />} />
+          <Route path="/player/:pid" element={<PlayerPage />} />
           <Route path="/standings" element={<StandingsPage />} />
           <Route path="/round/:rid" element={<RoundPage />} />
           <Route path="/round/:rid/score/:hole?" element={<ScoringPage />} />

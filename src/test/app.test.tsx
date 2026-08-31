@@ -40,6 +40,18 @@ describe('app flow', () => {
     }
   });
 
+  it('player page shows their index and a row per round', () => {
+    setMe('p1');
+    mount('/player/p6');
+    expect(screen.getByText('Rob Ellis')).toBeTruthy();
+    expect(screen.getByText('The week')).toBeTruthy();
+    for (const short of ['Elsham', 'Ganton', 'Cave Castle', 'Beverley', 'York']) {
+      expect(screen.getByText(short)).toBeTruthy();
+    }
+    // Rob is in Team D for the scramble
+    expect(screen.getByText(/Team D/)).toBeTruthy();
+  });
+
   it('round info page shows course facts, map link and my course handicap — but no steppers', () => {
     setMe('p1');
     mount('/round/d2');
