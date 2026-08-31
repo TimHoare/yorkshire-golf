@@ -70,7 +70,7 @@ export const phFor = (S: TripState, pid: string, rid: string) =>
 export const playerTally = (S: TripState, rid: string, pid: string) =>
   tally(rid, holesOf(S, rid, pid), phFor(S, pid, rid));
 
-// Scramble team playing handicap: 25/20/15/10 % of the members' course handicaps, lowest first.
+// Scramble team playing handicap: 35/15 % of the members' course handicaps, lowest first.
 export function teamHandicap(S: TripState, rid: string, t: number) {
   const g = R(rid)!.groups[t];
   const chs = g.players.map((pid) => courseHandicap(indexBefore(S, pid, rid), rid)).sort((a, b) => a - b);

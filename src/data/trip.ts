@@ -30,7 +30,10 @@ export const ROUNDS: Round[] = [
   { id: 'd3', n: 3, dow: 'Wed', dnum: 9,  mon: 'Sept', club: 'Cave Castle Golf Club', short: 'Cave Castle', town: 'South Cave, East Riding',   format: 'scramble',   pairs: false, par: 72, cr: 69.6, slope: 122, tees: 'yellow',
     address: 'Church Hill, South Cave, HU15 2EU',
     holes: card([4,5,5,4,3,4,4,4,4, 4,4,4,5,3,4,4,3,4], [18,16,10,4,12,2,6,14,8, 1,3,7,9,15,13,11,17,5], [274,459,459,357,187,396,341,367,386, 453,453,383,513,137,326,315,136,327]),
-    groups: [{ tee: '12:00', name: 'Team A', players: ['p1','p3','p5','p7'] }, { tee: '12:10', name: 'Team B', players: ['p2','p4','p6','p8'] }] },
+    groups: [
+      { tee: '12:00', name: 'Team A', players: ['p1','p3'] }, { tee: '12:00', name: 'Team B', players: ['p5','p7'] },
+      { tee: '12:10', name: 'Team C', players: ['p2','p4'] }, { tee: '12:10', name: 'Team D', players: ['p6','p8'] },
+    ] },
   { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Beverley & East Riding Golf Club', short: 'Beverley', town: 'Beverley, East Riding',  format: 'stableford', pairs: true,  par: 69, cr: 68.1, slope: 120, tees: 'yellow',
     address: 'Anti Mill, The Westwood, Beverley, HU17 8RG',
     holes: card([4,4,5,3,4,3,4,3,4, 4,4,4,4,4,5,3,4,3], [11,3,13,7,9,17,1,15,5, 14,16,10,8,2,12,6,4,18], [333,435,558,183,319,178,402,171,362, 320,315,316,301,337,477,186,324,136]),
@@ -57,8 +60,8 @@ export const RULES = {
   allowance: 100,
   scrambleWin: 4,
   scrambleLose: 0,
-  par: 32,                              // stableford points pivot for index adjustment
-  scrambleAllowance: [25, 20, 15, 10],  // % of course handicaps, lowest first
+  par: 32,                     // stableford points pivot for index adjustment
+  scrambleAllowance: [35, 15], // % of course handicaps, lowest first (2-man teams)
 };
 
 export const AVATAR_COLOURS = ['#22402F', '#5F4E8C', '#8A4A2F', '#3A5A6E', '#A8894B', '#4E6E4E', '#7A3A55', '#54604A'];

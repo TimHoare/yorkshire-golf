@@ -10,7 +10,7 @@ import { useStore } from '../lib/useStore';
 import { toast } from '../lib/toast';
 
 export function FormatChips({ r }: { r: Round }) {
-  if (r.format === 'scramble') return <span className="chip gorse">2-team scramble</span>;
+  if (r.format === 'scramble') return <span className="chip gorse">2-man scramble</span>;
   return (
     <>
       <span className="chip">Stableford</span>
@@ -107,7 +107,7 @@ export function ScrambleResult({ r }: { r: Round }) {
         })}
       </div>
       <p className="small muted" style={{ marginTop: 8 }}>
-        Team handicap is {RULES.scrambleAllowance.join('/')}% of the four course handicaps, lowest first.
+        Team handicap is {RULES.scrambleAllowance.join('/')}% of the two course handicaps, lowest first.
         Winners take {RULES.scrambleWin} week points each{res.decided && res.winner === null ? ' — tied, so shared' : ''}.
       </p>
     </div>
