@@ -220,6 +220,7 @@ p { margin: 0; }
 .btn.danger { background: var(--up-soft); color: var(--up); }
 .btn.sm { padding: 7px 12px; min-height: 34px; font-size: 13px; }
 .btn.block { width: 100%; }
+.btn.grow { flex: 1; }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 
 /* ---------- Tabs ---------- */
@@ -339,16 +340,13 @@ p { margin: 0; }
 .sc tr.sum td { font-weight: 700; background: var(--soft); }
 .sc tr.sum td sup { color: var(--ink-2); }
 /* ---------- Round info page ---------- */
-.my-ch { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; background: var(--pine); color: #F6F1E4; border-radius: var(--radius); padding: 14px 16px; margin: 12px 0; }
-.my-ch .eyebrow { color: rgba(246,241,228,.7); }
-.my-ch .v { font-family: var(--serif); font-weight: 400; font-size: 44px; line-height: 1; margin-top: 4px; }
-.my-ch-sub { font-size: 12.5px; color: rgba(246,241,228,.8); padding-bottom: 4px; text-align: right; }
-.course-facts { display: flex; flex-wrap: wrap; gap: 4px 22px; margin-top: 12px; }
+.my-ch { display: flex; align-items: center; gap: 16px; margin: 12px 0 10px; padding: 10px 16px; }
+.my-ch .v { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1; color: var(--pine); }
+.my-ch-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+.course-facts { display: flex; flex-wrap: wrap; gap: 4px 0; margin-top: 12px; justify-content: space-between; }
 .course-facts .cf { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
 .course-facts .cf .l { font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; }
 .course-facts .cf b { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--pine); }
-.course-facts .maplink { text-decoration: none; margin-left: auto; }
-.course-facts .maplink b { color: var(--brass); }
 .gm.me b { color: var(--pine); }
 .gm.me { background: var(--brass-soft); border-radius: 999px; padding: 2px 10px 2px 2px; margin: -2px 0; }
 .course-sc { max-width: 420px; }
