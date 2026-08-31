@@ -10,8 +10,8 @@ describe('handicap maths', () => {
   it('course handicap = index × slope/113 + (CR − par), rounded', () => {
     // Ganton (d2): slope 133, CR 72.2, par 71
     expect(courseHandicap(14.0, 'd2')).toBe(Math.round(14.0 * (133 / 113) + (72.2 - 71)));
-    // Brough (d1): slope 123, CR 68.8, par 68
-    expect(courseHandicap(3.8, 'd1')).toBe(Math.round(3.8 * (123 / 113) + 0.8));
+    // Elsham (d1): slope 132, CR 71.2, par 71
+    expect(courseHandicap(3.8, 'd1')).toBe(Math.round(3.8 * (132 / 113) + 0.2));
   });
   it('shots per hole follow stroke index', () => {
     expect(shotsOn(18, 1)).toBe(1);
@@ -36,7 +36,7 @@ describe('tally', () => {
     const t = tally('d1', filled(4), 0);
     expect(t.complete).toBe(true);
     expect(t.strokes).toBe(72);
-    // Brough par 68: all-4s is level on par-4s (2pts), birdie on par-5 (3), bogey on par-3s (1)
+    // Elsham par 71: all-4s is level on par-4s (2pts), birdie on par-5s (3), bogey on par-3s (1)
     const expected = t.rows.reduce((a, r) => a + Math.max(0, 2 + r.par - 4), 0);
     expect(t.pts).toBe(expected);
     expect(tally('d1', blank18(), 0).played).toBe(0);
