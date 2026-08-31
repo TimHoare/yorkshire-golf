@@ -34,17 +34,18 @@ export function RoundPage() {
       <BackButton to="/trip" label="Trip" />
       <RoundHead r={r} status={roundStatus(S, r.id)} />
       <div className="btn-row" style={{ margin: '14px 0 4px' }}>
-        <Link className="btn primary block" to={`/round/${r.id}/score`}>Enter scores</Link>
+        <Link className="btn primary grow" to={`/round/${r.id}/score`}>Enter scores</Link>
+        <a className="btn ghost" href={mapsUrl} target="_blank" rel="noopener noreferrer">Map ↗</a>
       </div>
 
       {playing && (
-        <div className="my-ch">
+        <div className="my-ch card">
+          <div className="v">{courseHandicap(indexBefore(S, me!, r.id), r.id)}</div>
           <div>
             <span className="eyebrow">Your course handicap here</span>
-            <div className="v">{courseHandicap(indexBefore(S, me!, r.id), r.id)}</div>
-          </div>
-          <div className="my-ch-sub">
-            off a {fmt1(indexBefore(S, me!, r.id))} index{!scramble && <> · playing hcp {phFor(S, me!, r.id)}</>}
+            <div className="my-ch-sub">
+              off a {fmt1(indexBefore(S, me!, r.id))} index{!scramble && <> · playing hcp {phFor(S, me!, r.id)}</>}
+            </div>
           </div>
         </div>
       )}
@@ -54,7 +55,6 @@ export function RoundPage() {
         {totalYds && <div className="cf"><span className="l">{r.tees} tees</span><b>{totalYds.toLocaleString()} yds</b></div>}
         <div className="cf"><span className="l">Rating</span><b>{r.cr}</b></div>
         <div className="cf"><span className="l">Slope</span><b>{r.slope}</b></div>
-        <a className="cf maplink" href={mapsUrl} target="_blank" rel="noopener noreferrer"><span className="l">Getting there</span><b>Map ↗</b></a>
       </div>
 
       <div className="section-title"><h2>{scramble ? 'Teams' : 'Groups'}</h2><span className="eyebrow">tee times · course hcp</span></div>
