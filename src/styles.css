@@ -133,7 +133,7 @@ p { margin: 0; }
 .index-edit input { width: 58px; text-align: right; border: 1px solid var(--line-2); border-radius: 6px; padding: 3px 6px; font-size: 13px; font-weight: 700; background: var(--card); }
 .index-edit input:focus { border-color: var(--pine); outline: none; }
 .index-now { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-.index-now .v { font-family: var(--serif); font-weight: 400; font-size: 24px; line-height: 1; color: var(--pine); }
+.index-now .v { font-weight: 700; font-size: 19px; line-height: 1; color: var(--pine); }
 .index-now .l { font-size: 10px; color: var(--ink-2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
 .delta { font-size: 12.5px; font-weight: 700; }
 .delta.down { color: var(--down); }
@@ -164,8 +164,8 @@ p { margin: 0; }
 .pair-item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding: 10px 12px; background: var(--heather-soft); border-radius: var(--radius-sm); }
 .pair-item .names { font-weight: 700; font-size: 15px; }
 .pair-item .names span { color: var(--heather); font-weight: 400; margin: 0 6px; }
-.pair-item .pts { font-family: var(--serif); font-weight: 400; font-size: 22px; }
-.pair-item .rank { font-family: var(--serif); font-weight: 400; color: var(--heather); margin-right: 8px; }
+.pair-item .pts { font-weight: 700; font-size: 17px; }
+.pair-item .rank { font-weight: 700; color: var(--heather); margin-right: 8px; }
 .pair-hidden { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 12px 14px; background: var(--heather-soft); border-radius: var(--radius-sm); font-size: 14px; color: #453A66; }
 .pair-hidden .lock { width: 32px; height: 32px; border-radius: 50%; background: var(--heather); color: #F6F1E4; display: grid; place-items: center; flex: none; }
 
@@ -188,7 +188,7 @@ p { margin: 0; }
 .lb-row { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .lb-row .nm { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-row .meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: 12.5px; color: var(--ink-2); flex-wrap: wrap; }
-.lb-row .pts { font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1; text-align: right; color: var(--pine); }
+.lb-row .pts { font-weight: 700; font-size: 21px; line-height: 1; text-align: right; color: var(--pine); }
 .lb-row .pts small { display: block; font-family: var(--font); font-weight: 600; font-size: 9.5px; color: var(--ink-2); margin-top: 3px; letter-spacing: 0.12em; text-transform: uppercase; }
 .dots { display: inline-flex; gap: 3px; }
 .dots i { width: 16px; height: 16px; border-radius: 4px; background: var(--soft); display: grid; place-items: center; font-size: 9px; font-weight: 700; color: var(--ink-2); font-style: normal; }
@@ -293,7 +293,7 @@ p { margin: 0; }
 .round-head h2 { font-size: 30px; line-height: 1.1; margin: 4px 0 8px; color: var(--pine); }
 .groups { display: grid; gap: 10px; }
 .group-card { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: start; border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 12px 14px; }
-.group-card .tee { font-family: var(--serif); font-weight: 400; font-size: 22px; line-height: 1; padding-top: 2px; color: var(--pine); }
+.group-card .tee { font-weight: 700; font-size: 16px; line-height: 1; padding-top: 4px; color: var(--pine); }
 .group-card .gname { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .gmembers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-top: 8px; }
 .gm { display: flex; align-items: center; gap: 8px; font-size: 14px; min-width: 0; }
@@ -316,7 +316,7 @@ p { margin: 0; }
 .hnav { display: flex; gap: 6px; }
 .hnav .btn { width: 40px; padding: 0; font-size: 20px; }
 .score-row { grid-template-columns: 1fr auto 44px; }
-.score-row .hp { text-align: right; font-family: var(--serif); font-weight: 400; font-size: 22px; line-height: 1; color: var(--pine); }
+.score-row .hp { text-align: right; font-weight: 700; font-size: 17px; line-height: 1; color: var(--pine); }
 .score-row .hp small { display: block; font-family: var(--font); font-size: 9px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
 .score-row .hp.off { color: var(--ink-3); }
 .team-dot { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #F6F1E4; background: var(--pine); flex: none; }
@@ -341,12 +341,12 @@ p { margin: 0; }
 .sc tr.sum td sup { color: var(--ink-2); }
 /* ---------- Round info page ---------- */
 .my-ch { display: flex; align-items: center; gap: 16px; margin: 12px 0 10px; padding: 10px 16px; }
-.my-ch .v { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1; color: var(--pine); }
+.my-ch .v { font-weight: 700; font-size: 28px; line-height: 1; color: var(--pine); }
 .my-ch-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
 .course-facts { display: flex; flex-wrap: wrap; gap: 4px 0; margin-top: 12px; justify-content: space-between; }
 .course-facts .cf { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
 .course-facts .cf .l { font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; }
-.course-facts .cf b { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--pine); }
+.course-facts .cf b { font-weight: 700; font-size: 16px; color: var(--pine); }
 .gm.me b { color: var(--pine); }
 .gm.me { background: var(--brass-soft); border-radius: 999px; padding: 2px 10px 2px 2px; margin: -2px 0; }
 .course-sc { max-width: 420px; }
@@ -363,6 +363,6 @@ p { margin: 0; }
 .rel.level { color: var(--brass); }
 .rel.over { color: var(--up); }
 
-.team .big { font-family: var(--serif); font-weight: 400; font-size: 30px; line-height: 1; margin: 2px 0 8px; color: var(--pine); }
+.team .big { font-weight: 700; font-size: 22px; line-height: 1; margin: 2px 0 8px; color: var(--pine); }
 .team .big small { display: block; font-family: var(--font); font-size: 10px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
 .team.won { outline: 2px solid var(--brass); }
