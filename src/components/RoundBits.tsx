@@ -38,6 +38,11 @@ export function PairsBox({ r }: { r: Round }) {
 
   const redraw = () => { if (confirm('Redraw the pairs for this round?')) setPairDraw(r.id, null); };
 
+  // The hat stays shut until all 18 holes are in for everyone.
+  const out = PLAYERS
+    .map((p) => ({ pid: p.id, t: playerTally(S, r.id, p.id) }))
+    .filter((x) => !x.t.complete);
+
   return (
     <div className="pairs-box">
       <h3>Hidden pairs</h3>
@@ -47,7 +52,17 @@ export function PairsBox({ r }: { r: Round }) {
             Nobody knows their partner until the golf is done: after the round, draw the pairs
             out of the hat with everyone watching — totals land as the names do.
           </p>
-          <div className="btn-row"><button className="btn heather" onClick={() => setDrawing(true)}>Draw the pairs</button></div>
+          <div className="btn-row">
+            <button className="btn heather" onClick={() => setDrawing(true)} disabled={out.length > 0}
+              title={out.length ? 'Every card must be complete first' : undefined}>
+              Draw the pairs
+            </button>
+          </div>
+          {out.length > 0 && (
+            <p className="small muted" style={{ marginTop: 8 }}>
+              The draw opens once every card is complete — still out: {out.map((x) => `${first(x.pid)} (thru ${x.t.played})`).join(', ')}.
+            </p>
+          )}
           {drawing && <PairDrawSheet r={r} onClose={() => setDrawing(false)} />}
         </>
       ) : (
