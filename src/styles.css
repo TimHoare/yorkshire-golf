@@ -364,8 +364,7 @@ p { margin: 0; }
 .sc th { font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
 .sc td:first-child, .sc th:first-child { text-align: left; font-weight: 700; padding-left: 0; }
 .sc td:nth-child(2), .sc td:nth-child(3) { color: var(--ink-2); font-size: 12.5px; }
-.sc tr.ph td { font-size: 11px; color: var(--ink-2); border-bottom: 1px solid var(--line-2); text-align: center; padding-top: 0; }
-.sc tr.ph td:first-child { text-align: left; font-weight: 600; }
+.sc th .ph { display: block; font-size: 10px; font-weight: 600; color: var(--ink-3); text-transform: none; letter-spacing: 0.02em; margin-top: 1px; }
 .sc tbody tr[data-hole] { cursor: pointer; }
 .sc tr.cur td { background: var(--soft); }
 .sc td sup { font-size: 9px; color: var(--ink-3); margin-left: 2px; font-weight: 700; }
