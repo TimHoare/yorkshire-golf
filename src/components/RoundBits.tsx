@@ -271,7 +271,7 @@ export function LiveScorecard({ r, group, selHole, onHole }: { r: Round; group: 
   const cell = (row: Tally['rows'][number], key: number) =>
     row.gross === null
       ? <td className="e" key={key}>·</td>
-      : <td key={key} className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.gross === 0 ? 'P' : row.gross}<sup>{row.pts}</sup></td>;
+      : <td key={key} className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.gross === 0 ? '✕' : row.gross}<sup>{row.pts}</sup></td>;
 
   const sumRow = (label: string, from: number, to: number) => (
     <tr className="sum" key={label}>
