@@ -13,6 +13,7 @@ import type { TripState } from '../lib/state';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { LiveScorecard } from '../components/RoundBits';
+import { GroupBet, HoleBitsPanel } from '../components/Bits';
 
 type Target = { pid: string } | { team: number };
 
@@ -98,6 +99,7 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
               );
             })}
       </div>
+      <HoleBitsPanel rid={r.id} group={group} holeIdx={i} players={g.players} readOnly={readOnly} />
     </section>
   );
 }
@@ -186,6 +188,7 @@ export function ScoringPage() {
         {r.holes.map((h) => <Slide key={h.n} S={S} r={r} group={group} h={h} readOnly={!canEdit} />)}
       </div>
       <LiveScorecard r={r} group={group} selHole={holeN} onHole={goHole} />
+      <GroupBet r={r} group={group} title={gname(g, group)} />
     </>
   );
 }

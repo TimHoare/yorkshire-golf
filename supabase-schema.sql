@@ -37,13 +37,35 @@ create table if not exists group_draws (
   updated_at timestamptz not null default now()
 );
 
+-- Side bets: one row per round, tee group, kind (cuckoo/camel/fish/threeputt)
+-- and hole. counts = { player_id: n }; last_pid = who had the last one there.
+create table if not exists bit_events (
+  round_id   text not null,
+  grp        smallint not null,
+  kind       text not null check (kind in ('cuckoo','camel','fish','threeputt')),
+  hole       smallint not null check (hole between 1 and 18),
+  counts     jsonb not null default '{}',
+  last_pid   text,
+  updated_at timestamptz not null default now(),
+  primary key (round_id, grp, kind, hole)
+);
+
+-- Side-bet stakes (pence each), one shared row edited from app settings.
+create table if not exists stakes (
+  id         smallint primary key,
+  stakes     jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
 -- Access model: the app URL is the secret. Anyone with the link can read and
 -- write scores (it's a mates' trip, not a bank). RLS is on with open policies
--- so the anon key can't touch anything except these three tables.
+-- so the anon key can't touch anything except these tables.
 alter table hole_scores enable row level security;
 alter table team_scores enable row level security;
 alter table pair_draws  enable row level security;
 alter table group_draws enable row level security;
+alter table bit_events  enable row level security;
+alter table stakes      enable row level security;
 
 drop policy if exists "open access" on hole_scores;
 create policy "open access" on hole_scores for all using (true) with check (true);
@@ -53,6 +75,10 @@ drop policy if exists "open access" on pair_draws;
 create policy "open access" on pair_draws for all using (true) with check (true);
 drop policy if exists "open access" on group_draws;
 create policy "open access" on group_draws for all using (true) with check (true);
+drop policy if exists "open access" on bit_events;
+create policy "open access" on bit_events for all using (true) with check (true);
+drop policy if exists "open access" on stakes;
+create policy "open access" on stakes for all using (true) with check (true);
 
 -- Realtime: broadcast row changes to connected phones.
 do $$
@@ -73,5 +99,15 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table group_draws;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table bit_events;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table stakes;
 exception when duplicate_object then null;
 end $$;

@@ -1,7 +1,8 @@
-import { ORGANISER, pName } from '../data/trip';
-import { hasSync, setMe, resetAll } from '../lib/store';
+import { BITS, ORGANISER, pName } from '../data/trip';
+import { hasSync, setMe, setStakes, resetAll } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { RULES } from '../data/trip';
+import { BIT_KINDS } from '../lib/state';
 import { toast } from '../lib/toast';
 
 async function copy(text: string, msg: string) {
@@ -10,7 +11,7 @@ async function copy(text: string, msg: string) {
 }
 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
-  const { me, syncStatus } = useStore();
+  const { S, me, syncStatus } = useStore();
 
   const syncLine = hasSync
     ? (syncStatus === 'live'
@@ -39,6 +40,26 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <p className="small muted">{syncLine}</p>
         <div className="btn-row">
           <button className="btn primary" onClick={share}>Copy app link</button>
+        </div>
+        <div className="course-edit">
+          <h3>Side bets</h3>
+          <p className="help">Pence per offence — Cuckoo (tree), Camel (bunker), Fish (water), Three-putt. Whoever has the last one of each at the end of the round pays the total into the group bet.</p>
+          <div className="stakes">
+            {BIT_KINDS.map((k) => (
+              <label key={k}>
+                <span><span aria-hidden>{BITS[k].icon}</span> {BITS[k].label}</span>
+                <span className="stake-in">
+                  <input
+                    type="number" inputMode="numeric" min={0} max={1000} value={S.stakes[k]}
+                    onChange={(e) => {
+                      const n = Math.round(parseFloat(e.target.value));
+                      setStakes({ ...S.stakes, [k]: Number.isNaN(n) ? 0 : Math.min(1000, Math.max(0, n)) });
+                    }}
+                  />p
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
         <div className="course-edit">
           <h3>Rules in play</h3>

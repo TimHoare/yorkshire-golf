@@ -2,6 +2,7 @@
 // tees from each club's published scorecard (par / yards / SI verified to sum).
 // Tee times are confirmed for Elsham, Ganton and York; Beverley's are TBC.
 // Cave Castle times and all groups are placeholders — check the tee sheet.
+import type { BitKind } from '../lib/state';
 
 export interface Hole { n: number; par: number; si: number; yds: number | null }
 export interface Group { tee: string; name?: string; players: string[] }
@@ -62,6 +63,15 @@ export const RULES = {
   scrambleLose: 0,
   par: 32,                     // stableford points pivot for index adjustment
   scrambleAllowance: [35, 15], // % of course handicaps, lowest first (2-man teams)
+};
+
+// Side-bet menagerie: labels for the four things logged hole by hole.
+// Amounts (pence each) live in app settings and sync between phones.
+export const BITS: Record<BitKind, { label: string; one: string; icon: string; desc: string }> = {
+  cuckoo:    { label: 'Cuckoos',     one: 'cuckoo',     icon: '🐦', desc: 'Hit a tree' },
+  camel:     { label: 'Camels',      one: 'camel',      icon: '🐫', desc: 'In a bunker' },
+  fish:      { label: 'Fish',        one: 'fish',       icon: '🐟', desc: 'In the water' },
+  threeputt: { label: 'Three-putts', one: 'three-putt', icon: '⛳', desc: '3 or more putts' },
 };
 
 // Trip organiser — the only player who can wipe the shared database.

@@ -2,7 +2,7 @@
 // standings. Pure functions over the trip data and a TripState — no globals,
 // no DOM, fully unit-testable.
 import { ROUNDS, PLAYERS, RULES, R, PL, type Group, type Round } from '../data/trip';
-import type { TripState, HoleScores } from './state';
+import { BIT_KINDS, type BitKind, type HoleBits, type TripState, type HoleScores } from './state';
 
 // The groups actually playing a round: the placeholder draw from trip.ts,
 // with players replaced by the stored draw when one has been made.
@@ -179,6 +179,41 @@ export function firstUnfinishedHole(S: TripState, rid: string, group: number) {
   for (let n = 1; n <= 18; n++) if (!done(n)) return n;
   return 18;
 }
+
+// ---------- Side bets (cuckoos · camels · fish · three-putts) ----------
+export const blankBits = (): (HoleBits | null)[] => Array(18).fill(null);
+export const bitsOf = (S: TripState, rid: string, group: number, kind: BitKind): (HoleBits | null)[] =>
+  S.bits[rid]?.[group]?.[kind] || blankBits();
+export const holeBitTotal = (hb: HoleBits | null): number =>
+  hb ? Object.values(hb.counts).reduce((a, c) => a + c, 0) : 0;
+
+// A group's running tally for one kind: total across the round, and who had
+// the last one — the marked player on the highest hole with any logged.
+export interface BitTally { kind: BitKind; total: number; last: string | null }
+export function groupBitTally(S: TripState, rid: string, group: number, kind: BitKind): BitTally {
+  let total = 0, last: string | null = null;
+  for (const hb of bitsOf(S, rid, group, kind)) {
+    const n = holeBitTotal(hb);
+    if (!n) continue;
+    total += n;
+    last = hb!.last ?? Object.keys(hb!.counts)[0] ?? last;
+  }
+  return { kind, total, last };
+}
+export const groupBitTallies = (S: TripState, rid: string, group: number): BitTally[] =>
+  BIT_KINDS.map((k) => groupBitTally(S, rid, group, k));
+
+// One player's count of a kind across every round of the week.
+export function playerBitTotal(S: TripState, pid: string, kind: BitKind): number {
+  let n = 0;
+  for (const byGroup of Object.values(S.bits))
+    for (const sheet of Object.values(byGroup))
+      for (const hb of sheet[kind] || []) n += hb?.counts[pid] || 0;
+  return n;
+}
+
+export const fmtMoney = (pence: number) =>
+  pence >= 100 ? '£' + (pence / 100).toFixed(2) : pence + 'p';
 
 // Score relative to par, for entry labels: ['birdie', 'under'] etc.
 export function relPar(diff: number): [string, 'under' | 'level' | 'over'] {

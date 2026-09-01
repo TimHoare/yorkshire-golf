@@ -1,10 +1,11 @@
 // One player's page: their indexes, and how their week is going round by round.
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { PL, gname } from '../data/trip';
+import { BITS, PL, gname } from '../data/trip';
+import { BIT_KINDS } from '../lib/state';
 import {
-  courseHandicap, fmt1, groupsFor, indexHistory, playerTally, roundPlace, roundPoints,
-  roundStatus, scrambleResults, signed, standings, teamHandicap, trim,
+  courseHandicap, fmt1, groupsFor, indexHistory, playerBitTotal, playerTally, roundPlace,
+  roundPoints, roundStatus, scrambleResults, signed, standings, teamHandicap, trim,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
@@ -39,6 +40,15 @@ export function PlayerPage() {
         <div className="cf"><span className="l">Position</span><b>{st.played ? <>{st.rank}{['st','nd','rd'][st.rank - 1] || 'th'}</> : '–'}</b></div>
         <div className="cf"><span className="l">Stableford</span><b>{st.stab}</b></div>
         <div className="cf"><span className="l">Index</span><b>{fmt1(cur)}</b></div>
+      </div>
+
+      <div className="course-facts card">
+        {BIT_KINDS.map((k) => (
+          <div className="cf" key={k}>
+            <span className="l">{BITS[k].label}</span>
+            <b><span aria-hidden>{BITS[k].icon}</span> {playerBitTotal(S, pid, k)}</b>
+          </div>
+        ))}
       </div>
 
       <div className="section-title"><h2>The week</h2><span className="eyebrow">tap a round</span></div>

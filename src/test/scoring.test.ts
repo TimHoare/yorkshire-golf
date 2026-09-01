@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { defaultState } from '../lib/state';
+import { defaultState, migrate } from '../lib/state';
 import {
-  blank18, courseHandicap, holePoints, shotsOn, stablefordResults, standings, tally,
+  blank18, courseHandicap, fmtMoney, groupBitTally, holePoints, playerBitTotal, shotsOn,
+  stablefordResults, standings, tally,
 } from '../lib/scoring';
 
 const filled = (n: number) => Array(18).fill(n);
@@ -61,5 +62,51 @@ describe('results', () => {
     const st = standings(S);
     expect(st[0].rank).toBe(1);
     expect(st.map((r) => r.pid)).toHaveLength(8);
+  });
+});
+
+describe('side bets', () => {
+  it('tallies a group: totals across holes, last one from the highest hole', () => {
+    const S = defaultState();
+    S.bits.d1 = { 0: { cuckoo: [
+      { counts: { p1: 2, p2: 1 }, last: 'p2' }, null, { counts: { p3: 1 }, last: 'p3' },
+      ...Array(15).fill(null),
+    ] } };
+    const t = groupBitTally(S, 'd1', 0, 'cuckoo');
+    expect(t.total).toBe(4);
+    expect(t.last).toBe('p3');
+    // an untouched kind is empty
+    expect(groupBitTally(S, 'd1', 0, 'fish').total).toBe(0);
+    expect(groupBitTally(S, 'd1', 0, 'fish').last).toBeNull();
+  });
+  it('counts one player across every round and group', () => {
+    const S = defaultState();
+    S.bits.d1 = { 0: { camel: [{ counts: { p1: 2 }, last: 'p1' }, ...Array(17).fill(null)] } };
+    S.bits.d2 = { 1: { camel: [null, { counts: { p1: 1, p4: 3 }, last: 'p4' }, ...Array(16).fill(null)] } };
+    expect(playerBitTotal(S, 'p1', 'camel')).toBe(3);
+    expect(playerBitTotal(S, 'p4', 'camel')).toBe(3);
+    expect(playerBitTotal(S, 'p1', 'fish')).toBe(0);
+  });
+  it('migrate keeps bits and stakes, pads holes, drops junk', () => {
+    const S = migrate({
+      v: 3, scores: {}, pairs: {}, scramble: {}, groups: {},
+      bits: { d1: { 0: { cuckoo: [{ counts: { p1: 1, p2: 0 }, last: 'p1' }], junk: [1, 2] } } },
+      stakes: { cuckoo: 25, fish: -5, nonsense: 99 },
+    });
+    const arr = S.bits.d1[0].cuckoo!;
+    expect(arr).toHaveLength(18);
+    expect(arr[0]).toEqual({ counts: { p1: 1 }, last: 'p1' });
+    expect(arr[5]).toBeNull();
+    expect((S.bits.d1[0] as Record<string, unknown>).junk).toBeUndefined();
+    expect(S.stakes).toEqual({ cuckoo: 25, camel: 10, fish: 10, threeputt: 10 });
+    // states written before side bets existed come up with defaults
+    const old = migrate({ v: 3, scores: {}, pairs: {}, scramble: {}, groups: {} });
+    expect(old.bits).toEqual({});
+    expect(old.stakes.threeputt).toBe(10);
+  });
+  it('money formatting', () => {
+    expect(fmtMoney(10)).toBe('10p');
+    expect(fmtMoney(100)).toBe('£1.00');
+    expect(fmtMoney(230)).toBe('£2.30');
   });
 });

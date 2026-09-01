@@ -8,6 +8,7 @@ import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { PairsBox, RoundHead, ScrambleResult } from '../components/RoundBits';
 import { GroupsTools } from '../components/GroupsEditor';
+import { BetsSection } from '../components/Bits';
 
 export function RoundPage() {
   const { rid } = useParams();
@@ -106,6 +107,7 @@ export function RoundPage() {
         </table>
       </div>
 
+      <BetsSection r={r} />
       {r.pairs && <PairsBox r={r} />}
       {scramble && <ScrambleResult r={r} />}
     </>

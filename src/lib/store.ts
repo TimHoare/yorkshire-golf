@@ -7,14 +7,15 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { CONFIG } from '../config';
 import { PLAYERS, R } from '../data/trip';
 import {
-  defaultState, loadState, persistState, migrate,
-  ME_KEY, OUTBOX_KEY, type TripState, type PairDraw, type HoleScores,
+  defaultState, defaultStakes, loadState, persistState, migrate, cleanHoleBits, cleanStakes,
+  BIT_KINDS, ME_KEY, OUTBOX_KEY,
+  type TripState, type PairDraw, type HoleScores, type BitKind, type HoleBits, type Stakes,
 } from './state';
-import { blank18 } from './scoring';
+import { blank18, blankBits } from './scoring';
 
 export type SyncStatus = 'local' | 'connecting' | 'live' | 'offline';
 
-interface Op { t: 'hole' | 'team' | 'pair' | 'group'; k: (string | number)[]; v: unknown; key: string }
+interface Op { t: 'hole' | 'team' | 'pair' | 'group' | 'bits' | 'stake'; k: (string | number)[]; v: unknown; key: string }
 
 export interface Snapshot {
   S: TripState;
@@ -91,6 +92,25 @@ export function setGroupDraw(rid: string, groups: string[][] | null) {
   save(); emit();
 }
 
+// One hole's side-bet log for one kind in one tee group. Empty logs store as
+// null (and upsert an empty row) so clearing syncs like any other edit.
+export function setHoleBits(rid: string, group: number, kind: BitKind, holeIdx: number, hb: HoleBits | null) {
+  const v = cleanHoleBits(hb);
+  S.bits[rid] = S.bits[rid] || {};
+  S.bits[rid][group] = S.bits[rid][group] || {};
+  const arr = S.bits[rid][group][kind] || blankBits();
+  arr[holeIdx] = v;
+  S.bits[rid][group][kind] = arr;
+  pushOp('bits', [rid, group, kind, holeIdx + 1], v);
+  save(); emit();
+}
+
+export function setStakes(stakes: Stakes) {
+  S.stakes = cleanStakes(stakes);
+  pushOp('stake', ['all'], S.stakes);
+  save(); emit();
+}
+
 export function setMe(id: string | null) {
   me = id;
   if (id) localStorage.setItem(ME_KEY, id); else localStorage.removeItem(ME_KEY);
@@ -112,6 +132,7 @@ export async function resetAll() {
       sb.from('team_scores').delete().neq('round_id', ''),
       sb.from('pair_draws').delete().neq('round_id', ''),
       sb.from('group_draws').delete().neq('round_id', ''),
+      sb.from('bit_events').delete().neq('round_id', ''),
     ]);
   }
 }
@@ -142,6 +163,11 @@ export async function flushOutbox() {
         ({ error } = await sb.from('hole_scores').upsert({ round_id: op.k[0], player_id: op.k[1], hole: op.k[2], gross: op.v, updated_at: now }));
       } else if (op.t === 'team') {
         ({ error } = await sb.from('team_scores').upsert({ round_id: op.k[0], team: op.k[1], hole: op.k[2], gross: op.v, updated_at: now }));
+      } else if (op.t === 'bits') {
+        const hb = op.v as HoleBits | null;
+        ({ error } = await sb.from('bit_events').upsert({ round_id: op.k[0], grp: op.k[1], kind: op.k[2], hole: op.k[3], counts: hb?.counts ?? {}, last_pid: hb?.last ?? null, updated_at: now }));
+      } else if (op.t === 'stake') {
+        ({ error } = await sb.from('stakes').upsert({ id: 1, stakes: op.v, updated_at: now }));
       } else if (op.t === 'group') {
         ({ error } = op.v === null
           ? await sb.from('group_draws').delete().eq('round_id', op.k[0])
@@ -180,10 +206,21 @@ function applyTeamHole(rid: string, t: number, hole: number, gross: number | nul
   S.scramble[rid][t] = arr;
 }
 
-interface Row { round_id: string; player_id?: string; team?: number; hole?: number; gross?: number | null; pairs?: string[][]; revealed?: boolean; groups?: string[][] }
+function applyBits(rid: string, grp: number, kind: string, hole: number, hb: HoleBits | null) {
+  if (!R(rid) || !BIT_KINDS.includes(kind as BitKind) || Number.isNaN(grp)) return;
+  S.bits[rid] = S.bits[rid] || {};
+  S.bits[rid][grp] = S.bits[rid][grp] || {};
+  const arr = S.bits[rid][grp][kind as BitKind] || blankBits();
+  arr[hole - 1] = hb;
+  S.bits[rid][grp][kind as BitKind] = arr;
+}
+
+interface Row { round_id: string; player_id?: string; team?: number; hole?: number; gross?: number | null; pairs?: string[][]; revealed?: boolean; groups?: string[][]; grp?: number; kind?: string; counts?: Record<string, number>; last_pid?: string | null; stakes?: unknown }
 function onRowChange(table: string, type: string, row: Row) {
   if (table === 'hole_scores') applyHole(row.round_id, row.player_id!, row.hole!, type === 'DELETE' ? null : row.gross ?? null);
   else if (table === 'team_scores') applyTeamHole(row.round_id, Number(row.team), row.hole!, type === 'DELETE' ? null : row.gross ?? null);
+  else if (table === 'bit_events') applyBits(row.round_id, Number(row.grp), row.kind!, row.hole!, type === 'DELETE' ? null : cleanHoleBits({ counts: row.counts, last: row.last_pid }));
+  else if (table === 'stakes') { if (type !== 'DELETE') S.stakes = cleanStakes(row.stakes); }
   else if (table === 'pair_draws') {
     if (type === 'DELETE') delete S.pairs[row.round_id];
     else S.pairs[row.round_id] = { pairs: row.pairs!, revealed: !!row.revealed };
@@ -195,21 +232,27 @@ function onRowChange(table: string, type: string, row: Row) {
 }
 
 async function hydrateFromServer(client: SupabaseClient) {
-  const [hs, ts, pd, gd] = await Promise.all([
+  const [hs, ts, pd, gd, be, sk] = await Promise.all([
     client.from('hole_scores').select('*'),
     client.from('team_scores').select('*'),
     client.from('pair_draws').select('*'),
     client.from('group_draws').select('*'),
+    client.from('bit_events').select('*'),
+    client.from('stakes').select('*'),
   ]);
   if (hs.error || ts.error || pd.error) throw hs.error || ts.error || pd.error;
-  // group_draws arrived later than the other tables — a database that predates
-  // it should still sync everything else rather than sit offline.
+  // group_draws, bit_events and stakes arrived later than the other tables — a
+  // database that predates them should still sync everything else rather than sit offline.
   const gdRows: Row[] = gd.error ? [] : (gd.data as Row[]);
+  const beRows: Row[] = be.error ? [] : (be.data as Row[]);
+  const skRows: Row[] = sk.error ? [] : (sk.data as Row[]);
   const seen = new Set<string>();
   for (const r of hs.data as Row[]) { seen.add(`hole|${r.round_id}|${r.player_id}|${r.hole}`); applyHole(r.round_id, r.player_id!, r.hole!, r.gross ?? null); }
   for (const r of ts.data as Row[]) { seen.add(`team|${r.round_id}|${r.team}|${r.hole}`); applyTeamHole(r.round_id, Number(r.team), r.hole!, r.gross ?? null); }
   for (const r of pd.data as Row[]) { seen.add(`pair|${r.round_id}`); S.pairs[r.round_id] = { pairs: r.pairs!, revealed: !!r.revealed }; }
   for (const r of gdRows) { seen.add(`group|${r.round_id}`); S.groups[r.round_id] = r.groups!; }
+  for (const r of beRows) { seen.add(`bits|${r.round_id}|${r.grp}|${r.kind}|${r.hole}`); applyBits(r.round_id, Number(r.grp), r.kind!, r.hole!, cleanHoleBits({ counts: r.counts, last: r.last_pid })); }
+  for (const r of skRows) { seen.add('stake'); S.stakes = cleanStakes(r.stakes); }
   // Push anything this phone has that the server doesn't (first phone to connect seeds it).
   for (const [rid, byP] of Object.entries(S.scores)) for (const [pid, arr] of Object.entries(byP))
     arr.forEach((g, i) => { if (g !== null && !seen.has(`hole|${rid}|${pid}|${i + 1}`)) pushOp('hole', [rid, pid, i + 1], g); });
@@ -219,6 +262,12 @@ async function hydrateFromServer(client: SupabaseClient) {
     if (!seen.has(`pair|${rid}`)) pushOp('pair', [rid], pr);
   for (const [rid, g] of Object.entries(S.groups))
     if (!seen.has(`group|${rid}`)) pushOp('group', [rid], g);
+  for (const [rid, byG] of Object.entries(S.bits)) for (const [grp, sheet] of Object.entries(byG))
+    for (const kind of BIT_KINDS) (sheet[kind] || []).forEach((hb, i) => {
+      if (hb && !seen.has(`bits|${rid}|${grp}|${kind}|${i + 1}`)) pushOp('bits', [rid, Number(grp), kind, i + 1], hb);
+    });
+  if (!seen.has('stake') && JSON.stringify(S.stakes) !== JSON.stringify(defaultStakes()))
+    pushOp('stake', ['all'], S.stakes);
   save(); emit();
 }
 
@@ -235,6 +284,8 @@ export function initSync(create: typeof createClient = createClient) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'team_scores' }, (p) => onRowChange('team_scores', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'pair_draws' }, (p) => onRowChange('pair_draws', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'group_draws' }, (p) => onRowChange('group_draws', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bit_events' }, (p) => onRowChange('bit_events', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'stakes' }, (p) => onRowChange('stakes', p.eventType, p.eventType === 'DELETE' ? p.old as Row : p.new as Row))
     .subscribe((status: string) => {
       if (status === 'SUBSCRIBED') { setSyncStatus('live'); void flushOutbox(); }
       else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setSyncStatus('offline');
