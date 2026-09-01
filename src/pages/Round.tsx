@@ -7,7 +7,7 @@ import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { PairsBox, RoundHead, ScrambleResult } from '../components/RoundBits';
-import { GroupsTools } from '../components/GroupsDraw';
+import { GroupsTools } from '../components/GroupsEditor';
 
 export function RoundPage() {
   const { rid } = useParams();
@@ -80,7 +80,7 @@ export function RoundPage() {
                   ))}
                 </div>
               ) : (
-                <div className="small muted" style={{ marginTop: 4 }}>To be drawn</div>
+                <div className="small muted" style={{ marginTop: 4 }}>To be set</div>
               )}
             </div>
           </div>
