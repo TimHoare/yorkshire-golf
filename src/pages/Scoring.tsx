@@ -19,10 +19,13 @@ type Target = { pid: string } | { team: number };
 
 function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; target: Target; holeIdx: number; gross: number | null; par: number; readOnly: boolean }) {
   const pickup = gross === 0;
-  // from empty or a pickup: + records par, − records a birdie; then ±1 per tap
+  // + from empty records par, then ±1 per tap; − from empty marks a pickup ✕,
+  // and − again (or stepping below 1) clears back to empty.
   const step = (d: number) => {
-    let next: number | null = gross === null || pickup ? (d > 0 ? par : par - 1) : gross + d;
-    if (next !== null && next < 1) next = null;
+    let next: number | null;
+    if (gross === null) next = d > 0 ? par : 0;
+    else if (pickup) next = d > 0 ? par : null;
+    else next = gross + d < 1 ? null : gross + d;
     setGross(rid, target, holeIdx, next);
   };
   if (readOnly) {
@@ -30,7 +33,7 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
   }
   return (
     <div className="stepper" aria-label="Strokes">
-      <button onClick={() => step(-1)} aria-label="One stroke fewer">−</button>
+      <button onClick={() => step(-1)} aria-label={gross === null ? 'No score — picked up' : pickup ? 'Undo the X' : 'One stroke fewer'}>−</button>
       {pickup
         ? <span className="pu" aria-label="No score — picked up">✕</span>
         : (
@@ -44,12 +47,6 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
           />
         )}
       <button onClick={() => step(1)} aria-label="One stroke more">+</button>
-      <button
-        className={`pk${pickup ? ' on' : ''}`}
-        onClick={() => setGross(rid, target, holeIdx, pickup ? null : 0)}
-        aria-label={pickup ? 'Undo the X' : 'No score — picked up'}
-        aria-pressed={pickup}
-      >✕</button>
     </div>
   );
 }
@@ -191,7 +188,7 @@ export function ScoringPage() {
       </div>
       <p className="swipe-hint small muted">
         {canEdit
-          ? 'Swipe between holes · − and + set the score against par'
+          ? 'Swipe between holes · + starts at par, then ±1 · − on an empty score marks a pickup ✕'
           : myGroupIdx < 0
             ? 'Watching only — scores go in on the players’ phones'
             : `${gname(g, group)}’s card — you enter scores for your own ${scramble ? 'team' : 'group'}`}

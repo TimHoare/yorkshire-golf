@@ -191,9 +191,6 @@ p { margin: 0; }
 .stepper input:focus { outline: none; }
 .stepper input:placeholder-shown { color: var(--ink-3); }
 .stepper .pu { width: 40px; height: 36px; display: grid; place-items: center; font-size: 18px; font-weight: 700; color: var(--up); }
-.stepper button.pk { width: 32px; height: 32px; font-size: 13px; margin-left: 2px; border-style: dashed; color: var(--ink-3); }
-.stepper button.pk.on { background: var(--up-soft); border-color: var(--up); border-style: solid; color: var(--up); }
-.stepper button.pk:active { border-color: var(--up); color: var(--up); background: var(--up-soft); }
 .stepper input::placeholder { color: var(--ink-3); opacity: 1; }
 
 .pairs-box, .scramble-box { margin-top: 20px; }
