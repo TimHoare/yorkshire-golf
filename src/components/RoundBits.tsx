@@ -33,36 +33,22 @@ function shuffle<T>(a: T[]): T[] {
 export function PairsBox({ r }: { r: Round }) {
   const { S } = useStore();
   const pr = S.pairs[r.id];
-  const [revealing, setRevealing] = useState(false);
+  const drawn = !!pr?.revealed;
+  const [drawing, setDrawing] = useState(false);
 
-  const draw = () => {
-    const ids = shuffle(PLAYERS.map((p) => p.id));
-    const pairs: string[][] = [];
-    for (let i = 0; i < ids.length; i += 2) pairs.push([ids[i], ids[i + 1]]);
-    setPairDraw(r.id, { pairs, revealed: false });
-    toast('Pairs drawn and sealed');
-  };
   const redraw = () => { if (confirm('Redraw the pairs for this round?')) setPairDraw(r.id, null); };
 
   return (
     <div className="pairs-box">
       <h3>Hidden pairs</h3>
-      {!pr ? (
+      {!drawn ? (
         <>
-          <p className="small muted" style={{ marginTop: 6 }}>Draw the pairs before tee-off. They stay sealed until you reveal them after the round.</p>
-          <div className="btn-row"><button className="btn heather" onClick={draw}>Draw hidden pairs</button></div>
-        </>
-      ) : !pr.revealed ? (
-        <>
-          <div className="pair-hidden">
-            <span className="lock"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg></span>
-            <span><b>{pr.pairs.length} pairs drawn and sealed.</b> Enter everyone's scores, then reveal.</span>
-          </div>
-          <div className="btn-row">
-            <button className="btn heather" onClick={() => setRevealing(true)}>Reveal pairs</button>
-            <button className="btn ghost sm" onClick={redraw}>Redraw</button>
-          </div>
-          {revealing && <RevealSheet r={r} onClose={() => setRevealing(false)} />}
+          <p className="small muted" style={{ marginTop: 6 }}>
+            Nobody knows their partner until the golf is done: after the round, draw the pairs
+            out of the hat with everyone watching — totals land as the names do.
+          </p>
+          <div className="btn-row"><button className="btn heather" onClick={() => setDrawing(true)}>Draw the pairs</button></div>
+          {drawing && <PairDrawSheet r={r} onClose={() => setDrawing(false)} />}
         </>
       ) : (
         <>
@@ -74,70 +60,78 @@ export function PairsBox({ r }: { r: Round }) {
   );
 }
 
-const ordinal = (n: number) => `${n}${['st', 'nd', 'rd'][n - 1] || 'th'}`;
-
-// The reveal ceremony: pairs come out one press at a time from last place up
-// to the winners, names flickering before they land — the same theatre the
-// old group draw had. Sealing shares the reveal to every phone.
-const SPIN_MS = 1400;   // per pair, before it locks
+// The draw ceremony, in the spirit of the old group draw: pairs are decided
+// after the round, so nothing needs hiding — one press pulls one name out of
+// the hat, flickering through whoever's still in it before it lands. A pair's
+// total appears the moment its second name drops. Sealing shares it to every
+// phone; cancelling shows nobody anything.
+const SPIN_MS = 1400;   // per name, before it locks
 const TICK0 = 60;       // flicker interval at full speed
 
-function RevealSheet({ r, onClose }: { r: Round; onClose: () => void }) {
+function PairDrawSheet({ r, onClose }: { r: Round; onClose: () => void }) {
   const { S } = useStore();
-  const rows = pairTotals(S, r.id);            // best first
-  const n = rows.length;
-  const [shown, setShown] = useState(0);       // pairs revealed, counted from the bottom
+  const [slots] = useState(() => shuffle(PLAYERS.map((p) => p.id)));  // draw order, pairs of two
+  const [locked, setLocked] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [flick, setFlick] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const names = PLAYERS.map((p) => first(p.id));
-  const revealNext = () => {
-    if (spinning || shown >= n) return;
+  // One press, one name: flicker through the names still in the hat, slowing
+  // until the next one lands.
+  const drawNext = () => {
+    if (spinning || locked >= slots.length) return;
     setSpinning(true);
-    let elapsed = 0;
+    const pool = slots.slice(locked);
+    let i = 0, elapsed = 0;
     const tick = () => {
       const speed = TICK0 + Math.pow(elapsed / SPIN_MS, 2) * 240;
-      const a = names[Math.floor(Math.random() * names.length)];
-      let b = a;
-      while (b === a) b = names[Math.floor(Math.random() * names.length)];
-      setFlick(`${a} & ${b}`);
+      setFlick(first(pool[i++ % pool.length]));
       elapsed += speed;
       if (elapsed < SPIN_MS) timer.current = setTimeout(tick, speed);
-      else timer.current = setTimeout(() => { setFlick(''); setSpinning(false); setShown((x) => x + 1); }, 150);
+      else timer.current = setTimeout(() => { setFlick(''); setSpinning(false); setLocked((n) => n + 1); }, 150);
     };
     tick();
   };
 
-  const done = shown >= n;
+  const done = locked >= slots.length;
   const seal = () => {
-    setPairDraw(r.id, { ...S.pairs[r.id]!, revealed: true });
-    toast('Pairs revealed — on every phone now');
+    const pairs: string[][] = [];
+    for (let i = 0; i < slots.length; i += 2) pairs.push([slots[i], slots[i + 1]]);
+    setPairDraw(r.id, { pairs, revealed: true });
+    toast('Pairs drawn — on every phone now');
     onClose();
   };
-  const nextPlace = n - shown;
+
+  const seg = (k: number) => {
+    if (k < locked) return <>{first(slots[k])}</>;
+    if (k === locked && spinning) return <i className="flick">{flick || '…'}</i>;
+    return <i className="tbd">?</i>;
+  };
 
   return (
     <div className="sheet-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="sheet" role="dialog" aria-modal="true">
-        <h2>The reveal</h2>
-        <p className="small muted">Last place first, winners last. Nobody else sees a thing until you seal it.</p>
+        <h2>The draw</h2>
+        <p className="small muted">Straight out of the hat, one name at a time. Nobody else sees a thing until you seal it.</p>
         <div className="pair-list">
-          {rows.map((row, k) => {
-            const revealed = k >= n - shown;
-            const isSpinning = spinning && k === n - shown - 1;
+          {Array.from({ length: slots.length / 2 }, (_, k) => {
+            const a = 2 * k, b = 2 * k + 1;
+            const complete = b < locked;
+            const active = spinning && (a === locked || b === locked);
+            const ts = complete ? [slots[a], slots[b]].map((pid) => playerTally(S, r.id, pid)) : [];
             return (
-              <div className={`pair-item${revealed ? '' : isSpinning ? ' spin' : ' sealed'}`} key={k}>
+              <div className={`pair-item${complete ? '' : active ? ' spin' : ' sealed'}`} key={k}>
                 <div className="pair-names">
                   <span className="rank">{k + 1}</span>
-                  {revealed
-                    ? <span className="names">{first(row.pair[0])}<span>&amp;</span>{first(row.pair[1])}</span>
-                    : isSpinning
-                      ? <span className="flick">{flick || '…'}</span>
-                      : <span className="names tbd">? &amp; ?</span>}
+                  <span className="names">{seg(a)}<span>&amp;</span>{seg(b)}</span>
                 </div>
-                {revealed && <span className="pts">{row.total}<small>{row.complete ? 'pts' : 'so far'}</small></span>}
+                {complete && (
+                  <span className="pts">
+                    {ts.reduce((x, t) => x + t.pts, 0)}
+                    <small>{ts.every((t) => t.complete) ? 'pts' : 'so far'}</small>
+                  </span>
+                )}
               </div>
             );
           })}
@@ -146,11 +140,11 @@ function RevealSheet({ r, onClose }: { r: Round; onClose: () => void }) {
           {done
             ? <>
                 <button className="btn heather grow" onClick={seal}>Seal it — show everyone</button>
-                <button className="btn ghost" onClick={onClose}>Close without sealing</button>
+                <button className="btn ghost" onClick={onClose}>Discard</button>
               </>
             : <>
-                <button className="btn heather grow" onClick={revealNext} disabled={spinning}>
-                  {spinning ? 'Drum roll…' : nextPlace === 1 ? 'Reveal the winners' : `Reveal ${ordinal(nextPlace)} place`}
+                <button className="btn heather grow" onClick={drawNext} disabled={spinning}>
+                  {spinning ? 'Out of the hat…' : locked === 0 ? 'Draw the first name' : 'Draw the next name'}
                 </button>
                 <button className="btn ghost" onClick={onClose}>Cancel</button>
               </>}
