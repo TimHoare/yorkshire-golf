@@ -91,6 +91,21 @@ describe('app flow', () => {
     expect(within(robRow2).getByText('birdie')).toBeTruthy();
   });
 
+  it("other groups' cards are read-only; watchers can't score at all", () => {
+    setMe('p6'); // Rob, group 2 of d1
+    setGroupDraw('d1', [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']]);
+    const { container, unmount } = mount('/round/d1/score/1');
+    // flip to group 1: no steppers, just the read-only strokes
+    fireEvent.click(within(container.querySelector('.seg')! as HTMLElement).getByText('Group 1'));
+    expect(container.querySelectorAll('.stepper button')).toHaveLength(0);
+    expect(container.querySelectorAll('.stepper.ro').length).toBeGreaterThan(0);
+    unmount();
+
+    setMe('watcher');
+    const { container: c2 } = mount('/round/d1/score/1');
+    expect(c2.querySelectorAll('.stepper button')).toHaveLength(0);
+  });
+
   it('scoring deep link with no hole lands on first unfinished hole for my group', () => {
     setMe('p1');
     // ragged 3-entry arrays on purpose: migrate() must pad them to 18

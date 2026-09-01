@@ -16,13 +16,16 @@ import { LiveScorecard } from '../components/RoundBits';
 
 type Target = { pid: string } | { team: number };
 
-function Stepper({ rid, target, holeIdx, gross, par }: { rid: string; target: Target; holeIdx: number; gross: number | null; par: number }) {
+function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; target: Target; holeIdx: number; gross: number | null; par: number; readOnly: boolean }) {
   // from empty: + records par, − records a birdie; then ±1 per tap
   const step = (d: number) => {
     let next: number | null = gross === null ? (d > 0 ? par : par - 1) : gross + d;
     if (next !== null && next < 1) next = null;
     setGross(rid, target, holeIdx, next);
   };
+  if (readOnly) {
+    return <div className="stepper ro" aria-label="Strokes">{gross ?? '–'}</div>;
+  }
   return (
     <div className="stepper" aria-label="Strokes">
       <button onClick={() => step(-1)} aria-label="One stroke fewer">−</button>
@@ -39,7 +42,7 @@ function Stepper({ rid, target, holeIdx, gross, par }: { rid: string; target: Ta
   );
 }
 
-function Slide({ S, r, group, h }: { S: TripState; r: Round; group: number; h: Hole }) {
+function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: number; h: Hole; readOnly: boolean }) {
   const i = h.n - 1;
   const scramble = r.format === 'scramble';
   const g = groupsFor(S, r.id)[group];
@@ -47,7 +50,7 @@ function Slide({ S, r, group, h }: { S: TripState; r: Round; group: number; h: H
   const row = (who: React.ReactNode, name: string, sub: React.ReactNode, target: Target, gross: number | null, pts: number | null) => (
     <div className="score-row" key={name}>
       <div className="who">{who}<div style={{ minWidth: 0 }}><div className="n">{name}</div><div className="h">{sub}</div></div></div>
-      <Stepper rid={r.id} target={target} holeIdx={i} gross={gross} par={h.par} />
+      <Stepper rid={r.id} target={target} holeIdx={i} gross={gross} par={h.par} readOnly={readOnly} />
       <div className={`hp${gross === null ? ' off' : ''}`}>{gross === null ? '–' : pts}<small>pts</small></div>
     </div>
   );
@@ -106,10 +109,13 @@ export function ScoringPage() {
   const r = rid ? R(rid) : undefined;
 
   const groups = r ? groupsFor(S, r.id) : [];
-  const myGroup = r ? Math.max(0, groups.findIndex((g) => !!me && g.players.includes(me))) : 0;
+  // -1 for a watcher (or an unpicked phone): they can look, not score.
+  const myGroupIdx = groups.findIndex((g) => !!me && me !== 'watcher' && g.players.includes(me));
+  const myGroup = Math.max(0, myGroupIdx);
   const [group, setGroup] = useState(myGroup);
   const scramble = r?.format === 'scramble';
   const g = groups[group] || groups[0];
+  const canEdit = group === myGroupIdx;
 
   const holeN = Number(hole);
   const valid = holeN >= 1 && holeN <= 18;
@@ -169,9 +175,15 @@ export function ScoringPage() {
           <button key={h.n} className={chipState(h)} onClick={() => goHole(h.n)}>{h.n}</button>
         ))}
       </div>
-      <p className="swipe-hint small muted">Swipe between holes · − and + set the score against par</p>
+      <p className="swipe-hint small muted">
+        {canEdit
+          ? 'Swipe between holes · − and + set the score against par'
+          : myGroupIdx < 0
+            ? 'Watching only — scores go in on the players’ phones'
+            : `${gname(g, group)}’s card — you enter scores for your own ${scramble ? 'team' : 'group'}`}
+      </p>
       <div className="swipe" ref={swipeRef} onScroll={onScroll}>
-        {r.holes.map((h) => <Slide key={h.n} S={S} r={r} group={group} h={h} />)}
+        {r.holes.map((h) => <Slide key={h.n} S={S} r={r} group={group} h={h} readOnly={!canEdit} />)}
       </div>
       <LiveScorecard r={r} group={group} selHole={holeN} onHole={goHole} />
     </>
