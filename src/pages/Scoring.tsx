@@ -83,7 +83,7 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
               return row(
                 <div className={`team-dot t${group}`}>{String.fromCharCode(65 + group)}</div>,
                 gname(g, group),
-                <>{g.players.map(first).join(' · ')}<br />{relBit(tr.gross)}{shotsBit(tr.shots)}team hcp {teamHandicap(S, r.id, group)}</>,
+                <>{g.players.map(first).join(' · ')}<br />{relBit(tr.gross)}{shotsBit(tr.shots)}Team HCP {teamHandicap(S, r.id, group)}</>,
                 { team: group }, tr.gross, tr.pts,
               );
             })()
@@ -93,7 +93,7 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
               return row(
                 <Avatar p={PL(pid)} />,
                 first(pid),
-                <>{relBit(tr.gross)}{tr.shots ? shotsBit(tr.shots) : 'no shot · '}{t.pts} pts thru {t.played}</>,
+                <>{relBit(tr.gross)}{tr.shots ? shotsBit(tr.shots) : 'No shot · '}{t.pts} pts thru {t.played}</>,
                 { pid }, tr.gross, tr.pts,
               );
             })}

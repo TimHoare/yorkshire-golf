@@ -54,10 +54,10 @@ export function PlayerPage() {
             const res = scrambleResults(S, r.id);
             const mine = res.rows[pid];
             const tt = res.ts[t];
-            if (drawn) line.push(<span key="t">{gname(grp!, t)} · team HCP {teamHandicap(S, r.id, t)}</span>);
+            if (drawn) line.push(<span key="t">{gname(grp!, t)} · Team HCP {teamHandicap(S, r.id, t)}</span>);
             else line.push(<span key="t">Teams to be set</span>);
             if (tt.played > 0) line.push(<span key="s"> · {tt.pts} pts{tt.complete ? '' : ` thru ${tt.played}`}</span>);
-            if (mine) line.push(<b key="r"> · {mine.tie ? 'tied' : mine.won ? 'won' : 'lost'} · {trim(mine.points)} week pts</b>);
+            if (mine) line.push(<b key="r"> · {mine.tie ? 'Tied' : mine.won ? 'Won' : 'Lost'} · {trim(mine.points)} week pts</b>);
           } else {
             const tl = playerTally(S, r.id, pid);
             line.push(<span key="h">CH {courseHandicap(before, r.id)}</span>);
@@ -66,7 +66,7 @@ export function PlayerPage() {
               const pl = roundPlace(S, r.id, pid), wp = roundPoints(S, r.id, pid);
               if (status === 'done' && pl) line.push(<span key="p"> · {pl}{['st','nd','rd'][pl - 1] || 'th'} · <b>{trim(wp ?? 0)} week pts</b></span>);
             }
-            if (applied) line.push(<span key="i" className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}> · index {fmt1(before)} → {fmt1(after)}</span>);
+            if (applied) line.push(<span key="i" className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}> · Index {fmt1(before)} → {fmt1(after)}</span>);
           }
           return (
             <Link className="pweek-row" to={`/round/${r.id}`} key={r.id}>

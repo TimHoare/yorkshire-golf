@@ -51,7 +51,7 @@ export function RoundPage() {
           <div>
             <span className="eyebrow">Your course handicap here</span>
             <div className="my-ch-sub">
-              off a {fmt1(indexBefore(S, me!, r.id))} index{!scramble && <> · playing hcp {phFor(S, me!, r.id)}</>}
+              Off a {fmt1(indexBefore(S, me!, r.id))} index{!scramble && <> · PH {phFor(S, me!, r.id)}</>}
             </div>
           </div>
         </div>

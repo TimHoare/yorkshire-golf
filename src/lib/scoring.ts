@@ -182,11 +182,11 @@ export function firstUnfinishedHole(S: TripState, rid: string, group: number) {
 
 // Score relative to par, for entry labels: ['birdie', 'under'] etc.
 export function relPar(diff: number): [string, 'under' | 'level' | 'over'] {
-  if (diff <= -3) return ['albatross', 'under'];
-  if (diff === -2) return ['eagle', 'under'];
-  if (diff === -1) return ['birdie', 'under'];
-  if (diff === 0) return ['par', 'level'];
-  if (diff === 1) return ['bogey', 'over'];
+  if (diff <= -3) return ['Albatross', 'under'];
+  if (diff === -2) return ['Eagle', 'under'];
+  if (diff === -1) return ['Birdie', 'under'];
+  if (diff === 0) return ['Par', 'level'];
+  if (diff === 1) return ['Bogey', 'over'];
   return ['+' + diff, 'over'];
 }
 

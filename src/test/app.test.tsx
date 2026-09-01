@@ -88,7 +88,7 @@ describe('app flow', () => {
     const saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026')!);
     expect(saved.scores.d1.p6[0]).toBe(4);
     expect(saved.scores.d1.p6[1]).toBe(3);
-    expect(within(robRow2).getByText('birdie')).toBeTruthy();
+    expect(within(robRow2).getByText('Birdie')).toBeTruthy();
   });
 
   it("other groups' cards are read-only; watchers can't score at all", () => {

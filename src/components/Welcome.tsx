@@ -21,7 +21,7 @@ export function Welcome() {
           {PLAYERS.map((p) => (
             <button key={p.id} onClick={() => pick(p.id)}>
               <Avatar p={p} size="sm" />
-              <span><b>{p.name}</b><small>index {fmt1(p.start)}</small></span>
+              <span><b>{p.name}</b><small>Index {fmt1(p.start)}</small></span>
             </button>
           ))}
         </div>
