@@ -156,12 +156,22 @@ p { margin: 0; }
 .delta.flat { color: var(--ink-3); }
 
 /* ---------- Group editor ---------- */
+.pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; min-height: 48px; align-items: center; }
+.pool.done { justify-content: center; background: var(--down-soft); border-radius: var(--radius-sm); padding: 10px 12px; }
+.pool.done .small { color: var(--down); font-weight: 600; }
+.pool-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line-2); border-radius: 999px; padding: 5px 14px 5px 6px; font-size: 15px; box-shadow: 0 1px 2px rgba(38,46,40,.08); }
+.pool-chip:active { background: var(--brass-soft); border-color: var(--brass); transform: translateY(1px); }
 .draw-groups { display: grid; gap: 12px; margin-top: 14px; }
+.draw-group { border: 1px solid transparent; border-radius: var(--radius-sm); padding: 8px; margin: -8px; }
+.draw-group.aimed { border-color: var(--brass); background: var(--brass-soft); }
 .draw-group .eyebrow { display: block; margin-bottom: 6px; }
 .draw-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .draw-slot { display: flex; align-items: center; gap: 10px; background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; min-height: 48px; font-size: 15px; }
-.draw-slot.pick { text-align: left; }
-.draw-slot.pick.sel { border-color: var(--pine); background: var(--brass-soft); box-shadow: 0 0 0 1px var(--pine); }
+.draw-slot.pick { text-align: left; animation: land .25s cubic-bezier(.2,.8,.2,1); }
+.draw-slot.pick .x { margin-left: auto; color: var(--ink-3); font-size: 17px; line-height: 1; }
+.draw-slot.empty { justify-content: center; background: transparent; border-style: dashed; border-color: var(--line-2); color: var(--ink-3); font-size: 13px; }
+.draw-slot.empty.next { border-color: var(--brass); color: var(--brass); font-weight: 700; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.1em; }
+@keyframes land { from { transform: scale(.92); opacity: .4; } to { transform: scale(1); opacity: 1; } }
 
 /* ---------- Scores ---------- */
 .score-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin: 14px 0 6px; }
