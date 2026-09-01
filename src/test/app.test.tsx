@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { StrictMode } from 'react';
 import App from '../App';
-import { reloadFromStorage, setMe } from '../lib/store';
+import { reloadFromStorage, setGroupDraw, setMe } from '../lib/store';
 
 function mount(path = '/trip') {
   return render(
@@ -72,6 +72,7 @@ describe('app flow', () => {
 
   it('scoring page: 18 slides, + from empty records par, − records birdie', () => {
     setMe('p6'); // Rob, group 2 of d1
+    setGroupDraw('d1', [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']]);
     const { container } = mount('/round/d1/score/1');
     expect(container.querySelectorAll('.swipe .slide')).toHaveLength(18);
     // group defaulted to mine (Group 2 seg active)
@@ -97,10 +98,21 @@ describe('app flow', () => {
       v: 3,
       scores: { d1: { p1: [4, 4, 4], p2: [4, 4, 4], p3: [4, 4, 4], p4: [4, 4, 4] } },
       pairs: {}, scramble: {},
+      groups: { d1: [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']] },
     }));
     reloadFromStorage();
     const { container } = mount('/round/d1/score');
     expect(container.querySelector('.hole-chip.on')!.textContent).toBe('4');
+  });
+
+  it('scoring is closed until the groups are saved', () => {
+    setMe('p1');
+    mount('/round/d1/score/1');
+    // bounced back to the round page, where Enter scores is disabled
+    expect(screen.getByText('Elsham Golf Club')).toBeTruthy();
+    const enter = screen.getByText('Enter scores') as HTMLButtonElement;
+    expect(enter.closest('a')).toBeNull();
+    expect(enter.closest('button')!.disabled).toBe(true);
   });
 
   it('standings tags my row with a you chip', () => {

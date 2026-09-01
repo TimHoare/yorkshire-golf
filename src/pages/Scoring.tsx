@@ -125,6 +125,7 @@ export function ScoringPage() {
   }, [holeN, valid, group]);
 
   if (!r || !g) return <Navigate to="/trip" replace />;
+  if (!S.groups[r.id]) return <Navigate to={`/round/${r.id}`} replace />;
   if (!valid) return <Navigate to={`/round/${r.id}/score/${firstUnfinishedHole(S, r.id, myGroup)}`} replace />;
 
   const goHole = (n: number) => {

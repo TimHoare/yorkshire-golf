@@ -38,9 +38,12 @@ export function RoundPage() {
       <BackButton to="/trip" label="Trip" />
       <RoundHead r={r} status={roundStatus(S, r.id)} />
       <div className="btn-row" style={{ margin: '14px 0 4px' }}>
-        <Link className="btn primary grow" to={`/round/${r.id}/score`}>Enter scores</Link>
+        {drawn
+          ? <Link className="btn primary grow" to={`/round/${r.id}/score`}>Enter scores</Link>
+          : <button className="btn primary grow" disabled title={`Set the ${scramble ? 'teams' : 'groups'} first`}>Enter scores</button>}
         <a className="btn ghost" href={mapsUrl} target="_blank" rel="noopener noreferrer">Map ↗</a>
       </div>
+      {!drawn && <p className="small muted" style={{ margin: '0 0 4px' }}>Scoring opens once the {scramble ? 'teams' : 'groups'} are set below.</p>}
 
       {playing && (
         <div className="my-ch card">
