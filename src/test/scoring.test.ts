@@ -110,3 +110,17 @@ describe('side bets', () => {
     expect(fmtMoney(230)).toBe('£2.30');
   });
 });
+
+describe('pickups', () => {
+  it('a pickup (gross 0) scores 0 points but counts as played', () => {
+    expect(holePoints(0, 4, 2)).toBe(0);
+    const gross = filled(4);
+    gross[0] = 0;
+    const t = tally('d1', gross, 0);
+    expect(t.played).toBe(18);
+    expect(t.complete).toBe(true);
+    expect(t.pickups).toBe(1);
+    expect(t.rows[0].pts).toBe(0);
+    expect(t.strokes).toBe(68); // pickup adds nothing to the strokes floor
+  });
+});

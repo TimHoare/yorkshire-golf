@@ -31,11 +31,14 @@ export function shotsOn(ph: number, si: number) {
   const give = -ph;
   return -(Math.floor(give / 18) + (si > 18 - (give % 18) ? 1 : 0));
 }
+// gross 0 = picked the ball up: the hole was played but there's no score, so
+// no points — distinct from null (not entered yet).
+export const isPickup = (gross: number | null) => gross === 0;
 export const holePoints = (gross: number | null, par: number, shots: number) =>
-  gross === null ? null : Math.max(0, 2 + par + shots - gross);
+  gross === null ? null : gross === 0 ? 0 : Math.max(0, 2 + par + shots - gross);
 
 export interface TallyRow { n: number; par: number; si: number; yds: number | null; shots: number; gross: number | null; pts: number | null }
-export interface Tally { rows: TallyRow[]; played: number; pts: number; strokes: number; complete: boolean }
+export interface Tally { rows: TallyRow[]; played: number; pts: number; strokes: number; pickups: number; complete: boolean }
 
 // Per-hole breakdown for a set of 18 gross scores.
 export function tally(rid: string, gross: HoleScores, ph: number): Tally {
@@ -48,7 +51,8 @@ export function tally(rid: string, gross: HoleScores, ph: number): Tally {
   const played = rows.filter((x) => x.gross !== null).length;
   const pts = rows.reduce((a, x) => a + (x.pts ?? 0), 0);
   const strokes = rows.reduce((a, x) => a + (x.gross ?? 0), 0);
-  return { rows, played, pts, strokes, complete: played === 18 };
+  const pickups = rows.filter((x) => isPickup(x.gross)).length;
+  return { rows, played, pts, strokes, pickups, complete: played === 18 };
 }
 
 // Index entering each round: −0.5 per point over 32 for every completed stableford round before it.

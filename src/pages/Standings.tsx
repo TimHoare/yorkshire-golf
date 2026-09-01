@@ -5,7 +5,6 @@ import {
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
-import { PairList } from '../components/RoundBits';
 
 export function StandingsPage() {
   const { S, me } = useStore();
@@ -75,13 +74,6 @@ export function StandingsPage() {
         </table>
       </div>
       <p className="small muted" style={{ marginTop: 6 }}>* round in progress</p>
-
-      {ROUNDS.filter((r) => r.pairs && S.pairs[r.id]?.revealed).map((r) => (
-        <div key={r.id}>
-          <div className="section-title"><h2>Pairs · {r.short}</h2><span className="eyebrow">combined points</span></div>
-          <div className="pairs-box" style={{ marginTop: 0 }}><PairList rid={r.id} /></div>
-        </div>
-      ))}
     </>
   );
 }

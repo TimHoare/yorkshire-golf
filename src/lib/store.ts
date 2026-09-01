@@ -63,7 +63,8 @@ function setSyncStatus(st: SyncStatus) { syncStatus = st; emit(); }
 
 // ---------- Mutations (local + queued push) ----------
 export function setGross(rid: string, target: { pid: string } | { team: number }, holeIdx: number, gross: number | null) {
-  const v = gross === null ? null : Math.min(20, Math.max(1, Math.round(gross)));
+  // 0 is a pickup (no score on the hole); 1–20 are real gross scores.
+  const v = gross === null ? null : Math.min(20, Math.max(0, Math.round(gross)));
   if ('team' in target) {
     S.scramble[rid] = S.scramble[rid] || {};
     const arr = S.scramble[rid][target.team] || blank18();

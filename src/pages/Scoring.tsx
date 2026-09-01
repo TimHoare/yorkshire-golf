@@ -18,27 +18,38 @@ import { GroupBet, HoleBitsPanel } from '../components/Bits';
 type Target = { pid: string } | { team: number };
 
 function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; target: Target; holeIdx: number; gross: number | null; par: number; readOnly: boolean }) {
-  // from empty: + records par, − records a birdie; then ±1 per tap
+  const pickup = gross === 0;
+  // from empty or a pickup: + records par, − records a birdie; then ±1 per tap
   const step = (d: number) => {
-    let next: number | null = gross === null ? (d > 0 ? par : par - 1) : gross + d;
+    let next: number | null = gross === null || pickup ? (d > 0 ? par : par - 1) : gross + d;
     if (next !== null && next < 1) next = null;
     setGross(rid, target, holeIdx, next);
   };
   if (readOnly) {
-    return <div className="stepper ro" aria-label="Strokes">{gross ?? '–'}</div>;
+    return <div className="stepper ro" aria-label="Strokes">{pickup ? 'P' : gross ?? '–'}</div>;
   }
   return (
     <div className="stepper" aria-label="Strokes">
       <button onClick={() => step(-1)} aria-label="One stroke fewer">−</button>
-      <input
-        type="number" inputMode="numeric" min={1} max={20}
-        placeholder={String(par)} value={gross ?? ''}
-        onChange={(e) => {
-          const n = parseFloat(e.target.value);
-          setGross(rid, target, holeIdx, Number.isNaN(n) ? null : n);
-        }}
-      />
+      {pickup
+        ? <span className="pu" aria-label="Picked up">P</span>
+        : (
+          <input
+            type="number" inputMode="numeric" min={1} max={20}
+            placeholder={String(par)} value={gross ?? ''}
+            onChange={(e) => {
+              const n = parseFloat(e.target.value);
+              setGross(rid, target, holeIdx, Number.isNaN(n) ? null : n);
+            }}
+          />
+        )}
       <button onClick={() => step(1)} aria-label="One stroke more">+</button>
+      <button
+        className={`pk${pickup ? ' on' : ''}`}
+        onClick={() => setGross(rid, target, holeIdx, pickup ? null : 0)}
+        aria-label={pickup ? 'Undo pickup' : 'Picked up — no score'}
+        aria-pressed={pickup}
+      >P</button>
     </div>
   );
 }
@@ -58,6 +69,7 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
 
   const relBit = (gross: number | null) => {
     if (gross === null) return null;
+    if (gross === 0) return <><b className="rel over">Pickup</b> · </>;
     const [label, cls] = relPar(gross - h.par);
     return <><b className={`rel ${cls}`}>{label}</b> · </>;
   };

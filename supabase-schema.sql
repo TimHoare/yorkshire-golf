@@ -2,12 +2,13 @@
 -- Run this once in your Supabase project: Dashboard → SQL Editor → paste → Run.
 -- Safe to re-run.
 
--- One row per player per hole per round. gross is null when a score is cleared.
+-- One row per player per hole per round. gross is null when a score is cleared;
+-- 0 means the ball was picked up (hole played, no score).
 create table if not exists hole_scores (
   round_id   text not null,
   player_id  text not null,
   hole       smallint not null check (hole between 1 and 18),
-  gross      smallint check (gross between 1 and 20),
+  gross      smallint check (gross between 0 and 20),
   updated_at timestamptz not null default now(),
   primary key (round_id, player_id, hole)
 );
@@ -17,10 +18,16 @@ create table if not exists team_scores (
   round_id   text not null,
   team       smallint not null,
   hole       smallint not null check (hole between 1 and 18),
-  gross      smallint check (gross between 1 and 20),
+  gross      smallint check (gross between 0 and 20),
   updated_at timestamptz not null default now(),
   primary key (round_id, team, hole)
 );
+
+-- Databases created before pickups existed allow only 1–20; widen to 0–20.
+alter table hole_scores drop constraint if exists hole_scores_gross_check;
+alter table hole_scores add constraint hole_scores_gross_check check (gross between 0 and 20);
+alter table team_scores drop constraint if exists team_scores_gross_check;
+alter table team_scores add constraint team_scores_gross_check check (gross between 0 and 20);
 
 -- Hidden-pairs draw per round: the sealed pairs and whether they've been revealed.
 create table if not exists pair_draws (

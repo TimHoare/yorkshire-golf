@@ -72,7 +72,7 @@ export function PlayerPage() {
             const tl = playerTally(S, r.id, pid);
             line.push(<span key="h">CH {courseHandicap(before, r.id)}</span>);
             if (tl.played > 0) {
-              line.push(<span key="s"> · <b>{tl.pts} pts</b>{tl.complete ? ` · ${tl.strokes} strokes` : ` thru ${tl.played}`}</span>);
+              line.push(<span key="s"> · <b>{tl.pts} pts</b>{tl.complete ? ` · ${tl.strokes}${tl.pickups ? '+' : ''} strokes` : ` thru ${tl.played}`}</span>);
               const pl = roundPlace(S, r.id, pid), wp = roundPoints(S, r.id, pid);
               if (status === 'done' && pl) line.push(<span key="p"> · {pl}{['st','nd','rd'][pl - 1] || 'th'} · <b>{trim(wp ?? 0)} week pts</b></span>);
             }

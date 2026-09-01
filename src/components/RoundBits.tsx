@@ -246,7 +246,7 @@ export function Leaderboard({ r }: { r: Round }) {
                 <b>{'pid' in x ? first(x.pid) : gname(x.grp, x.t)}</b>
                 <small>
                   {'pid' in x ? `PH ${phFor(S, x.pid, r.id)}` : x.grp.players.map(first).join(' · ')}
-                  {t.complete ? ` · ${t.strokes} strokes` : ` · thru ${t.played}`}
+                  {t.complete ? ` · ${t.strokes}${t.pickups ? '+' : ''} strokes` : ` · thru ${t.played}`}
                 </small>
               </div>
               <span className="rlb-pts">{t.pts}<small>pts</small></span>
@@ -271,7 +271,7 @@ export function LiveScorecard({ r, group, selHole, onHole }: { r: Round; group: 
   const cell = (row: Tally['rows'][number], key: number) =>
     row.gross === null
       ? <td className="e" key={key}>·</td>
-      : <td key={key} className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.gross}<sup>{row.pts}</sup></td>;
+      : <td key={key} className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.gross === 0 ? 'P' : row.gross}<sup>{row.pts}</sup></td>;
 
   const sumRow = (label: string, from: number, to: number) => (
     <tr className="sum" key={label}>
