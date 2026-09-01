@@ -70,7 +70,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             {me === ORGANISER && <button className="btn danger sm" onClick={doReset}>Clear all scores</button>}
             <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}>Done</button>
           </div>
-          {me !== ORGANISER && <p className="help" style={{ marginTop: 8 }}>Only {pName(ORGANISER)} can clear the week's scores.</p>}
         </div>
       </div>
     </div>
