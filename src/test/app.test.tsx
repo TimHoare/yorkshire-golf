@@ -70,7 +70,7 @@ describe('app flow', () => {
     expect(screen.getByText('6,440 yds')).toBeTruthy();
   });
 
-  it('scoring page: 18 slides, + from empty records par, − marks a pickup', () => {
+  it('scoring page: 18 slides, + from empty records par, − a birdie, 0 a pickup', () => {
     setMe('p6'); // Rob, group 2 of d1
     setGroupDraw('d1', [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']]);
     const { container } = mount('/round/d1/score/1');
@@ -83,16 +83,20 @@ describe('app flow', () => {
     expect((within(robRow).getByPlaceholderText('4') as HTMLInputElement).value).toBe('4'); // hole 1 par 4 → par
     const slide2 = container.querySelector('.slide[data-slide="2"]')!;
     const robRow2 = [...slide2.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Rob'))! as HTMLElement;
-    fireEvent.click(within(robRow2).getByLabelText('No score — picked up'));
-    expect(within(robRow2).getByText('Pickup')).toBeTruthy(); // − from empty = ✕
+    fireEvent.click(within(robRow2).getByLabelText(/One stroke fewer/));
+    expect((within(robRow2).getByPlaceholderText('4') as HTMLInputElement).value).toBe('3'); // birdie
     let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026')!);
     expect(saved.scores.d1.p6[0]).toBe(4);
+    expect(saved.scores.d1.p6[1]).toBe(3);
+    expect(within(robRow2).getByText('Birdie')).toBeTruthy();
+    // typing 0 marks a pickup (hold − does the same); − then clears it
+    fireEvent.change(within(robRow2).getByPlaceholderText('4'), { target: { value: '0' } });
+    expect(within(robRow2).getByText('Pickup')).toBeTruthy();
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026')!);
     expect(saved.scores.d1.p6[1]).toBe(0);
-    // − again clears; + from a pickup goes back to par
     fireEvent.click(within(robRow2).getByLabelText('Undo the X'));
     saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026')!);
     expect(saved.scores.d1.p6[1]).toBeNull();
-    expect((within(robRow2).getByPlaceholderText('4') as HTMLInputElement).value).toBe('');
   });
 
   it("other groups' cards are read-only; watchers can't score at all", () => {

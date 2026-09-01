@@ -19,21 +19,33 @@ type Target = { pid: string } | { team: number };
 
 function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; target: Target; holeIdx: number; gross: number | null; par: number; readOnly: boolean }) {
   const pickup = gross === 0;
-  // + from empty records par, then ±1 per tap; − from empty marks a pickup ✕,
-  // and − again (or stepping below 1) clears back to empty.
+  // from empty: + records par, − a birdie; then ±1 per tap. Holding − marks a
+  // pickup ✕ (typing 0 does too); once picked up, − clears and + restarts at par.
   const step = (d: number) => {
     let next: number | null;
-    if (gross === null) next = d > 0 ? par : 0;
+    if (gross === null) next = d > 0 ? par : par - 1;
     else if (pickup) next = d > 0 ? par : null;
     else next = gross + d < 1 ? null : gross + d;
     setGross(rid, target, holeIdx, next);
   };
+  const holdT = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const held = useRef(false);
+  const holdStart = () => {
+    held.current = false;
+    holdT.current = setTimeout(() => { held.current = true; setGross(rid, target, holeIdx, 0); }, 550);
+  };
+  const holdEnd = () => clearTimeout(holdT.current);
   if (readOnly) {
     return <div className="stepper ro" aria-label="Strokes">{pickup ? '✕' : gross ?? '–'}</div>;
   }
   return (
     <div className="stepper" aria-label="Strokes">
-      <button onClick={() => step(-1)} aria-label={gross === null ? 'No score — picked up' : pickup ? 'Undo the X' : 'One stroke fewer'}>−</button>
+      <button
+        onPointerDown={holdStart} onPointerUp={holdEnd} onPointerLeave={holdEnd}
+        onContextMenu={(e) => e.preventDefault()}
+        onClick={() => { if (held.current) { held.current = false; return; } step(-1); }}
+        aria-label={pickup ? 'Undo the X' : 'One stroke fewer — hold for a pickup'}
+      >−</button>
       {pickup
         ? <span className="pu" aria-label="No score — picked up">✕</span>
         : (
@@ -188,7 +200,7 @@ export function ScoringPage() {
       </div>
       <p className="swipe-hint small muted">
         {canEdit
-          ? 'Swipe between holes · + starts at par, then ±1 · − on an empty score marks a pickup ✕'
+          ? 'Swipe between holes · − and + set the score against par · hold − for a pickup ✕'
           : myGroupIdx < 0
             ? 'Watching only — scores go in on the players’ phones'
             : `${gname(g, group)}’s card — you enter scores for your own ${scramble ? 'team' : 'group'}`}
