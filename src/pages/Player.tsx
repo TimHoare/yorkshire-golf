@@ -55,7 +55,7 @@ export function PlayerPage() {
             const mine = res.rows[pid];
             const tt = res.ts[t];
             if (drawn) line.push(<span key="t">{gname(grp!, t)} · team HCP {teamHandicap(S, r.id, t)}</span>);
-            else line.push(<span key="t">teams to be set</span>);
+            else line.push(<span key="t">Teams to be set</span>);
             if (tt.played > 0) line.push(<span key="s"> · {tt.pts} pts{tt.complete ? '' : ` thru ${tt.played}`}</span>);
             if (mine) line.push(<b key="r"> · {mine.tie ? 'tied' : mine.won ? 'won' : 'lost'} · {trim(mine.points)} week pts</b>);
           } else {

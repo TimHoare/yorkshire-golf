@@ -150,7 +150,7 @@ export function LiveScorecard({ r, group, selHole, onHole }: { r: Round; group: 
             <tr>
               <th>Hole</th><th>Par</th><th>SI</th>
               {cols.map((c, k) => (
-                <th key={k}>{c.label}{!scramble && <span className="ph">hcp {phFor(S, g.players[k], r.id)}</span>}</th>
+                <th key={k}>{c.label}{!scramble && <span className="ph">PH {phFor(S, g.players[k], r.id)}</span>}</th>
               ))}
             </tr>
           </thead>
