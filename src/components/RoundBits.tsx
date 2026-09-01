@@ -1,13 +1,15 @@
 // Round-level widgets shared by pages: format chips, hidden-pairs box,
-// scramble result, and the live gross/points scorecard.
-import { PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
+// scramble result, the round leaderboard, and the live gross/points scorecard.
+import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
-  groupsFor, pairTotals, playerTally, teamTally, phFor, scrambleResults, type Tally,
+  groupsFor, pairTotals, playerTally, stablefordResults, teamTally, phFor, scrambleResults,
+  type Tally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { toast } from '../lib/toast';
+import { Avatar } from './Avatar';
 
 export function FormatChips({ r }: { r: Round }) {
   if (r.format === 'scramble') return <span className="chip gorse">2-man scramble</span>;
@@ -111,6 +113,59 @@ export function ScrambleResult({ r }: { r: Round }) {
         Winners take {RULES.scrambleWin} week points each{res.decided && res.winner === null ? ' — tied, so shared' : ''}.
       </p>
     </div>
+  );
+}
+
+// Live leaderboard for one round: every player across every group, ranked by
+// stableford points as scores land (teams on scramble day). Nothing to poll —
+// it re-renders off the store, which realtime sync keeps current.
+export function Leaderboard({ r }: { r: Round }) {
+  const { S, me } = useStore();
+  const scramble = r.format === 'scramble';
+
+  const teams = scramble
+    ? groupsFor(S, r.id)
+        .map((grp, t) => ({ key: String(t), t, grp, tally: teamTally(S, r.id, t) }))
+        .filter((x) => x.tally.played > 0)
+        .sort((a, b) => b.tally.pts - a.tally.pts)
+        .map((x, k, all) => {
+          const tiedUp = k > 0 && x.tally.pts === all[k - 1].tally.pts;
+          const tiedDown = k + 1 < all.length && x.tally.pts === all[k + 1].tally.pts;
+          const place = tiedUp ? all.findIndex((y) => y.tally.pts === x.tally.pts) + 1 : k + 1;
+          return { ...x, place, tied: tiedUp || tiedDown };
+        })
+    : [];
+  const rows = scramble ? teams : stablefordResults(S, r.id).map((x) => ({ key: x.pid, ...x }));
+
+  if (!rows.length) return null;
+
+  return (
+    <>
+      <div className="section-title"><h2>Leaderboard</h2><span className="eyebrow">live · all {scramble ? 'teams' : 'groups'}</span></div>
+      <div className="lb">
+        {rows.map((x) => {
+          const t = 'tally' in x ? x.tally : x;
+          const place = `${x.place}${x.tied ? '=' : ''}`;
+          const mine = 'pid' in x ? x.pid === me : ('grp' in x && !!me && x.grp.players.includes(me));
+          return (
+            <div className={`lb-row${mine ? ' me' : ''}`} key={x.key}>
+              <span className="lb-place">{place}</span>
+              {'pid' in x
+                ? <Avatar p={PL(x.pid)} size="sm" />
+                : <div className={`team-dot sm t${x.t}`}>{gname(x.grp, x.t).replace('Team ', '')}</div>}
+              <div className="lb-who">
+                <b>{'pid' in x ? first(x.pid) : gname(x.grp, x.t)}</b>
+                <small>
+                  {'pid' in x ? `PH ${phFor(S, x.pid, r.id)}` : x.grp.players.map(first).join(' · ')}
+                  {t.complete ? ` · ${t.strokes} strokes` : ` · thru ${t.played}`}
+                </small>
+              </div>
+              <span className="lb-pts">{t.pts}<small>pts</small></span>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 

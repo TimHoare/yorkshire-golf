@@ -6,7 +6,7 @@ import { courseHandicap, groupsFor, indexBefore, phFor, roundStatus, teamHandica
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
-import { PairsBox, RoundHead, ScrambleResult } from '../components/RoundBits';
+import { Leaderboard, PairsBox, RoundHead, ScrambleResult } from '../components/RoundBits';
 import { GroupsTools } from '../components/GroupsEditor';
 import { BetsSection } from '../components/Bits';
 
@@ -57,6 +57,8 @@ export function RoundPage() {
           </div>
         </div>
       )}
+
+      <Leaderboard r={r} />
 
       <div className="course-facts card">
         <div className="cf"><span className="l">Par</span><b>{r.par}</b></div>
