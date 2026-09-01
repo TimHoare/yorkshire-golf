@@ -99,7 +99,6 @@ export function GroupBet({ r, group, title }: { r: Round; group: number; title?:
     <div className="bet-card card">
       <div className="bet-head">
         <h3>{title ? `${title} · group bet` : 'Group bet'}</h3>
-        <span className="eyebrow">last one pays the lot</span>
       </div>
       {rows.map((x) => (
         <div className="bet-row" key={x.kind}>
