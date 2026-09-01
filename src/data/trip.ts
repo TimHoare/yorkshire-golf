@@ -74,8 +74,9 @@ export const playerIdx = (pid: string) => PLAYERS.findIndex((p) => p.id === pid)
 export const PL = (pid: string) => PLAYERS[playerIdx(pid)];
 export const pName = (pid: string) => PL(pid)?.name || '?';
 export const first = (pid: string) => {
-  const f = pName(pid).split(/\s+/)[0];
-  return PLAYERS.filter((p) => p.name.split(/\s+/)[0] === f).length > 1 ? pName(pid) : f;
+  const parts = pName(pid).split(/\s+/);
+  const shared = PLAYERS.filter((p) => p.name.split(/\s+/)[0] === parts[0]).length > 1;
+  return shared && parts[1] ? `${parts[0]} ${parts[1][0]}` : parts[0];
 };
 export const initials = (p: Player) => {
   const parts = p.name.trim().split(/\s+/);
