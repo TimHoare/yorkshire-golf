@@ -446,14 +446,14 @@ p { margin: 0; }
 .stakes input:focus { border-color: var(--pine); outline: none; }
 
 /* ---------- Round leaderboard ---------- */
-.lb { display: grid; gap: 0; }
-.lb-row { display: grid; grid-template-columns: 26px 28px 1fr auto; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
-.lb-row:last-child { border-bottom: 0; }
-.lb-row.me { background: var(--brass-soft); border-radius: var(--radius-sm); padding-left: 6px; padding-right: 6px; margin: 0 -6px; }
-.lb-place { font-family: var(--serif); font-size: 18px; color: var(--brass); text-align: center; }
-.lb-who { min-width: 0; }
-.lb-who b { display: block; font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lb-who small { display: block; font-size: 11.5px; color: var(--ink-2); }
-.lb-pts { font-weight: 700; font-size: 17px; color: var(--pine); font-variant-numeric: tabular-nums; text-align: right; }
-.lb-pts small { font-size: 9px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 3px; }
+.rlb { display: grid; gap: 0; }
+.rlb-row { display: grid; grid-template-columns: 26px 28px 1fr auto; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rlb-row:last-child { border-bottom: 0; }
+.rlb-row.me { background: var(--brass-soft); border-radius: var(--radius-sm); padding-left: 6px; padding-right: 6px; margin: 0 -6px; }
+.rlb-place { font-family: var(--serif); font-size: 18px; color: var(--brass); text-align: center; }
+.rlb-who { min-width: 0; }
+.rlb-who b { display: block; font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rlb-who small { display: block; font-size: 11.5px; color: var(--ink-2); }
+.rlb-pts { font-weight: 700; font-size: 17px; color: var(--pine); font-variant-numeric: tabular-nums; text-align: right; }
+.rlb-pts small { font-size: 9px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 3px; }
 .team-dot.sm { width: 28px; height: 28px; font-size: 12px; }

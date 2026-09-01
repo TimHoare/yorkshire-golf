@@ -231,25 +231,25 @@ export function Leaderboard({ r }: { r: Round }) {
   return (
     <>
       <div className="section-title"><h2>Leaderboard</h2><span className="eyebrow">live · all {scramble ? 'teams' : 'groups'}</span></div>
-      <div className="lb">
+      <div className="rlb">
         {rows.map((x) => {
           const t = 'tally' in x ? x.tally : x;
           const place = `${x.place}${x.tied ? '=' : ''}`;
           const mine = 'pid' in x ? x.pid === me : ('grp' in x && !!me && x.grp.players.includes(me));
           return (
-            <div className={`lb-row${mine ? ' me' : ''}`} key={x.key}>
-              <span className="lb-place">{place}</span>
+            <div className={`rlb-row${mine ? ' me' : ''}`} key={x.key}>
+              <span className="rlb-place">{place}</span>
               {'pid' in x
                 ? <Avatar p={PL(x.pid)} size="sm" />
                 : <div className={`team-dot sm t${x.t}`}>{gname(x.grp, x.t).replace('Team ', '')}</div>}
-              <div className="lb-who">
+              <div className="rlb-who">
                 <b>{'pid' in x ? first(x.pid) : gname(x.grp, x.t)}</b>
                 <small>
                   {'pid' in x ? `PH ${phFor(S, x.pid, r.id)}` : x.grp.players.map(first).join(' · ')}
                   {t.complete ? ` · ${t.strokes} strokes` : ` · thru ${t.played}`}
                 </small>
               </div>
-              <span className="lb-pts">{t.pts}<small>pts</small></span>
+              <span className="rlb-pts">{t.pts}<small>pts</small></span>
             </div>
           );
         })}
