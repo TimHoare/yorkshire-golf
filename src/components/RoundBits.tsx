@@ -1,5 +1,6 @@
 // Round-level widgets shared by pages: format chips, hidden-pairs box,
 // scramble result, the round leaderboard, and the live gross/points scorecard.
+import { useEffect, useRef, useState } from 'react';
 import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
@@ -32,6 +33,7 @@ function shuffle<T>(a: T[]): T[] {
 export function PairsBox({ r }: { r: Round }) {
   const { S } = useStore();
   const pr = S.pairs[r.id];
+  const [revealing, setRevealing] = useState(false);
 
   const draw = () => {
     const ids = shuffle(PLAYERS.map((p) => p.id));
@@ -41,7 +43,6 @@ export function PairsBox({ r }: { r: Round }) {
     toast('Pairs drawn and sealed');
   };
   const redraw = () => { if (confirm('Redraw the pairs for this round?')) setPairDraw(r.id, null); };
-  const reveal = () => { setPairDraw(r.id, { ...pr!, revealed: true }); toast('Pairs revealed'); };
 
   return (
     <div className="pairs-box">
@@ -58,9 +59,10 @@ export function PairsBox({ r }: { r: Round }) {
             <span><b>{pr.pairs.length} pairs drawn and sealed.</b> Enter everyone's scores, then reveal.</span>
           </div>
           <div className="btn-row">
-            <button className="btn heather" onClick={reveal}>Reveal pairs</button>
+            <button className="btn heather" onClick={() => setRevealing(true)}>Reveal pairs</button>
             <button className="btn ghost sm" onClick={redraw}>Redraw</button>
           </div>
+          {revealing && <RevealSheet r={r} onClose={() => setRevealing(false)} />}
         </>
       ) : (
         <>
@@ -72,17 +74,103 @@ export function PairsBox({ r }: { r: Round }) {
   );
 }
 
+const ordinal = (n: number) => `${n}${['st', 'nd', 'rd'][n - 1] || 'th'}`;
+
+// The reveal ceremony: pairs come out one press at a time from last place up
+// to the winners, names flickering before they land — the same theatre the
+// old group draw had. Sealing shares the reveal to every phone.
+const SPIN_MS = 1400;   // per pair, before it locks
+const TICK0 = 60;       // flicker interval at full speed
+
+function RevealSheet({ r, onClose }: { r: Round; onClose: () => void }) {
+  const { S } = useStore();
+  const rows = pairTotals(S, r.id);            // best first
+  const n = rows.length;
+  const [shown, setShown] = useState(0);       // pairs revealed, counted from the bottom
+  const [spinning, setSpinning] = useState(false);
+  const [flick, setFlick] = useState('');
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const names = PLAYERS.map((p) => first(p.id));
+  const revealNext = () => {
+    if (spinning || shown >= n) return;
+    setSpinning(true);
+    let elapsed = 0;
+    const tick = () => {
+      const speed = TICK0 + Math.pow(elapsed / SPIN_MS, 2) * 240;
+      const a = names[Math.floor(Math.random() * names.length)];
+      let b = a;
+      while (b === a) b = names[Math.floor(Math.random() * names.length)];
+      setFlick(`${a} & ${b}`);
+      elapsed += speed;
+      if (elapsed < SPIN_MS) timer.current = setTimeout(tick, speed);
+      else timer.current = setTimeout(() => { setFlick(''); setSpinning(false); setShown((x) => x + 1); }, 150);
+    };
+    tick();
+  };
+
+  const done = shown >= n;
+  const seal = () => {
+    setPairDraw(r.id, { ...S.pairs[r.id]!, revealed: true });
+    toast('Pairs revealed — on every phone now');
+    onClose();
+  };
+  const nextPlace = n - shown;
+
+  return (
+    <div className="sheet-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="sheet" role="dialog" aria-modal="true">
+        <h2>The reveal</h2>
+        <p className="small muted">Last place first, winners last. Nobody else sees a thing until you seal it.</p>
+        <div className="pair-list">
+          {rows.map((row, k) => {
+            const revealed = k >= n - shown;
+            const isSpinning = spinning && k === n - shown - 1;
+            return (
+              <div className={`pair-item${revealed ? '' : isSpinning ? ' spin' : ' sealed'}`} key={k}>
+                <div className="pair-names">
+                  <span className="rank">{k + 1}</span>
+                  {revealed
+                    ? <span className="names">{first(row.pair[0])}<span>&amp;</span>{first(row.pair[1])}</span>
+                    : isSpinning
+                      ? <span className="flick">{flick || '…'}</span>
+                      : <span className="names tbd">? &amp; ?</span>}
+                </div>
+                {revealed && <span className="pts">{row.total}<small>{row.complete ? 'pts' : 'so far'}</small></span>}
+              </div>
+            );
+          })}
+        </div>
+        <div className="btn-row" style={{ marginTop: 16 }}>
+          {done
+            ? <>
+                <button className="btn heather grow" onClick={seal}>Seal it — show everyone</button>
+                <button className="btn ghost" onClick={onClose}>Close without sealing</button>
+              </>
+            : <>
+                <button className="btn heather grow" onClick={revealNext} disabled={spinning}>
+                  {spinning ? 'Drum roll…' : nextPlace === 1 ? 'Reveal the winners' : `Reveal ${ordinal(nextPlace)} place`}
+                </button>
+                <button className="btn ghost" onClick={onClose}>Cancel</button>
+              </>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PairList({ rid }: { rid: string }) {
   const { S } = useStore();
   return (
     <div className="pair-list">
       {pairTotals(S, rid).map((row, k) => (
         <div className="pair-item" key={k}>
-          <div>
+          <div className="pair-names">
             <span className="rank">{k + 1}</span>
-            <span className="names">{pName(row.pair[0])}<span>&amp;</span>{pName(row.pair[1])}</span>
+            <span className="names">{first(row.pair[0])}<span>&amp;</span>{first(row.pair[1])}</span>
           </div>
-          <span className="pts">{row.complete ? row.total : <span className="muted">{row.total}…</span>}</span>
+          <span className="pts">{row.total}<small>{row.complete ? 'pts' : 'so far'}</small></span>
         </div>
       ))}
     </div>
