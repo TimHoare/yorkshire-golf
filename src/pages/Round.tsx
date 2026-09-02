@@ -2,7 +2,7 @@
 // everyone's course handicaps, the course card, and pairs/scramble widgets.
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname } from '../data/trip';
-import { courseHandicap, groupsFor, indexBefore, phFor, roundStatus, teamHandicap, fmt1 } from '../lib/scoring';
+import { courseHandicap, groupsFor, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, fmt1 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
@@ -25,12 +25,17 @@ export function RoundPage() {
   const status = roundStatus(S, r.id);
   const playing = me && me !== 'watcher' && groups.some((g) => g.players.includes(me));
 
+  // Your playing handicap here, for marking shot holes on the course card
+  // (individual formats only — the scramble plays off a team handicap).
+  const myPh = playing && !scramble ? phFor(S, me!, r.id) : null;
+
   const nine = (label: string, from: number, to: number) => (
     <tr className="sum" key={label}>
       <td>{label}</td>
       <td>{r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td>
       <td>{yardsKnown ? r.holes.slice(from, to).reduce((a, x) => a + (x.yds ?? 0), 0).toLocaleString() : ''}</td>
       <td />
+      {myPh !== null && <td>{r.holes.slice(from, to).reduce((a, x) => a + Math.max(0, shotsOn(myPh, x.si)), 0)}</td>}
     </tr>
   );
 
@@ -94,13 +99,19 @@ export function RoundPage() {
       </div>
       {status === 'none' && <GroupsTools r={r} />}
 
-      <div className="section-title"><h2>Course</h2><span className="eyebrow">{yardsKnown ? r.tees + ' tees' : 'par · stroke index'}</span></div>
+      <div className="section-title"><h2>Course</h2><span className="eyebrow">{yardsKnown ? r.tees + ' tees' : 'par · stroke index'}{myPh !== null ? ` · your shots off PH ${myPh}` : ''}</span></div>
       <div className="sc-wrap">
         <table className="sc course-sc">
-          <thead><tr><th>Hole</th><th>Par</th><th>{yardsKnown ? 'Yards' : ''}</th><th>SI</th></tr></thead>
+          <thead><tr><th>Hole</th><th>Par</th><th>{yardsKnown ? 'Yards' : ''}</th><th>SI</th>{myPh !== null && <th>Shots</th>}</tr></thead>
           <tbody>
             {r.holes.flatMap((h, i) => {
-              const tr = <tr key={h.n}><td>{h.n}</td><td>{h.par}</td><td>{h.yds ?? ''}</td><td>{h.si}</td></tr>;
+              const shots = myPh !== null ? Math.max(0, shotsOn(myPh, h.si)) : 0;
+              const tr = (
+                <tr key={h.n} className={shots ? 'shot-hole' : ''}>
+                  <td>{h.n}</td><td>{h.par}</td><td>{h.yds ?? ''}</td><td>{h.si}</td>
+                  {myPh !== null && <td className="shot-dots">{'●'.repeat(shots)}</td>}
+                </tr>
+              );
               return i === 8 ? [tr, nine('Out', 0, 9)] : [tr];
             })}
             {nine('In', 9, 18)}
