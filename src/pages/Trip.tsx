@@ -39,7 +39,7 @@ export function TripPage() {
       <p className="small muted rules-note">
         Week points {RULES.placePoints.join(' · ')} for 1st–8th each stableford round, ties settled on the back 9, then back 6, then back 3.
         Hidden pairs and the scramble add {RULES.pairPoints.join(' · ')} each for 1st–4th (ties share).
-        Everyone carries a bonus ball — 2× points on one hole a round, +{RULES.bonusKeep} if it survives the trip (lose it and it's gone).
+        Everyone carries a bonus ball — 2× points on one hole a round (lose it there and the 2× is void), +{RULES.bonusKeep} if it survives the trip.
         Handicap index moves ±0.5 per stableford point either side of {RULES.par} after every completed round.
       </p>
     </>

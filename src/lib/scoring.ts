@@ -61,12 +61,13 @@ export function tally(rid: string, gross: HoleScores, ph: number, bonusHole: num
 // ---------- Bonus balls ----------
 const roundIdx = (rid: string) => ROUNDS.findIndex((r) => r.id === rid);
 // The hole (0–17) whose points double for pid this round — null if they
-// haven't played the bonus ball this round, or lost it in an earlier round.
+// haven't played the bonus ball this round, lost it in an earlier round, or
+// lost it this round: losing the ball on its hole voids the 2×, either/or.
 export function bonusHoleFor(S: TripState, rid: string, pid: string): number | null {
   const bb = S.bonus[pid];
   const h = bb?.used[rid];
   if (h === undefined) return null;
-  if (bb.lost && roundIdx(bb.lost) < roundIdx(rid)) return null;
+  if (bb.lost && roundIdx(bb.lost) <= roundIdx(rid)) return null;
   return h;
 }
 // Ball lost in this round or any earlier one → no more 2×s from here on.

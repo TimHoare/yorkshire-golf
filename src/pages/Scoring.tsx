@@ -89,7 +89,8 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
   const bits: string[] = [];
   for (const pid of players) {
     const bb = rec(pid);
-    if (bb.used[r.id] !== undefined && !bonusGoneBy(S, r.id, pid)) bits.push(`${first(pid)} · ${bb.used[r.id] + 1}`);
+    if (bb.used[r.id] !== undefined && !bonusGoneBy(S, r.id, pid) && bb.lost !== r.id)
+      bits.push(`${first(pid)} · ${bb.used[r.id] + 1}`);
     if (bb.lost) bits.push(`${first(pid)} ✕`);
   }
 
@@ -115,8 +116,8 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
                   <Avatar p={PL(pid)} size="sm" />
                   <span className="bit-pn">
                     {first(pid)}
-                    {here && <span className="chip gorse">2× here</span>}
-                    {!here && usedHole !== undefined && <span className="chip">2× on {usedHole + 1}</span>}
+                    {here && !lostHere && <span className="chip gorse">2× here</span>}
+                    {!here && !lostHere && usedHole !== undefined && <span className="chip">2× on {usedHole + 1}</span>}
                     {(gone || lostHere) && (
                       <span className="chip">
                         Lost{gone && bb.lost ? ` at ${R(bb.lost)?.short}` : lostHere && !here && usedHole !== undefined ? ` on ${usedHole + 1}` : ''}

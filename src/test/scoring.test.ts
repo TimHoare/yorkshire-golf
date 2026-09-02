@@ -186,13 +186,16 @@ describe('bonus balls', () => {
     expect(doubled.rows[1].pts).toBe(plain.rows[1].pts);
     expect(doubled.pts).toBe(plain.pts + (plain.rows[0].pts ?? 0));
   });
-  it('a ball lost in an earlier round cannot double later', () => {
+  it('a lost ball never doubles: not the round it was lost, nor later', () => {
     const S = defaultState();
     S.bonus.p1 = { used: { d1: 4, d2: 7 }, lost: 'd1' };
-    expect(bonusHoleFor(S, 'd1', 'p1')).toBe(4);  // usable the round it was lost
+    expect(bonusHoleFor(S, 'd1', 'p1')).toBeNull(); // lost on its hole → 2× void, either/or
     expect(bonusHoleFor(S, 'd2', 'p1')).toBeNull();
     expect(bonusGoneBy(S, 'd2', 'p1')).toBe(true);
     expect(bonusGoneBy(S, 'd1', 'p1')).toBe(false);
+    // still in play before it's lost
+    S.bonus.p2 = { used: { d1: 4 }, lost: 'd2' };
+    expect(bonusHoleFor(S, 'd1', 'p2')).toBe(4);
   });
   it('+5 for a kept ball, only once every round is in', () => {
     const S = defaultState();
