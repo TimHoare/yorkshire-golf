@@ -35,7 +35,7 @@ export const ROUNDS: Round[] = [
       { tee: '12:36', name: 'Team A', players: ['p1','p3'] }, { tee: '12:36', name: 'Team B', players: ['p5','p7'] },
       { tee: '12:44', name: 'Team C', players: ['p2','p4'] }, { tee: '12:44', name: 'Team D', players: ['p6','p8'] },
     ] },
-  { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Beverley & East Riding Golf Club', short: 'Beverley', town: 'Beverley, East Riding',  format: 'stableford', pairs: true,  par: 69, cr: 68.1, slope: 120, tees: 'yellow',
+  { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Beverley & East Riding Golf Club', short: 'Beverley', town: 'Beverley, East Riding',  format: 'stableford', pairs: false, par: 69, cr: 68.1, slope: 120, tees: 'yellow',
     address: 'Anti Mill, The Westwood, Beverley, HU17 8RG',
     holes: card([4,4,5,3,4,3,4,3,4, 4,4,4,4,4,5,3,4,3], [11,3,13,7,9,17,1,15,5, 14,16,10,8,2,12,6,4,18], [333,435,558,183,319,178,402,171,362, 320,315,316,301,337,477,186,324,136]),
     groups: [{ tee: 'TBC', players: ['p1','p6','p4','p7'] }, { tee: 'TBC', players: ['p2','p5','p3','p8'] }] },
