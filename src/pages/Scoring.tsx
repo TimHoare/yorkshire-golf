@@ -73,11 +73,13 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
   const [open, setOpen] = useState(false);
   const rec = (pid: string): BonusBall => S.bonus[pid] ?? { used: {}, lost: null };
 
+  // The ball is only in play on its nominated hole, so that's the only place
+  // it can be lost — and un-nominating the hole unwinds a loss marked there.
   const use = (pid: string, h: number | null) => {
     const bb = rec(pid);
     const used = { ...bb.used };
     if (h === null) delete used[r.id]; else used[r.id] = h;
-    setBonusBall(pid, { ...bb, used });
+    setBonusBall(pid, { used, lost: bb.lost === r.id ? null : bb.lost });
   };
   const toggleLost = (pid: string) => {
     const bb = rec(pid);
@@ -115,16 +117,22 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
                     {first(pid)}
                     {here && <span className="chip gorse">2× here</span>}
                     {!here && usedHole !== undefined && <span className="chip">2× on {usedHole + 1}</span>}
-                    {(gone || lostHere) && <span className="chip">Lost{gone && bb.lost ? ` at ${R(bb.lost)?.short}` : ''}</span>}
+                    {(gone || lostHere) && (
+                      <span className="chip">
+                        Lost{gone && bb.lost ? ` at ${R(bb.lost)?.short}` : lostHere && !here && usedHole !== undefined ? ` on ${usedHole + 1}` : ''}
+                      </span>
+                    )}
                   </span>
-                  {gone || readOnly ? null : (
+                  {gone || readOnly || (lostHere && !here) ? null : (
                     <span className="btn-row" style={{ gap: 6 }}>
                       <button className={`btn sm ${here ? 'heather' : 'ghost'}`} onClick={() => use(pid, here ? null : holeIdx)}>
                         {here ? 'Undo 2×' : usedHole !== undefined ? `Move 2× here` : '2× this hole'}
                       </button>
-                      <button className={`btn sm ${lostHere ? 'gorse' : 'ghost'}`} onClick={() => toggleLost(pid)}>
-                        {lostHere ? 'Not lost' : 'Lost it'}
-                      </button>
+                      {here && (
+                        <button className={`btn sm ${lostHere ? 'gorse' : 'ghost'}`} onClick={() => toggleLost(pid)}>
+                          {lostHere ? 'Not lost' : 'Lost it'}
+                        </button>
+                      )}
                     </span>
                   )}
                 </div>
