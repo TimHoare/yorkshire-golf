@@ -10,6 +10,12 @@ export interface HoleBits { counts: Record<string, number>; last: string | null 
 export type BitSheet = Partial<Record<BitKind, (HoleBits | null)[]>>;
 export type Stakes = Record<BitKind, number>;            // pence per one
 
+// Bonus balls: one per player for the whole trip. used[rid] = the hole index
+// (0–17) they played it on that round (that hole's points double); lost = the
+// round it was lost in, if it was — no more 2×s after that round, and no +5
+// for keeping it to the end.
+export interface BonusBall { used: Record<string, number>; lost: string | null }
+
 export interface TripState {
   v: 3;
   scores: Record<string, Record<string, HoleScores>>;    // scores[rid][pid] = 18 gross
@@ -18,6 +24,7 @@ export interface TripState {
   groups: Record<string, string[][]>;                    // groups[rid] = player ids per group, overriding the placeholder draw
   bits: Record<string, Record<number, BitSheet>>;        // bits[rid][group][kind] = 18 hole logs
   stakes: Stakes;                                        // pence per cuckoo/camel/fish/three-putt
+  bonus: Record<string, BonusBall>;                      // bonus[pid] = bonus-ball record
 }
 
 export const STORE_KEY = 'yorkshire-golf-2026';
@@ -27,7 +34,7 @@ export const ROUTE_KEY = STORE_KEY + '-route';
 
 export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
 export function defaultState(): TripState {
-  return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes() };
+  return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes(), bonus: {} };
 }
 // Normalise a hole array to exactly 18 entries of number-or-null.
 const pad18 = (a: unknown): HoleScores =>
@@ -82,6 +89,17 @@ export const cleanStakes = (s: unknown): Stakes => {
   return d;
 };
 
+export const cleanBonusBall = (v: unknown): BonusBall => {
+  const o = (v && typeof v === 'object' ? v : {}) as { used?: unknown; lost?: unknown };
+  const used: Record<string, number> = {};
+  if (o.used && typeof o.used === 'object')
+    for (const [rid, h] of Object.entries(o.used as Record<string, unknown>))
+      if (typeof h === 'number' && h >= 0 && h <= 17) used[rid] = Math.round(h);
+  return { used, lost: typeof o.lost === 'string' ? o.lost : null };
+};
+const cleanBonus = (b: unknown): TripState['bonus'] =>
+  Object.fromEntries(Object.entries((b as Record<string, unknown>) || {}).map(([pid, v]) => [pid, cleanBonusBall(v)]));
+
 const cleanGroups = (g: unknown): Record<string, string[][]> =>
   Object.fromEntries(Object.entries((g as Record<string, unknown>) || {}).filter(([, v]) =>
     Array.isArray(v) && v.every((grp) => Array.isArray(grp) && grp.every((pid) => typeof pid === 'string')))) as Record<string, string[][]>;
@@ -98,6 +116,7 @@ export function migrate(s: unknown): TripState {
     groups: cleanGroups(o.groups),
     bits: cleanBits(o.bits),
     stakes: cleanStakes(o.stakes),
+    bonus: cleanBonus(o.bonus),
   };
 }
 export function loadState(): TripState {

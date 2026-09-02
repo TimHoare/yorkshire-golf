@@ -1,7 +1,7 @@
 // One player's page: their indexes, and how their week is going round by round.
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { BITS, PL, gname } from '../data/trip';
+import { BITS, PL, R, gname } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
   courseHandicap, fmt1, groupsFor, indexHistory, playerBitTotal, playerTally, roundPlace,
@@ -49,6 +49,10 @@ export function PlayerPage() {
             <b><span aria-hidden>{BITS[k].icon}</span> {playerBitTotal(S, pid, k)}</b>
           </div>
         ))}
+        <div className="cf">
+          <span className="l">Bonus ball</span>
+          <b><span aria-hidden>🎱</span> {S.bonus[pid]?.lost ? `Lost at ${R(S.bonus[pid].lost!)?.short ?? '?'}` : st.bonusKept ? 'Kept · +5' : 'In play'}</b>
+        </div>
       </div>
 
       <div className="section-title"><h2>The week</h2><span className="eyebrow">tap a round</span></div>

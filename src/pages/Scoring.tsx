@@ -5,12 +5,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
-  firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally, relPar,
-  teamHandicap, teamHoles, teamTally,
+  bonusGoneBy, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
+  relPar, teamHandicap, teamHoles, teamTally,
 } from '../lib/scoring';
-import { setGross } from '../lib/store';
+import { setBonusBall, setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
-import type { TripState } from '../lib/state';
+import type { BonusBall, TripState } from '../lib/state';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { LiveScorecard } from '../components/RoundBits';
@@ -60,6 +60,79 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
           />
         )}
       <button onClick={() => step(1)} aria-label="One stroke more">+</button>
+    </div>
+  );
+}
+
+// Bonus balls, one per player for the trip: play it on one hole a round for
+// double points; mark it lost and it's gone for good (+5 at the end if kept).
+// One collapsible row per slide, in the style of the side-bet panel.
+function BonusPanel({ S, r, players, holeIdx, readOnly }: {
+  S: TripState; r: Round; players: string[]; holeIdx: number; readOnly: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const rec = (pid: string): BonusBall => S.bonus[pid] ?? { used: {}, lost: null };
+
+  const use = (pid: string, h: number | null) => {
+    const bb = rec(pid);
+    const used = { ...bb.used };
+    if (h === null) delete used[r.id]; else used[r.id] = h;
+    setBonusBall(pid, { ...bb, used });
+  };
+  const toggleLost = (pid: string) => {
+    const bb = rec(pid);
+    setBonusBall(pid, { ...bb, lost: bb.lost === r.id ? null : r.id });
+  };
+
+  const bits: string[] = [];
+  for (const pid of players) {
+    const bb = rec(pid);
+    if (bb.used[r.id] !== undefined && !bonusGoneBy(S, r.id, pid)) bits.push(`${first(pid)} · ${bb.used[r.id] + 1}`);
+    if (bb.lost) bits.push(`${first(pid)} ✕`);
+  }
+
+  return (
+    <div className="bits">
+      <div className="bit">
+        <button className="bit-row" onClick={() => setOpen(!open)} aria-expanded={open}>
+          <span className="bit-ic" aria-hidden>🎱</span>
+          <span className="bit-l"><b>Bonus balls</b><small>2× one hole a round</small></span>
+          <span className="bit-sum">{bits.join(' · ')}</span>
+          <span className={`bit-n${bits.length ? '' : ' off'}`}>{bits.length || '–'}</span>
+        </button>
+        {open && (
+          <div className="bit-edit">
+            {players.map((pid) => {
+              const bb = rec(pid);
+              const gone = bonusGoneBy(S, r.id, pid);
+              const usedHole = gone ? undefined : bb.used[r.id];
+              const here = usedHole === holeIdx;
+              const lostHere = bb.lost === r.id;
+              return (
+                <div className="bit-p" key={pid}>
+                  <Avatar p={PL(pid)} size="sm" />
+                  <span className="bit-pn">
+                    {first(pid)}
+                    {here && <span className="chip gorse">2× here</span>}
+                    {!here && usedHole !== undefined && <span className="chip">2× on {usedHole + 1}</span>}
+                    {(gone || lostHere) && <span className="chip">Lost{gone && bb.lost ? ` at ${R(bb.lost)?.short}` : ''}</span>}
+                  </span>
+                  {gone || readOnly ? null : (
+                    <span className="btn-row" style={{ gap: 6 }}>
+                      <button className={`btn sm ${here ? 'heather' : 'ghost'}`} onClick={() => use(pid, here ? null : holeIdx)}>
+                        {here ? 'Undo 2×' : usedHole !== undefined ? `Move 2× here` : '2× this hole'}
+                      </button>
+                      <button className={`btn sm ${lostHere ? 'gorse' : 'ghost'}`} onClick={() => toggleLost(pid)}>
+                        {lostHere ? 'Not lost' : 'Lost it'}
+                      </button>
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -117,11 +190,12 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
               return row(
                 <Avatar p={PL(pid)} />,
                 first(pid),
-                <>{relBit(tr.gross)}{tr.shots ? shotsBit(tr.shots) : 'No shot · '}{t.pts} pts thru {t.played}</>,
+                <>{tr.bonus && <><b className="rel under">2× bonus</b> · </>}{relBit(tr.gross)}{tr.shots ? shotsBit(tr.shots) : 'No shot · '}{t.pts} pts thru {t.played}</>,
                 { pid }, tr.gross, tr.pts,
               );
             })}
       </div>
+      {!scramble && <BonusPanel S={S} r={r} players={g.players} holeIdx={i} readOnly={readOnly} />}
       <HoleBitsPanel rid={r.id} group={group} holeIdx={i}
         players={scramble ? flightsFor(S, r.id)[group].players : g.players} readOnly={readOnly} />
     </section>

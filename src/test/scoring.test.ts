@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultState, migrate } from '../lib/state';
 import {
-  blank18, countback, courseHandicap, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
+  blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
   holePoints, pairPointsFor, pairTotals, playerBitTotal, roundPoints, scrambleResults, shotsOn,
   stablefordResults, standings, tally,
 } from '../lib/scoring';
@@ -174,6 +174,36 @@ describe('side bets', () => {
     expect(fmtMoney(10)).toBe('10p');
     expect(fmtMoney(100)).toBe('£1.00');
     expect(fmtMoney(230)).toBe('£2.30');
+  });
+});
+
+describe('bonus balls', () => {
+  it('doubles the points on the nominated hole only', () => {
+    const plain = tally('d1', filled(4), 0);
+    const doubled = tally('d1', filled(4), 0, 0);
+    expect(doubled.rows[0].pts).toBe((plain.rows[0].pts ?? 0) * 2);
+    expect(doubled.rows[0].bonus).toBe(true);
+    expect(doubled.rows[1].pts).toBe(plain.rows[1].pts);
+    expect(doubled.pts).toBe(plain.pts + (plain.rows[0].pts ?? 0));
+  });
+  it('a ball lost in an earlier round cannot double later', () => {
+    const S = defaultState();
+    S.bonus.p1 = { used: { d1: 4, d2: 7 }, lost: 'd1' };
+    expect(bonusHoleFor(S, 'd1', 'p1')).toBe(4);  // usable the round it was lost
+    expect(bonusHoleFor(S, 'd2', 'p1')).toBeNull();
+    expect(bonusGoneBy(S, 'd2', 'p1')).toBe(true);
+    expect(bonusGoneBy(S, 'd1', 'p1')).toBe(false);
+  });
+  it('+5 for a kept ball, only once every round is in', () => {
+    const S = defaultState();
+    const pids = ['p1','p2','p3','p4','p5','p6','p7','p8'];
+    for (const rid of ['d1','d2','d4','d5']) S.scores[rid] = Object.fromEntries(pids.map((pid) => [pid, filled(5)]));
+    S.bonus.p1 = { used: {}, lost: 'd2' };
+    // trip not finished: no +5 for anyone yet
+    expect(standings(S).every((r) => r.bonusKept === 0)).toBe(true);
+    S.scramble.d3 = { 0: filled(5), 1: filled(5), 2: filled(5), 3: filled(5) };
+    const st = standings(S);
+    for (const row of st) expect(row.bonusKept).toBe(row.pid === 'p1' ? 0 : 5);
   });
 });
 

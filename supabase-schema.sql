@@ -49,12 +49,26 @@ create table if not exists group_draws (
 create table if not exists bit_events (
   round_id   text not null,
   grp        smallint not null,
-  kind       text not null check (kind in ('cuckoo','camel','fish','threeputt')),
+  kind       text not null check (kind in ('cuckoo','camel','fish','threeputt','lostball')),
   hole       smallint not null check (hole between 1 and 18),
   counts     jsonb not null default '{}',
   last_pid   text,
   updated_at timestamptz not null default now(),
   primary key (round_id, grp, kind, hole)
+);
+
+-- Databases created before lost balls existed only allow the original four kinds.
+alter table bit_events drop constraint if exists bit_events_kind_check;
+alter table bit_events add constraint bit_events_kind_check check (kind in ('cuckoo','camel','fish','threeputt','lostball'));
+
+-- Bonus balls: one row per player for the whole trip. used = { round_id: hole
+-- index 0–17 } where the 2× was played each round; lost_round = the round the
+-- ball was lost in (null while still in play).
+create table if not exists bonus_balls (
+  player_id  text primary key,
+  used       jsonb not null default '{}',
+  lost_round text,
+  updated_at timestamptz not null default now()
 );
 
 -- Side-bet stakes (pence each), one shared row edited from app settings.
@@ -73,6 +87,7 @@ alter table pair_draws  enable row level security;
 alter table group_draws enable row level security;
 alter table bit_events  enable row level security;
 alter table stakes      enable row level security;
+alter table bonus_balls enable row level security;
 
 drop policy if exists "open access" on hole_scores;
 create policy "open access" on hole_scores for all using (true) with check (true);
@@ -86,6 +101,8 @@ drop policy if exists "open access" on bit_events;
 create policy "open access" on bit_events for all using (true) with check (true);
 drop policy if exists "open access" on stakes;
 create policy "open access" on stakes for all using (true) with check (true);
+drop policy if exists "open access" on bonus_balls;
+create policy "open access" on bonus_balls for all using (true) with check (true);
 
 -- Realtime: broadcast row changes to connected phones.
 do $$
@@ -116,5 +133,10 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table stakes;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table bonus_balls;
 exception when duplicate_object then null;
 end $$;

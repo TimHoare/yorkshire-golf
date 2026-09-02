@@ -37,16 +37,19 @@ export const isPickup = (gross: number | null) => gross === 0;
 export const holePoints = (gross: number | null, par: number, shots: number) =>
   gross === null ? null : gross === 0 ? 0 : Math.max(0, 2 + par + shots - gross);
 
-export interface TallyRow { n: number; par: number; si: number; yds: number | null; shots: number; gross: number | null; pts: number | null }
+export interface TallyRow { n: number; par: number; si: number; yds: number | null; shots: number; gross: number | null; pts: number | null; bonus?: boolean }
 export interface Tally { rows: TallyRow[]; played: number; pts: number; strokes: number; pickups: number; complete: boolean }
 
-// Per-hole breakdown for a set of 18 gross scores.
-export function tally(rid: string, gross: HoleScores, ph: number): Tally {
+// Per-hole breakdown for a set of 18 gross scores. bonusHole (0–17) is the
+// hole the player's bonus ball doubles, if they played it this round.
+export function tally(rid: string, gross: HoleScores, ph: number, bonusHole: number | null = null): Tally {
   const r = R(rid)!;
   const rows = r.holes.map((h, i) => {
     const shots = shotsOn(ph, h.si);
     const g = gross[i];
-    return { ...h, shots, gross: g, pts: holePoints(g, h.par, shots) };
+    const base = holePoints(g, h.par, shots);
+    const bonus = i === bonusHole;
+    return { ...h, shots, gross: g, pts: bonus && base !== null ? base * 2 : base, bonus };
   });
   const played = rows.filter((x) => x.gross !== null).length;
   const pts = rows.reduce((a, x) => a + (x.pts ?? 0), 0);
@@ -55,7 +58,25 @@ export function tally(rid: string, gross: HoleScores, ph: number): Tally {
   return { rows, played, pts, strokes, pickups, complete: played === 18 };
 }
 
+// ---------- Bonus balls ----------
+const roundIdx = (rid: string) => ROUNDS.findIndex((r) => r.id === rid);
+// The hole (0–17) whose points double for pid this round — null if they
+// haven't played the bonus ball this round, or lost it in an earlier round.
+export function bonusHoleFor(S: TripState, rid: string, pid: string): number | null {
+  const bb = S.bonus[pid];
+  const h = bb?.used[rid];
+  if (h === undefined) return null;
+  if (bb.lost && roundIdx(bb.lost) < roundIdx(rid)) return null;
+  return h;
+}
+// Ball lost in this round or any earlier one → no more 2×s from here on.
+export const bonusGoneBy = (S: TripState, rid: string, pid: string): boolean => {
+  const lost = S.bonus[pid]?.lost;
+  return !!lost && roundIdx(lost) < roundIdx(rid);
+};
+
 // Index entering each round: −0.5 per point over 32 for every completed stableford round before it.
+// Uses raw points — the bonus-ball doubling counts for the competition, not the handicap.
 export function indexHistory(S: TripState, pid: string) {
   const p = PL(pid);
   const out: { round: Round; before: number; after: number; applied: boolean }[] = [];
@@ -81,7 +102,7 @@ export const indexBefore = (S: TripState, pid: string, rid: string) =>
 export const phFor = (S: TripState, pid: string, rid: string) =>
   playingHandicap(indexBefore(S, pid, rid), rid);
 export const playerTally = (S: TripState, rid: string, pid: string) =>
-  tally(rid, holesOf(S, rid, pid), phFor(S, pid, rid));
+  tally(rid, holesOf(S, rid, pid), phFor(S, pid, rid), bonusHoleFor(S, rid, pid));
 
 // Scramble team playing handicap: 35/15 % of the members' course handicaps, lowest first.
 export function teamHandicap(S: TripState, rid: string, t: number) {
@@ -152,8 +173,10 @@ export function roundPoints(S: TripState, rid: string, pid: string): number | nu
 export const roundPlace = (S: TripState, rid: string, pid: string) =>
   stablefordResults(S, rid).find((x) => x.pid === pid)?.place ?? null;
 
-export interface StandingsRow { pid: string; i: number; pts: number; stab: number; played: number; rank: number }
+export interface StandingsRow { pid: string; i: number; pts: number; stab: number; played: number; rank: number; bonusKept: number }
 export function standings(S: TripState): StandingsRow[] {
+  // +5 for a bonus ball that survives the whole trip, added once every round is in.
+  const tripDone = ROUNDS.every((r) => roundStatus(S, r.id) === 'done');
   const rows = PLAYERS.map((p, i) => {
     let pts = 0, stab = 0, played = 0;
     for (const r of ROUNDS) {
@@ -161,7 +184,8 @@ export function standings(S: TripState): StandingsRow[] {
       if (rp !== null) { pts += rp; played++; }
       if (r.format === 'stableford') stab += playerTally(S, r.id, p.id).pts;
     }
-    return { pid: p.id, i, pts, stab, played, rank: 0 };
+    const bonusKept = tripDone && !S.bonus[p.id]?.lost ? RULES.bonusKeep : 0;
+    return { pid: p.id, i, pts: pts + bonusKept, stab, played, rank: 0, bonusKept };
   });
   rows.sort((a, b) => b.pts - a.pts || b.stab - a.stab || a.i - b.i);
   let rank = 0;

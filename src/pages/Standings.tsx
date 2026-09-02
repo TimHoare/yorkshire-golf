@@ -67,13 +67,13 @@ export function StandingsPage() {
                   const rp = roundPoints(S, rd.id, row.pid);
                   return <td key={rd.id}>{t.played === 0 ? '·' : <>{t.pts}{t.complete ? '' : '*'} <span className="pt">({trim(rp ?? 0)})</span></>}</td>;
                 })}
-                <td><b>{trim(row.pts)}</b></td>
+                <td><b>{trim(row.pts)}</b>{row.bonusKept > 0 && <span className="pt"> 🎱</span>}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="small muted" style={{ marginTop: 6 }}>* round in progress</p>
+      <p className="small muted" style={{ marginTop: 6 }}>* round in progress · 🎱 bonus ball kept all trip: +5 in the total, added once the last round is in</p>
     </>
   );
 }
