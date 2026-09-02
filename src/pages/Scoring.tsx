@@ -127,8 +127,10 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
                       </span>
                     )}
                   </span>
-                  {gone || readOnly || (lostHere && !here) ? null : (
-                    // Either/or: Used doubles this hole, Lost voids it — one lit at a time.
+                  {gone || readOnly || (usedHole !== undefined && !here) ? null : (
+                    // Either/or: Used doubles this hole, Lost voids it — one lit at a
+                    // time. Once committed to a hole the buttons only appear there
+                    // (to fix a mis-tap); no reselecting elsewhere in the round.
                     <span className="btn-row" style={{ gap: 6 }}>
                       <button className={`btn sm ${here && !lostHere ? 'heather' : 'ghost'}`}
                         onClick={() => use(pid, here && !lostHere ? null : holeIdx)}>Used</button>
