@@ -81,9 +81,11 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
     if (h === null) delete used[r.id]; else used[r.id] = h;
     setBonusBall(pid, { used, lost: bb.lost === r.id ? null : bb.lost });
   };
+  // Lost implies played here — marking it nominates the hole too, and voids the 2×.
   const toggleLost = (pid: string) => {
     const bb = rec(pid);
-    setBonusBall(pid, { ...bb, lost: bb.lost === r.id ? null : r.id });
+    if (bb.lost === r.id) setBonusBall(pid, { ...bb, lost: null });
+    else setBonusBall(pid, { used: { ...bb.used, [r.id]: holeIdx }, lost: r.id });
   };
 
   const bits: string[] = [];
@@ -116,7 +118,6 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
                   <Avatar p={PL(pid)} size="sm" />
                   <span className="bit-pn">
                     {first(pid)}
-                    {here && !lostHere && <span className="chip gorse">2× here</span>}
                     {!here && !lostHere && usedHole !== undefined && <span className="chip">2× on {usedHole + 1}</span>}
                     {(gone || lostHere) && (
                       <span className="chip">
@@ -126,17 +127,13 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
                       </span>
                     )}
                   </span>
-                  {gone || readOnly || (lostHere && !here) ? null : lostHere ? (
-                    // Lost replaces the 2× — one way back, no doubled state alongside.
-                    <button className="btn sm gorse" onClick={() => toggleLost(pid)}>Found it — back to 2×</button>
-                  ) : (
+                  {gone || readOnly || (lostHere && !here) ? null : (
+                    // Either/or: Used doubles this hole, Lost voids it — one lit at a time.
                     <span className="btn-row" style={{ gap: 6 }}>
-                      <button className={`btn sm ${here ? 'heather' : 'ghost'}`} onClick={() => use(pid, here ? null : holeIdx)}>
-                        {here ? 'Undo 2×' : usedHole !== undefined ? `Move 2× here` : '2× this hole'}
-                      </button>
-                      {here && (
-                        <button className="btn sm ghost" onClick={() => toggleLost(pid)}>Lost it — voids the 2×</button>
-                      )}
+                      <button className={`btn sm ${here && !lostHere ? 'heather' : 'ghost'}`}
+                        onClick={() => use(pid, here && !lostHere ? null : holeIdx)}>Used</button>
+                      <button className={`btn sm ${lostHere ? 'gorse' : 'ghost'}`}
+                        onClick={() => toggleLost(pid)}>Lost</button>
                     </span>
                   )}
                 </div>
