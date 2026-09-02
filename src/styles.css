@@ -93,13 +93,15 @@ p { margin: 0; }
 .chip.gorse { background: var(--gorse-soft); color: var(--gorse); }
 .chip.ghost { background: var(--soft); color: var(--ink-2); }
 
-/* ---------- Countdown (trip page, until the first tee) ---------- */
-.countdown { background: var(--pine); border-radius: var(--radius); padding: 16px 18px 14px; margin: 4px 0 18px; box-shadow: var(--shadow); }
-.countdown .eyebrow { color: #CFC29B; }
-.cd-row { display: flex; gap: 26px; margin-top: 8px; }
-.cd-cell { display: flex; flex-direction: column; }
-.cd-cell .v { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1; color: var(--brass-soft); }
-.cd-cell .l { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: #93A695; margin-top: 4px; }
+/* ---------- Countdown (trip page, until the first tee) ----------
+   A quiet clubhouse plaque: cream card, hairline rules, serif pine numerals. */
+.countdown { text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 12px 12px; margin: 4px 0 18px; }
+.countdown .eyebrow { color: var(--brass); display: inline-block; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.cd-row { display: flex; justify-content: center; margin-top: 10px; }
+.cd-cell { flex: 0 1 78px; min-width: 62px; display: flex; flex-direction: column; align-items: center; }
+.cd-cell + .cd-cell { border-left: 1px solid var(--line); }
+.cd-cell .v { font-family: var(--serif); font-weight: 400; font-size: 36px; line-height: 1; color: var(--pine); }
+.cd-cell .l { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-2); margin-top: 4px; }
 
 /* ---------- Itinerary ---------- */
 .itin { display: grid; gap: 0; }

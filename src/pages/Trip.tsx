@@ -11,12 +11,13 @@ const TRIP_START = new Date(2026, 8, 7, 12, 28);
 function Countdown() {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 30_000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const mins = Math.floor((TRIP_START.getTime() - now) / 60000);
-  if (mins < 0) return null;   // trip's underway — the rounds list takes over
-  const d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), m = mins % 60;
+  const secs = Math.floor((TRIP_START.getTime() - now) / 1000);
+  if (secs < 0) return null;   // trip's underway — the rounds list takes over
+  const d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600),
+    m = Math.floor((secs % 3600) / 60), s = secs % 60;
   const cell = (v: number, l: string) => (
     <div className="cd-cell" key={l}><span className="v">{v}</span><span className="l">{l}</span></div>
   );
@@ -27,6 +28,7 @@ function Countdown() {
         {d > 0 && cell(d, d === 1 ? 'day' : 'days')}
         {cell(h, h === 1 ? 'hour' : 'hours')}
         {cell(m, m === 1 ? 'min' : 'mins')}
+        {cell(s, 'secs')}
       </div>
     </div>
   );
