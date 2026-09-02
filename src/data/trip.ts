@@ -1,7 +1,7 @@
 // Everything fixed about the trip. Course data is the real thing: men's yellow
 // tees from each club's published scorecard (par / yards / SI verified to sum).
-// Tee times are confirmed for Elsham, Ganton and York; Beverley's are TBC.
-// Cave Castle times and all groups are placeholders — check the tee sheet.
+// Tee times are confirmed for Elsham, Ganton, Cave Castle and York;
+// Beverley's are TBC. All groups are placeholders — check the tee sheet.
 import type { BitKind } from '../lib/state';
 
 export interface Hole { n: number; par: number; si: number; yds: number | null }
@@ -32,8 +32,8 @@ export const ROUNDS: Round[] = [
     address: 'Church Hill, South Cave, HU15 2EU',
     holes: card([4,5,5,4,3,4,4,4,4, 4,4,4,5,3,4,4,3,4], [18,16,10,4,12,2,6,14,8, 1,3,7,9,15,13,11,17,5], [274,459,459,357,187,396,341,367,386, 453,453,383,513,137,326,315,136,327]),
     groups: [
-      { tee: '12:00', name: 'Team A', players: ['p1','p3'] }, { tee: '12:00', name: 'Team B', players: ['p5','p7'] },
-      { tee: '12:10', name: 'Team C', players: ['p2','p4'] }, { tee: '12:10', name: 'Team D', players: ['p6','p8'] },
+      { tee: '12:36', name: 'Team A', players: ['p1','p3'] }, { tee: '12:36', name: 'Team B', players: ['p5','p7'] },
+      { tee: '12:44', name: 'Team C', players: ['p2','p4'] }, { tee: '12:44', name: 'Team D', players: ['p6','p8'] },
     ] },
   { id: 'd4', n: 4, dow: 'Thu', dnum: 10, mon: 'Sept', club: 'Beverley & East Riding Golf Club', short: 'Beverley', town: 'Beverley, East Riding',  format: 'stableford', pairs: true,  par: 69, cr: 68.1, slope: 120, tees: 'yellow',
     address: 'Anti Mill, The Westwood, Beverley, HU17 8RG',
