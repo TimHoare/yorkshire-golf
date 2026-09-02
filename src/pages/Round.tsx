@@ -2,7 +2,7 @@
 // everyone's course handicaps, the course card, and pairs/scramble widgets.
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname } from '../data/trip';
-import { courseHandicap, groupsFor, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, fmt1 } from '../lib/scoring';
+import { courseHandicap, groupsFor, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
@@ -17,8 +17,10 @@ export function RoundPage() {
   if (!r) return <Navigate to="/trip" replace />;
 
   const scramble = r.format === 'scramble';
-  const yardsKnown = r.holes.every((h) => h.yds);
-  const totalYds = yardsKnown ? r.holes.reduce((a, h) => a + (h.yds ?? 0), 0) : null;
+  const tee = teeFor(S, r.id);   // the tees in play (settings can switch them)
+  const yds = tee.yds;
+  const yardsKnown = !!yds && yds.every((v) => v != null);
+  const totalYds = yardsKnown ? yds!.reduce((a: number, v) => a + (v ?? 0), 0) : null;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.club + ', ' + r.address)}`;
   const groups = groupsFor(S, r.id);
   const drawn = !!S.groups[r.id];
@@ -33,7 +35,7 @@ export function RoundPage() {
     <tr className="sum" key={label}>
       <td>{label}</td>
       <td>{r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td>
-      <td>{yardsKnown ? r.holes.slice(from, to).reduce((a, x) => a + (x.yds ?? 0), 0).toLocaleString() : ''}</td>
+      <td>{yardsKnown ? yds!.slice(from, to).reduce((a: number, v) => a + (v ?? 0), 0).toLocaleString() : ''}</td>
       <td />
     </tr>
   );
@@ -52,7 +54,7 @@ export function RoundPage() {
 
       {playing && (
         <div className="my-ch card">
-          <div className="v">{courseHandicap(indexBefore(S, me!, r.id), r.id)}</div>
+          <div className="v">{courseHandicap(S, indexBefore(S, me!, r.id), r.id)}</div>
           <div>
             <span className="eyebrow">Your course handicap here</span>
             <div className="my-ch-sub">
@@ -66,9 +68,9 @@ export function RoundPage() {
 
       <div className="course-facts card">
         <div className="cf"><span className="l">Par</span><b>{r.par}</b></div>
-        {totalYds && <div className="cf"><span className="l">{r.tees} tees</span><b>{totalYds.toLocaleString()} yds</b></div>}
-        <div className="cf"><span className="l">Rating</span><b>{r.cr}</b></div>
-        <div className="cf"><span className="l">Slope</span><b>{r.slope}</b></div>
+        {totalYds && <div className="cf"><span className="l">{tee.label} tees</span><b>{totalYds.toLocaleString()} yds</b></div>}
+        <div className="cf"><span className="l">Rating</span><b>{tee.cr}</b></div>
+        <div className="cf"><span className="l">Slope</span><b>{tee.slope}</b></div>
       </div>
 
       <div className="section-title"><h2>{scramble ? 'Teams' : 'Groups'}</h2><span className="eyebrow">tee times · course hcp</span></div>
@@ -85,7 +87,7 @@ export function RoundPage() {
                   {grp.players.map((pid) => (
                     <span className={`gm${pid === me ? ' me' : ''}`} key={pid}>
                       <Avatar p={PL(pid)} size="sm" />
-                      <span><b>{first(pid)}</b> <small>{courseHandicap(indexBefore(S, pid, r.id), r.id)}</small></span>
+                      <span><b>{first(pid)}</b> <small>{courseHandicap(S, indexBefore(S, pid, r.id), r.id)}</small></span>
                     </span>
                   ))}
                 </div>
@@ -98,7 +100,7 @@ export function RoundPage() {
       </div>
       {status === 'none' && <GroupsTools r={r} />}
 
-      <div className="section-title"><h2>Course</h2><span className="eyebrow">{yardsKnown ? r.tees + ' tees' : 'par · stroke index'}{myPh !== null ? ` · your shots off PH ${myPh}` : ''}</span></div>
+      <div className="section-title"><h2>Course</h2><span className="eyebrow">{tee.label + ' tees'}{myPh !== null ? ` · your shots off PH ${myPh}` : ''}</span></div>
       <div className="sc-wrap">
         <table className="sc course-sc">
           <thead><tr><th>Hole</th><th>Par</th><th>{yardsKnown ? 'Yards' : ''}</th><th>SI</th></tr></thead>
@@ -107,7 +109,7 @@ export function RoundPage() {
               const shots = myPh !== null ? Math.max(0, shotsOn(myPh, h.si)) : 0;
               const tr = (
                 <tr key={h.n}>
-                  <td>{h.n}</td><td>{h.par}</td><td>{h.yds ?? ''}</td>
+                  <td>{h.n}</td><td>{h.par}</td><td>{yds?.[i] ?? ''}</td>
                   <td>{shots ? <span className={`si-pill s${Math.min(shots, 2)}`}>{h.si}</span> : h.si}</td>
                 </tr>
               );

@@ -25,6 +25,7 @@ export interface TripState {
   bits: Record<string, Record<number, BitSheet>>;        // bits[rid][group][kind] = 18 hole logs
   stakes: Stakes;                                        // pence per cuckoo/camel/fish/three-putt
   bonus: Record<string, BonusBall>;                      // bonus[pid] = bonus-ball record
+  teeChoice: Record<string, string>;                     // teeChoice[rid] = alt tee key, absent = the round's default tees
 }
 
 export const STORE_KEY = 'yorkshire-golf-2026';
@@ -34,7 +35,7 @@ export const ROUTE_KEY = STORE_KEY + '-route';
 
 export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
 export function defaultState(): TripState {
-  return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes(), bonus: {} };
+  return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes(), bonus: {}, teeChoice: {} };
 }
 // Normalise a hole array to exactly 18 entries of number-or-null.
 const pad18 = (a: unknown): HoleScores =>
@@ -117,6 +118,7 @@ export function migrate(s: unknown): TripState {
     bits: cleanBits(o.bits),
     stakes: cleanStakes(o.stakes),
     bonus: cleanBonus(o.bonus),
+    teeChoice: Object.fromEntries(Object.entries(o.teeChoice || {}).filter(([, v]) => typeof v === 'string')) as Record<string, string>,
   };
 }
 export function loadState(): TripState {

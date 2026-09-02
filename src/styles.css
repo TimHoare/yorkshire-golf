@@ -464,6 +464,8 @@ p { margin: 0; }
 .stake-in { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); font-weight: 600; }
 .stakes input { width: 52px; text-align: right; border: 1px solid var(--line-2); border-radius: 6px; padding: 4px 6px; font-size: 13px; font-weight: 700; background: var(--card); }
 .stakes input:focus { border-color: var(--pine); outline: none; }
+.stakes select { border: 1px solid var(--line-2); border-radius: 6px; padding: 4px 6px; font-size: 13px; font-weight: 700; background: var(--card); max-width: 60%; }
+.stakes select:focus { border-color: var(--pine); outline: none; }
 
 /* ---------- Round leaderboard ---------- */
 .rlb { display: grid; gap: 0; }

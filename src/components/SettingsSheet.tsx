@@ -1,5 +1,5 @@
-import { BITS, ORGANISER, pName } from '../data/trip';
-import { hasSync, setMe, setStakes, resetAll } from '../lib/store';
+import { BITS, ORGANISER, ROUNDS, pName } from '../data/trip';
+import { hasSync, setMe, setStakes, setTeeChoice, resetAll } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { RULES } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
@@ -57,6 +57,24 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                     }}
                   />p
                 </span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="course-edit">
+          <h3>Tees</h3>
+          <p className="help">Which tees each course is played off. Changing this moves everyone's course handicaps for that round, on every phone.</p>
+          <div className="stakes">
+            {ROUNDS.filter((r) => r.altTees?.length).map((r) => (
+              <label key={r.id}>
+                <span>{r.short}</span>
+                <select
+                  value={S.teeChoice[r.id] ?? ''}
+                  onChange={(e) => setTeeChoice(r.id, e.target.value || null)}
+                >
+                  <option value="">{r.tees} (booked)</option>
+                  {r.altTees!.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+                </select>
               </label>
             ))}
           </div>

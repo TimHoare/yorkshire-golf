@@ -14,7 +14,7 @@ export function PlayersPage() {
         {PLAYERS.map((p) => {
           const cur = currentIndex(S, p.id);
           const d = cur - p.start;
-          const ch = courseHandicap(cur, nextRound.id);
+          const ch = courseHandicap(S, cur, nextRound.id);
           return (
             <Link className="player-row" to={`/player/${p.id}`} key={p.id}>
               <Avatar p={p} />

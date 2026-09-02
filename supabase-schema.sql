@@ -71,6 +71,14 @@ create table if not exists bonus_balls (
   updated_at timestamptz not null default now()
 );
 
+-- Tee choice per round, when a course is played off something other than the
+-- default tees in the app. Absent row = default; tee = the TeeSet key.
+create table if not exists tee_choices (
+  round_id   text primary key,
+  tee        text not null,
+  updated_at timestamptz not null default now()
+);
+
 -- Side-bet stakes (pence each), one shared row edited from app settings.
 create table if not exists stakes (
   id         smallint primary key,
@@ -88,6 +96,7 @@ alter table group_draws enable row level security;
 alter table bit_events  enable row level security;
 alter table stakes      enable row level security;
 alter table bonus_balls enable row level security;
+alter table tee_choices enable row level security;
 
 drop policy if exists "open access" on hole_scores;
 create policy "open access" on hole_scores for all using (true) with check (true);
@@ -103,6 +112,8 @@ drop policy if exists "open access" on stakes;
 create policy "open access" on stakes for all using (true) with check (true);
 drop policy if exists "open access" on bonus_balls;
 create policy "open access" on bonus_balls for all using (true) with check (true);
+drop policy if exists "open access" on tee_choices;
+create policy "open access" on tee_choices for all using (true) with check (true);
 
 -- Realtime: broadcast row changes to connected phones.
 do $$
@@ -138,5 +149,10 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table bonus_balls;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table tee_choices;
 exception when duplicate_object then null;
 end $$;

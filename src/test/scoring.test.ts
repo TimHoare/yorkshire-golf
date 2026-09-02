@@ -10,10 +10,11 @@ const filled = (n: number) => Array(18).fill(n);
 
 describe('handicap maths', () => {
   it('course handicap = index × slope/113 + (CR − par), rounded', () => {
+    const S = defaultState();
     // Ganton (d2): slope 133, CR 72.2, par 71
-    expect(courseHandicap(14.0, 'd2')).toBe(Math.round(14.0 * (133 / 113) + (72.2 - 71)));
+    expect(courseHandicap(S, 14.0, 'd2')).toBe(Math.round(14.0 * (133 / 113) + (72.2 - 71)));
     // Elsham (d1): slope 132, CR 71.2, par 71
-    expect(courseHandicap(3.8, 'd1')).toBe(Math.round(3.8 * (132 / 113) + 0.2));
+    expect(courseHandicap(S, 3.8, 'd1')).toBe(Math.round(3.8 * (132 / 113) + 0.2));
   });
   it('shots per hole follow stroke index', () => {
     expect(shotsOn(18, 1)).toBe(1);
@@ -23,6 +24,15 @@ describe('handicap maths', () => {
     expect(shotsOn(24, 6)).toBe(2);   // 24 = 18 + 6: two shots on SI 1–6
     expect(shotsOn(24, 7)).toBe(1);
     expect(shotsOn(-2, 18)).toBe(-1); // plus handicaps give shots back on high SI
+  });
+  it('a tee choice moves course handicaps', () => {
+    const S = defaultState();
+    // Ganton white: CR 73.6, slope 138 (vs yellow 72.2/133)
+    S.teeChoice.d2 = 'white';
+    expect(courseHandicap(S, 14.0, 'd2')).toBe(Math.round(14.0 * (138 / 113) + (73.6 - 71)));
+    // an unknown key falls back to the default tees
+    S.teeChoice.d2 = 'nope';
+    expect(courseHandicap(S, 14.0, 'd2')).toBe(Math.round(14.0 * (133 / 113) + (72.2 - 71)));
   });
   it('stableford points: 2 for net par, floor at 0', () => {
     expect(holePoints(4, 4, 0)).toBe(2);

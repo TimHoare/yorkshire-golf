@@ -1,7 +1,7 @@
 // The scoring engine: handicap maths, stableford tallies, results and
 // standings. Pure functions over the trip data and a TripState — no globals,
 // no DOM, fully unit-testable.
-import { ROUNDS, PLAYERS, RULES, R, PL, gname, type Group, type Round } from '../data/trip';
+import { ROUNDS, PLAYERS, RULES, R, PL, gname, type Group, type Round, type TeeSet } from '../data/trip';
 import { BIT_KINDS, type BitKind, type HoleBits, type TripState, type HoleScores } from './state';
 
 // The groups actually playing a round: the placeholder draw from trip.ts,
@@ -17,13 +17,21 @@ export const blank18 = (): HoleScores => Array(18).fill(null);
 export const holesOf = (S: TripState, rid: string, pid: string): HoleScores => S.scores[rid]?.[pid] || blank18();
 export const teamHoles = (S: TripState, rid: string, t: number): HoleScores => S.scramble[rid]?.[t] || blank18();
 
-// ---------- Handicap maths ----------
-export function courseHandicap(index: number, rid: string) {
-  const c = R(rid)!;
-  return Math.round(index * (c.slope / 113) + (c.cr - c.par));
+// The tees a round is actually being played off: the stored choice when it
+// names one of the round's alternative sets, else the default from trip data.
+export function teeFor(S: TripState, rid: string): TeeSet {
+  const r = R(rid)!;
+  const alt = r.altTees?.find((t) => t.key === S.teeChoice[rid]);
+  return alt ?? { key: r.tees, label: r.tees, cr: r.cr, slope: r.slope, yds: r.holes.map((h) => h.yds) };
 }
-export function playingHandicap(index: number, rid: string) {
-  return Math.round(courseHandicap(index, rid) * (RULES.allowance / 100));
+
+// ---------- Handicap maths ----------
+export function courseHandicap(S: TripState, index: number, rid: string) {
+  const t = teeFor(S, rid);
+  return Math.round(index * (t.slope / 113) + (t.cr - R(rid)!.par));
+}
+export function playingHandicap(S: TripState, index: number, rid: string) {
+  return Math.round(courseHandicap(S, index, rid) * (RULES.allowance / 100));
 }
 // Shots received on a hole of stroke index si for playing handicap ph.
 export function shotsOn(ph: number, si: number) {
@@ -86,7 +94,7 @@ export function indexHistory(S: TripState, pid: string) {
     const before = idx;
     let after = idx, applied = false;
     if (r.format === 'stableford') {
-      const t = tally(r.id, holesOf(S, r.id, pid), playingHandicap(idx, r.id));
+      const t = tally(r.id, holesOf(S, r.id, pid), playingHandicap(S, idx, r.id));
       if (t.complete) { after = idx - 0.5 * (t.pts - RULES.par); applied = true; }
     }
     out.push({ round: r, before, after, applied });
@@ -101,14 +109,14 @@ export const currentIndex = (S: TripState, pid: string) => {
 export const indexBefore = (S: TripState, pid: string, rid: string) =>
   indexHistory(S, pid).find((h) => h.round.id === rid)!.before;
 export const phFor = (S: TripState, pid: string, rid: string) =>
-  playingHandicap(indexBefore(S, pid, rid), rid);
+  playingHandicap(S, indexBefore(S, pid, rid), rid);
 export const playerTally = (S: TripState, rid: string, pid: string) =>
   tally(rid, holesOf(S, rid, pid), phFor(S, pid, rid), bonusHoleFor(S, rid, pid));
 
 // Scramble team playing handicap: 35/15 % of the members' course handicaps, lowest first.
 export function teamHandicap(S: TripState, rid: string, t: number) {
   const g = groupsFor(S, rid)[t];
-  const chs = g.players.map((pid) => courseHandicap(indexBefore(S, pid, rid), rid)).sort((a, b) => a - b);
+  const chs = g.players.map((pid) => courseHandicap(S, indexBefore(S, pid, rid), rid)).sort((a, b) => a - b);
   return Math.round(chs.reduce((a, ch, i) => a + ch * (RULES.scrambleAllowance[i] ?? 0) / 100, 0));
 }
 export const teamTally = (S: TripState, rid: string, t: number) =>

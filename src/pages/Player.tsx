@@ -74,7 +74,7 @@ export function PlayerPage() {
             if (mine) line.push(<b key="r"> · {mine.place}{['st', 'nd', 'rd'][mine.place - 1] || 'th'}{mine.tie ? '=' : ''} · {trim(mine.points)} week pts</b>);
           } else {
             const tl = playerTally(S, r.id, pid);
-            line.push(<span key="h">CH {courseHandicap(before, r.id)}</span>);
+            line.push(<span key="h">CH {courseHandicap(S, before, r.id)}</span>);
             if (tl.played > 0) {
               line.push(<span key="s"> · <b>{tl.pts} pts</b>{tl.complete ? ` · ${tl.strokes}${tl.pickups ? '+' : ''} strokes` : ` thru ${tl.played}`}</span>);
               const pl = roundPlace(S, r.id, pid), wp = roundPoints(S, r.id, pid);
