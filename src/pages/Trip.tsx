@@ -23,7 +23,6 @@ function Countdown() {
   );
   return (
     <div className="countdown">
-      <span className="eyebrow">First tee · Mon 7 Sept · 12:28 · Elsham</span>
       <div className="cd-row">
         {d > 0 && cell(d, d === 1 ? 'day' : 'days')}
         {cell(h, h === 1 ? 'hour' : 'hours')}
