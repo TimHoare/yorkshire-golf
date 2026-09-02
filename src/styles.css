@@ -402,9 +402,13 @@ p { margin: 0; }
 .gm.me b { color: var(--pine); }
 .gm.me { background: var(--brass-soft); border-radius: 999px; padding: 2px 10px 2px 2px; margin: -2px 0; }
 .course-sc { max-width: 420px; }
-/* Holes where the current player gets shots: brass dots, one per shot. */
-.course-sc .shot-dots { color: var(--brass); font-size: 8px; letter-spacing: 2px; }
-.course-sc tr.shot-hole td { background: rgba(168,137,75,.07); }
+/* Holes where the current player gets shots: the SI wears a solid pill —
+   brass for one shot, pine for the rarer two. */
+.si-pill { display: inline-block; min-width: 22px; padding: 2px 3px; border-radius: 999px; font-weight: 700; }
+.si-pill.s1 { background: var(--brass); color: #FCF9EF; }
+.si-pill.s2 { background: var(--pine); color: #F0E7CF; }
+.si-legend { margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+.si-legend .si-pill { font-size: 10px; min-width: 20px; text-align: center; }
 
 /* ---------- Score entry (swipe) ---------- */
 .score-page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 10px; }

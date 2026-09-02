@@ -35,7 +35,6 @@ export function RoundPage() {
       <td>{r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td>
       <td>{yardsKnown ? r.holes.slice(from, to).reduce((a, x) => a + (x.yds ?? 0), 0).toLocaleString() : ''}</td>
       <td />
-      {myPh !== null && <td>{r.holes.slice(from, to).reduce((a, x) => a + Math.max(0, shotsOn(myPh, x.si)), 0)}</td>}
     </tr>
   );
 
@@ -102,14 +101,14 @@ export function RoundPage() {
       <div className="section-title"><h2>Course</h2><span className="eyebrow">{yardsKnown ? r.tees + ' tees' : 'par · stroke index'}{myPh !== null ? ` · your shots off PH ${myPh}` : ''}</span></div>
       <div className="sc-wrap">
         <table className="sc course-sc">
-          <thead><tr><th>Hole</th><th>Par</th><th>{yardsKnown ? 'Yards' : ''}</th><th>SI</th>{myPh !== null && <th>Shots</th>}</tr></thead>
+          <thead><tr><th>Hole</th><th>Par</th><th>{yardsKnown ? 'Yards' : ''}</th><th>SI</th></tr></thead>
           <tbody>
             {r.holes.flatMap((h, i) => {
               const shots = myPh !== null ? Math.max(0, shotsOn(myPh, h.si)) : 0;
               const tr = (
-                <tr key={h.n} className={shots ? 'shot-hole' : ''}>
-                  <td>{h.n}</td><td>{h.par}</td><td>{h.yds ?? ''}</td><td>{h.si}</td>
-                  {myPh !== null && <td className="shot-dots">{'●'.repeat(shots)}</td>}
+                <tr key={h.n}>
+                  <td>{h.n}</td><td>{h.par}</td><td>{h.yds ?? ''}</td>
+                  <td>{shots ? <span className={`si-pill s${Math.min(shots, 2)}`}>{h.si}</span> : h.si}</td>
                 </tr>
               );
               return i === 8 ? [tr, nine('Out', 0, 9)] : [tr];
@@ -119,6 +118,11 @@ export function RoundPage() {
           </tbody>
         </table>
       </div>
+      {myPh !== null && myPh > 18 && (
+        <p className="small muted si-legend">
+          <span className="si-pill s1">SI</span> one shot · <span className="si-pill s2">SI</span> two shots
+        </p>
+      )}
 
       <BetsSection r={r} />
       {r.pairs && <PairsBox r={r} />}
