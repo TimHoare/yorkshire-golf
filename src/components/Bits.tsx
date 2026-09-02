@@ -1,4 +1,4 @@
-// Side bets: cuckoos (trees), camels (bunkers), fish (water), three-putts.
+// Side bets: cuckoos (trees), camels (bunkers), fish (water), three-putts, lost balls.
 // Logged hole by hole per tee group — a count per player plus who had the
 // last one, so the round ends with a total of each and a payer: the player
 // holding the last one puts total × stake into the group bet.
@@ -128,7 +128,7 @@ export function BetsSection({ r }: { r: Round }) {
   if (!any) return null;
   return (
     <>
-      <div className="section-title"><h2>Side bets</h2><span className="eyebrow">cuckoos · camels · fish · three-putts</span></div>
+      <div className="section-title"><h2>Side bets</h2><span className="eyebrow">cuckoos · camels · fish · three-putts · lost balls</span></div>
       {groups.map((g, t) => <GroupBet key={t} r={r} group={t} title={gname(g, t)} />)}
     </>
   );

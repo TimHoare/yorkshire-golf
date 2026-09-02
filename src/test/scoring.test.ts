@@ -151,7 +151,7 @@ describe('side bets', () => {
     expect(arr[0]).toEqual({ counts: { p1: 1 }, last: 'p1' });
     expect(arr[5]).toBeNull();
     expect((S.bits.d1[0] as Record<string, unknown>).junk).toBeUndefined();
-    expect(S.stakes).toEqual({ cuckoo: 25, camel: 10, fish: 10, threeputt: 10 });
+    expect(S.stakes).toEqual({ cuckoo: 25, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
     // states written before side bets existed come up with defaults
     const old = migrate({ v: 3, scores: {}, pairs: {}, scramble: {}, groups: {} });
     expect(old.bits).toEqual({});

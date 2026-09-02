@@ -2,8 +2,8 @@
 export type HoleScores = (number | null)[];
 export interface PairDraw { pairs: string[][]; revealed: boolean }
 
-// Side bets: cuckoo = hit a tree, camel = bunker, fish = water, threeputt = 3+ putts.
-export const BIT_KINDS = ['cuckoo', 'camel', 'fish', 'threeputt'] as const;
+// Side bets: cuckoo = hit a tree, camel = bunker, fish = water, threeputt = 3+ putts, lostball = lost a ball.
+export const BIT_KINDS = ['cuckoo', 'camel', 'fish', 'threeputt', 'lostball'] as const;
 export type BitKind = (typeof BIT_KINDS)[number];
 // One hole's log for one kind: how many each player had, and who had the last one.
 export interface HoleBits { counts: Record<string, number>; last: string | null }
@@ -25,7 +25,7 @@ export const ME_KEY = STORE_KEY + '-me';
 export const OUTBOX_KEY = STORE_KEY + '-outbox';
 export const ROUTE_KEY = STORE_KEY + '-route';
 
-export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10 });
+export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
 export function defaultState(): TripState {
   return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes() };
 }
