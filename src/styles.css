@@ -396,6 +396,9 @@ p { margin: 0; }
 .course-facts .cf { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
 .course-facts .cf .l { font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; }
 .course-facts .cf b { font-weight: 700; font-size: 16px; color: var(--pine); }
+/* More than a handful of facts (player page side bets + bonus ball): a tidy
+   grid instead of one bunched-up flex row. */
+.course-facts.facts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 16px; }
 .gm.me b { color: var(--pine); }
 .gm.me { background: var(--brass-soft); border-radius: 999px; padding: 2px 10px 2px 2px; margin: -2px 0; }
 .course-sc { max-width: 420px; }

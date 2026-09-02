@@ -42,7 +42,7 @@ export function PlayerPage() {
         <div className="cf"><span className="l">Index</span><b>{fmt1(cur)}</b></div>
       </div>
 
-      <div className="course-facts card">
+      <div className="course-facts facts-grid card">
         {BIT_KINDS.map((k) => (
           <div className="cf" key={k}>
             <span className="l">{BITS[k].label}</span>
