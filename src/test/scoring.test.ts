@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { defaultState, migrate } from '../lib/state';
 import {
-  blank18, countback, courseHandicap, fmtMoney, groupBitTally, holePoints, pairPointsFor,
-  pairTotals, playerBitTotal, roundPoints, scrambleResults, shotsOn, stablefordResults,
-  standings, tally,
+  blank18, countback, courseHandicap, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
+  holePoints, pairPointsFor, pairTotals, playerBitTotal, roundPoints, scrambleResults, shotsOn,
+  stablefordResults, standings, tally,
 } from '../lib/scoring';
 
 const filled = (n: number) => Array(18).fill(n);
@@ -94,6 +94,19 @@ describe('results', () => {
     // roundPoints = individual place points + pair points
     const total = ['p1','p2','p3','p4','p5','p6','p7','p8'].reduce((a, pid) => a + (roundPoints(S, 'd1', pid) ?? 0), 0);
     expect(total).toBe(34 + 2 * 12);
+  });
+  it('scramble scoring flights: teams grouped by tee time', () => {
+    const S = defaultState();
+    const fs = flightsFor(S, 'd3');
+    expect(fs).toHaveLength(2);
+    expect(fs[0].teams).toEqual([0, 1]);
+    expect(fs[1].teams).toEqual([2, 3]);
+    expect(fs[0].players).toEqual(['p1', 'p3', 'p5', 'p7']);
+    // a flight's hole isn't done until both its teams have a score
+    S.scramble.d3 = { 0: [4, ...Array(17).fill(null)] };
+    expect(firstUnfinishedHole(S, 'd3', 0)).toBe(1);
+    S.scramble.d3[1] = [4, ...Array(17).fill(null)];
+    expect(firstUnfinishedHole(S, 'd3', 0)).toBe(2);
   });
   it('scramble awards 6/4/2/0 per player by team place', () => {
     const S = defaultState();

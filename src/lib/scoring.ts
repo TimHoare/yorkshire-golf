@@ -1,7 +1,7 @@
 // The scoring engine: handicap maths, stableford tallies, results and
 // standings. Pure functions over the trip data and a TripState — no globals,
 // no DOM, fully unit-testable.
-import { ROUNDS, PLAYERS, RULES, R, PL, type Group, type Round } from '../data/trip';
+import { ROUNDS, PLAYERS, RULES, R, PL, gname, type Group, type Round } from '../data/trip';
 import { BIT_KINDS, type BitKind, type HoleBits, type TripState, type HoleScores } from './state';
 
 // The groups actually playing a round: the placeholder draw from trip.ts,
@@ -199,10 +199,29 @@ export function pairTotals(S: TripState, rid: string): PairRow[] {
 export const pairPointsFor = (S: TripState, rid: string, pid: string): number =>
   pairTotals(S, rid).find((r) => r.pair.includes(pid))?.points ?? 0;
 
+// Scramble teams share tee times, so scoring happens per flight — the four
+// players walking together — not per team: one scorer keeps both cards.
+export interface Flight { tee: string; teams: number[]; players: string[] }
+export function flightsFor(S: TripState, rid: string): Flight[] {
+  const out: Flight[] = [];
+  groupsFor(S, rid).forEach((g, t) => {
+    const f = out.find((x) => x.tee === g.tee);
+    if (f) { f.teams.push(t); f.players.push(...g.players); }
+    else out.push({ tee: g.tee, teams: [t], players: [...g.players] });
+  });
+  return out;
+}
+export const flightName = (S: TripState, rid: string, i: number) => {
+  const groups = groupsFor(S, rid);
+  const f = flightsFor(S, rid)[i];
+  return 'Teams ' + f.teams.map((t) => gname(groups[t], t).replace(/^Team /, '')).join(' & ');
+};
+
+// On scramble day `group` is a flight index; otherwise a tee-group index.
 export function firstUnfinishedHole(S: TripState, rid: string, group: number) {
   const r = R(rid)!;
   const done = (n: number) => r.format === 'scramble'
-    ? teamHoles(S, rid, group)[n - 1] !== null
+    ? (flightsFor(S, rid)[group]?.teams ?? []).every((t) => teamHoles(S, rid, t)[n - 1] !== null)
     : groupsFor(S, rid)[group].players.every((pid) => holesOf(S, rid, pid)[n - 1] !== null);
   for (let n = 1; n <= 18; n++) if (!done(n)) return n;
   return 18;

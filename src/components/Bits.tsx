@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { BITS, PL, first, gname, type Round } from '../data/trip';
 import { BIT_KINDS, type BitKind } from '../lib/state';
-import { bitsOf, fmtMoney, groupBitTallies, groupsFor, holeBitTotal } from '../lib/scoring';
+import { bitsOf, fmtMoney, flightName, flightsFor, groupBitTallies, groupsFor, holeBitTotal } from '../lib/scoring';
 import { setHoleBits } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { Avatar } from './Avatar';
@@ -120,16 +120,19 @@ export function GroupBet({ r, group, title }: { r: Round; group: number; title?:
   );
 }
 
-// Round-page section: one bet card per group, only once something's been logged.
+// Round-page section: one bet card per group (per flight on scramble day —
+// bits are logged and stored by flight there), only once something's been logged.
 export function BetsSection({ r }: { r: Round }) {
   const { S } = useStore();
-  const groups = groupsFor(S, r.id);
-  const any = groups.some((_, t) => groupBitTallies(S, r.id, t).some((x) => x.total > 0));
+  const titles = r.format === 'scramble'
+    ? flightsFor(S, r.id).map((_, i) => flightName(S, r.id, i))
+    : groupsFor(S, r.id).map((g, t) => gname(g, t));
+  const any = titles.some((_, t) => groupBitTallies(S, r.id, t).some((x) => x.total > 0));
   if (!any) return null;
   return (
     <>
       <div className="section-title"><h2>Side bets</h2><span className="eyebrow">cuckoos · camels · fish · three-putts · lost balls</span></div>
-      {groups.map((g, t) => <GroupBet key={t} r={r} group={t} title={gname(g, t)} />)}
+      {titles.map((title, t) => <GroupBet key={t} r={r} group={t} title={title} />)}
     </>
   );
 }

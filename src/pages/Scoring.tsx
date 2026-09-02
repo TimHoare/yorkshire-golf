@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
-  firstUnfinishedHole, groupsFor, holesOf, playerTally, relPar, teamHandicap, teamHoles, teamTally,
+  firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally, relPar,
+  teamHandicap, teamHoles, teamTally,
 } from '../lib/scoring';
 import { setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -99,16 +100,17 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
       </div>
       <div className="score-list">
         {scramble
-          ? (() => {
-              const t = teamTally(S, r.id, group);
-              const tr = t.rows[i];
+          ? flightsFor(S, r.id)[group].teams.map((t) => {
+              const grp = groupsFor(S, r.id)[t];
+              const tt = teamTally(S, r.id, t);
+              const tr = tt.rows[i];
               return row(
-                <div className={`team-dot t${group}`}>{String.fromCharCode(65 + group)}</div>,
-                gname(g, group),
-                <>{g.players.map(first).join(' · ')}<br />{relBit(tr.gross)}{shotsBit(tr.shots)}Team HCP {teamHandicap(S, r.id, group)}</>,
-                { team: group }, tr.gross, tr.pts,
+                <div className={`team-dot t${t}`}>{String.fromCharCode(65 + t)}</div>,
+                gname(grp, t),
+                <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}{shotsBit(tr.shots)}Team HCP {teamHandicap(S, r.id, t)}</>,
+                { team: t }, tr.gross, tr.pts,
               );
-            })()
+            })
           : g.players.map((pid) => {
               const t = playerTally(S, r.id, pid);
               const tr = t.rows[i];
@@ -120,7 +122,8 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
               );
             })}
       </div>
-      <HoleBitsPanel rid={r.id} group={group} holeIdx={i} players={g.players} readOnly={readOnly} />
+      <HoleBitsPanel rid={r.id} group={group} holeIdx={i}
+        players={scramble ? flightsFor(S, r.id)[group].players : g.players} readOnly={readOnly} />
     </section>
   );
 }
@@ -132,13 +135,18 @@ export function ScoringPage() {
   const r = rid ? R(rid) : undefined;
 
   const groups = r ? groupsFor(S, r.id) : [];
+  const scramble = r?.format === 'scramble';
+  // On scramble day you flip between flights (both teams off one tee, one
+  // scorer for the four); otherwise between tee groups.
+  const flights = scramble && r ? flightsFor(S, r.id) : [];
+  const units: { tee: string; players: string[] }[] = scramble ? flights : groups;
   // -1 for a watcher (or an unpicked phone): they can look, not score.
-  const myGroupIdx = groups.findIndex((g) => !!me && me !== 'watcher' && g.players.includes(me));
+  const myGroupIdx = units.findIndex((u) => !!me && me !== 'watcher' && u.players.includes(me));
   const myGroup = Math.max(0, myGroupIdx);
   const [group, setGroup] = useState(myGroup);
-  const scramble = r?.format === 'scramble';
   const g = groups[group] || groups[0];
   const canEdit = group === myGroupIdx;
+  const uname = (t: number) => (scramble && r ? flightName(S, r.id, t) : gname(groups[t], t));
 
   const holeN = Number(hole);
   const valid = holeN >= 1 && holeN <= 18;
@@ -171,10 +179,13 @@ export function ScoringPage() {
   };
 
   const chipState = (h: Hole) => {
+    const teamIn = (t: number) => teamHoles(S, r.id, t)[h.n - 1] !== null;
     const filled = scramble
-      ? teamHoles(S, r.id, group)[h.n - 1] !== null
+      ? flights[group].teams.every(teamIn)
       : g.players.every((pid) => holesOf(S, r.id, pid)[h.n - 1] !== null);
-    const some = scramble ? filled : g.players.some((pid) => holesOf(S, r.id, pid)[h.n - 1] !== null);
+    const some = scramble
+      ? flights[group].teams.some(teamIn)
+      : g.players.some((pid) => holesOf(S, r.id, pid)[h.n - 1] !== null);
     return `hole-chip ${h.n === holeN ? 'on' : ''} ${filled ? 'done' : some ? 'part' : ''}`;
   };
 
@@ -183,11 +194,11 @@ export function ScoringPage() {
       <BackButton to={`/round/${r.id}`} label={r.short} />
       <div className="score-page-head">
         <h2>Enter scores</h2>
-        {groups.length > 1 && (
+        {units.length > 1 && (
           <div className="seg">
-            {groups.map((grp, t) => (
+            {units.map((u, t) => (
               <button key={t} className={t === group ? 'on' : ''} onClick={() => setGroup(t)}>
-                {groups.length > 2 ? gname(grp, t).replace(/^Team /, '') : gname(grp, t)}
+                {scramble ? `${uname(t).replace('Teams ', '')} · ${u.tee}` : gname(groups[t], t)}
               </button>
             ))}
           </div>
@@ -203,13 +214,13 @@ export function ScoringPage() {
           ? 'Swipe between holes · − and + set the score against par · hold − for a pickup ✕'
           : myGroupIdx < 0
             ? 'Watching only — scores go in on the players’ phones'
-            : `${gname(g, group)}’s card — you enter scores for your own ${scramble ? 'team' : 'group'}`}
+            : `${uname(group)}’s card — you enter scores for your own ${scramble ? 'flight' : 'group'}`}
       </p>
       <div className="swipe" ref={swipeRef} onScroll={onScroll}>
         {r.holes.map((h) => <Slide key={h.n} S={S} r={r} group={group} h={h} readOnly={!canEdit} />)}
       </div>
       <LiveScorecard r={r} group={group} selHole={holeN} onHole={goHole} />
-      <GroupBet r={r} group={group} title={gname(g, group)} />
+      <GroupBet r={r} group={group} title={uname(group)} />
     </>
   );
 }
