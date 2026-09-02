@@ -37,7 +37,8 @@ export function TripPage() {
         ))}
       </div>
       <p className="small muted rules-note">
-        Week points {RULES.placePoints.join(' · ')} for 1st–4th each round (ties share); scramble winners {RULES.scrambleWin} each.
+        Week points {RULES.placePoints.join(' · ')} for 1st–8th each stableford round, ties settled on the back 9, then back 6, then back 3.
+        Hidden pairs and the scramble add {RULES.pairPoints.join(' · ')} each for 1st–4th (ties share).
         Handicap index moves ±0.5 per stableford point either side of {RULES.par} after every completed round.
       </p>
     </>

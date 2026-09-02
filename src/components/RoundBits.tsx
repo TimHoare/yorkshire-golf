@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
-  groupsFor, pairTotals, playerTally, stablefordResults, teamTally, phFor, scrambleResults,
+  groupsFor, pairTotals, playerTally, stablefordResults, teamTally, phFor, scrambleResults, trim,
   type Tally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
@@ -168,10 +168,10 @@ export function PairList({ rid }: { rid: string }) {
       {pairTotals(S, rid).map((row, k) => (
         <div className="pair-item" key={k}>
           <div className="pair-names">
-            <span className="rank">{k + 1}</span>
+            <span className="rank">{row.place ?? k + 1}{row.tied ? '=' : ''}</span>
             <span className="names">{first(row.pair[0])}<span>&amp;</span>{first(row.pair[1])}</span>
           </div>
-          <span className="pts">{row.total}<small>{row.complete ? 'pts' : 'so far'}</small></span>
+          <span className="pts">{row.total}<small>{row.complete ? `pts · +${trim(row.points ?? 0)} wk each` : 'so far'}</small></span>
         </div>
       ))}
     </div>
@@ -199,7 +199,7 @@ export function ScrambleResult({ r }: { r: Round }) {
       </div>
       <p className="small muted" style={{ marginTop: 8 }}>
         Team handicap is {RULES.scrambleAllowance.join('/')}% of the two course handicaps, lowest first.
-        Winners take {RULES.scrambleWin} week points each{res.decided && res.winner === null ? ' — tied, so shared' : ''}.
+        Week points {RULES.scramblePoints.join(' · ')} each for 1st–4th{res.decided && res.winner === null ? ' — top spot tied, so shared' : ' (ties share)'}.
       </p>
     </div>
   );

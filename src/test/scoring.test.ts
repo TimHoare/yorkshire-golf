@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { defaultState, migrate } from '../lib/state';
 import {
-  blank18, courseHandicap, fmtMoney, groupBitTally, holePoints, playerBitTotal, shotsOn,
-  stablefordResults, standings, tally,
+  blank18, countback, courseHandicap, fmtMoney, groupBitTally, holePoints, pairPointsFor,
+  pairTotals, playerBitTotal, roundPoints, scrambleResults, shotsOn, stablefordResults,
+  standings, tally,
 } from '../lib/scoring';
 
 const filled = (n: number) => Array(18).fill(n);
@@ -45,16 +46,68 @@ describe('tally', () => {
 });
 
 describe('results', () => {
-  it('splits week points across ties', () => {
+  it('distributes the full place-points table', () => {
     const S = defaultState();
-    // everyone shoots identical rounds → all tie for 1st → (8+6+4+2)/8 each... capped by placePoints length
     S.scores.d1 = Object.fromEntries(['p1','p2','p3','p4','p5','p6','p7','p8'].map((pid) => [pid, filled(4)]));
-    // different handicaps → different points, so build a real spread instead:
     const rows = stablefordResults(S, 'd1');
     expect(rows).toHaveLength(8);
     const totalWeekPts = rows.reduce((a, r) => a + (r.points ?? 0), 0);
-    expect(totalWeekPts).toBe(20); // 8+6+4+2 always fully distributed
+    expect(totalWeekPts).toBe(34); // 10+8+6+4+3+2+1+0 always fully distributed
     expect(rows[0].place).toBe(1);
+  });
+  it('countback reads back 9, back 6, back 3', () => {
+    const gross = filled(4);
+    gross[17] = 3; // one better on the last
+    const t = tally('d1', gross, 0);
+    const [b9, b6, b3] = countback(t);
+    expect(b9).toBe(t.rows.slice(9).reduce((a, r) => a + (r.pts ?? 0), 0));
+    expect(b6).toBe(t.rows.slice(12).reduce((a, r) => a + (r.pts ?? 0), 0));
+    expect(b3).toBe(t.rows.slice(15).reduce((a, r) => a + (r.pts ?? 0), 0));
+  });
+  it('breaks stableford ties on the back 9 instead of sharing', () => {
+    const S = defaultState();
+    // p5 and p8 both start on 9.1 → identical playing handicaps. Same total
+    // gross, but p8's better holes are on the back 9 → p8 takes the place.
+    const a = filled(4); a[0] = 3; a[1] = 3;   // front-loaded
+    const b = filled(4); b[16] = 3; b[17] = 3; // back-loaded
+    S.scores.d1 = { p5: a, p8: b };
+    const rows = stablefordResults(S, 'd1');
+    expect(rows[0].pts).toBe(rows[1].pts);
+    expect(rows[0].pid).toBe('p8');
+    expect(rows[0].place).toBe(1);
+    expect(rows[1].place).toBe(2);
+    expect(rows[0].tied).toBe(false);
+    expect(rows[0].points).toBe(10);
+    expect(rows[1].points).toBe(8);
+  });
+  it('pairs add 6/4/2/0 each, ties on aggregate shared', () => {
+    const S = defaultState();
+    S.scores.d1 = Object.fromEntries(['p1','p2','p3','p4','p5','p6','p7','p8'].map((pid) => [pid, filled(4)]));
+    S.pairs.d1 = { pairs: [['p1','p2'],['p3','p4'],['p5','p6'],['p7','p8']], revealed: true };
+    const rows = pairTotals(S, 'd1');
+    expect(rows.reduce((a, r) => a + (r.points ?? 0), 0)).toBe(12); // 6+4+2+0
+    expect(rows[0].place).toBe(1);
+    // each member of a pair takes the pair's full points
+    const top = rows[0].pair;
+    expect(pairPointsFor(S, 'd1', top[0])).toBe(rows[0].points);
+    expect(pairPointsFor(S, 'd1', top[1])).toBe(rows[0].points);
+    // roundPoints = individual place points + pair points
+    const total = ['p1','p2','p3','p4','p5','p6','p7','p8'].reduce((a, pid) => a + (roundPoints(S, 'd1', pid) ?? 0), 0);
+    expect(total).toBe(34 + 2 * 12);
+  });
+  it('scramble awards 6/4/2/0 per player by team place', () => {
+    const S = defaultState();
+    // d3 teams: A p1/p3 · B p5/p7 · C p2/p4 · D p6/p8 — a stroke a hole apart
+    S.scramble.d3 = { 0: filled(3), 1: filled(4), 2: filled(5), 3: filled(6) };
+    const res = scrambleResults(S, 'd3');
+    expect(res.decided).toBe(true);
+    expect(res.winner).toBe(0);
+    expect(res.rows.p1).toEqual({ points: 6, place: 1, won: true, tie: false });
+    expect(res.rows.p3.points).toBe(6);
+    expect(res.rows.p6.place).toBe(4);
+    expect(res.rows.p6.points).toBe(0);
+    const total = Object.values(res.rows).reduce((a, r) => a + r.points, 0);
+    expect(total).toBe(24); // (6+4+2+0) × 2 players
   });
   it('standings ranks by week points then stableford total', () => {
     const S = defaultState();

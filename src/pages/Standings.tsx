@@ -31,7 +31,7 @@ export function StandingsPage() {
                     {ROUNDS.map((rd) => {
                       if (rd.format === 'scramble') {
                         const sr = scrambleResults(S, rd.id).rows[row.pid];
-                        return <i key={rd.id} className={sr?.won ? 'win' : ''} title={`Round ${rd.n}`}>{sr ? (sr.won ? 'W' : sr.tie ? '=' : 'L') : ''}</i>;
+                        return <i key={rd.id} className={sr ? 'p' + Math.min(sr.place, 4) : ''} title={`Round ${rd.n}`}>{sr?.place ?? ''}</i>;
                       }
                       const pl = roundPlace(S, rd.id, row.pid);
                       return <i key={rd.id} className={pl ? 'p' + Math.min(pl, 4) : ''} title={`Round ${rd.n}`}>{pl ?? ''}</i>;
@@ -61,7 +61,7 @@ export function StandingsPage() {
                 {ROUNDS.map((rd) => {
                   if (rd.format === 'scramble') {
                     const sr = scrambleResults(S, rd.id).rows[row.pid];
-                    return <td key={rd.id}>{sr ? <><span className={sr.won ? 'win' : ''}>{sr.won ? 'W' : sr.tie ? '=' : 'L'}</span> <span className="pt">({trim(sr.points)})</span></> : '·'}</td>;
+                    return <td key={rd.id}>{sr ? <><span className={sr.won ? 'win' : ''}>{sr.place}{['st', 'nd', 'rd'][sr.place - 1] || 'th'}{sr.tie ? '=' : ''}</span> <span className="pt">({trim(sr.points)})</span></> : '·'}</td>;
                   }
                   const t = playerTally(S, rd.id, row.pid);
                   const rp = roundPoints(S, rd.id, row.pid);

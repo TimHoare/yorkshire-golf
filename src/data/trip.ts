@@ -57,10 +57,10 @@ export const PLAYERS: Player[] = [
 ];
 
 export const RULES = {
-  placePoints: [8, 6, 4, 2],
+  placePoints: [10, 8, 6, 4, 3, 2, 1, 0],  // individual stableford, 1st–8th
+  pairPoints: [6, 4, 2, 0],                // hidden pairs, per player, 1st–4th
+  scramblePoints: [6, 4, 2, 0],            // scramble teams, per player, 1st–4th
   allowance: 100,
-  scrambleWin: 4,
-  scrambleLose: 0,
   par: 32,                     // stableford points pivot for index adjustment
   scrambleAllowance: [35, 15], // % of course handicaps, lowest first (2-man teams)
 };

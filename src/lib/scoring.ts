@@ -93,44 +93,61 @@ export const teamTally = (S: TripState, rid: string, t: number) =>
   tally(rid, teamHoles(S, rid, t), teamHandicap(S, rid, t));
 
 // ---------- Results ----------
-export interface StablefordRow extends Tally { pid: string; place?: number; points?: number; tied?: boolean }
-export function stablefordResults(S: TripState, rid: string): StablefordRow[] {
-  const rows: StablefordRow[] = PLAYERS.map((p) => ({ pid: p.id, ...playerTally(S, rid, p.id) })).filter((r) => r.played > 0);
-  rows.sort((a, b) => b.pts - a.pts);
-  const pp = RULES.placePoints;
+// Award place points down a sorted list, splitting the table across ties:
+// rows i..j equal under `same` share (pp[i]+…+pp[j]) / count.
+function award<T extends { place?: number; points?: number; tied?: boolean }>(
+  rows: T[], pp: number[], same: (a: T, b: T) => boolean,
+) {
   let i = 0;
   while (i < rows.length) {
     let j = i;
-    while (j + 1 < rows.length && rows[j + 1].pts === rows[i].pts) j++;
+    while (j + 1 < rows.length && same(rows[i], rows[j + 1])) j++;
     let sum = 0;
     for (let k = i; k <= j; k++) sum += pp[k] || 0;
     for (let k = i; k <= j; k++) { rows[k].place = i + 1; rows[k].points = sum / (j - i + 1); rows[k].tied = j > i; }
     i = j + 1;
   }
+}
+
+// Countback for individual ties: points on the back 9, then back 6, then back 3.
+export const countback = (t: { rows: TallyRow[] }): number[] =>
+  [9, 12, 15].map((from) => t.rows.slice(from).reduce((a, x) => a + (x.pts ?? 0), 0));
+
+export interface StablefordRow extends Tally { pid: string; place?: number; points?: number; tied?: boolean }
+export function stablefordResults(S: TripState, rid: string): StablefordRow[] {
+  const rows: StablefordRow[] = PLAYERS.map((p) => ({ pid: p.id, ...playerTally(S, rid, p.id) })).filter((r) => r.played > 0);
+  const key = (r: StablefordRow) => [r.pts, ...countback(r)];
+  rows.sort((a, b) => {
+    const ka = key(a), kb = key(b);
+    return kb[0] - ka[0] || kb[1] - ka[1] || kb[2] - ka[2] || kb[3] - ka[3];
+  });
+  // Countback separates most ties; only players level on all of it share points.
+  award(rows, RULES.placePoints, (a, b) => key(a).join() === key(b).join());
   return rows;
 }
 
-export interface ScrambleOutcome { points: number; won: boolean; tie: boolean }
+export interface ScrambleOutcome { points: number; place: number; won: boolean; tie: boolean }
 export function scrambleResults(S: TripState, rid: string) {
   const groups = groupsFor(S, rid);
   const out: Record<string, ScrambleOutcome> = {};
   const ts = groups.map((_, t) => teamTally(S, rid, t));
   const decided = ts.every((t) => t.complete);
   if (!decided) return { rows: out, decided, ts, winner: null as number | null };
-  const best = Math.max(...ts.map((t) => t.pts));
-  const winners = ts.map((t, i) => (t.pts === best ? i : -1)).filter((i) => i >= 0);
-  const tie = winners.length > 1;
-  const { scrambleWin: W, scrambleLose: L } = RULES;
-  groups.forEach((g, t) => g.players.forEach((pid) => {
-    const won = winners.includes(t);
-    out[pid] = { points: tie ? (W + L) / 2 : won ? W : L, won: won && !tie, tie };
-  }));
-  return { rows: out, decided, ts, winner: tie ? null : winners[0] };
+  const order: { t: number; pts: number; place?: number; points?: number; tied?: boolean }[] =
+    ts.map((tt, t) => ({ t, pts: tt.pts })).sort((a, b) => b.pts - a.pts);
+  award(order, RULES.scramblePoints, (a, b) => a.pts === b.pts);
+  for (const o of order)
+    for (const pid of groups[o.t].players)
+      out[pid] = { points: o.points!, place: o.place!, won: o.place === 1 && !o.tied, tie: !!o.tied };
+  return { rows: out, decided, ts, winner: order[0].tied ? null : order[0].t };
 }
 
 export function roundPoints(S: TripState, rid: string, pid: string): number | null {
-  if (R(rid)!.format === 'scramble') return scrambleResults(S, rid).rows[pid]?.points ?? null;
-  return stablefordResults(S, rid).find((x) => x.pid === pid)?.points ?? null;
+  const r = R(rid)!;
+  if (r.format === 'scramble') return scrambleResults(S, rid).rows[pid]?.points ?? null;
+  const ind = stablefordResults(S, rid).find((x) => x.pid === pid)?.points;
+  if (ind === undefined) return null;
+  return ind + (r.pairs ? pairPointsFor(S, rid, pid) : 0);
 }
 export const roundPlace = (S: TripState, rid: string, pid: string) =>
   stablefordResults(S, rid).find((x) => x.pid === pid)?.place ?? null;
@@ -164,16 +181,23 @@ export function roundStatus(S: TripState, rid: string): 'done' | 'partial' | 'no
   return ts.some((t) => t.played > 0) ? 'partial' : 'none';
 }
 
-export function pairTotals(S: TripState, rid: string) {
+export interface PairRow { pair: string[]; total: number; complete: boolean; place?: number; points?: number; tied?: boolean }
+export function pairTotals(S: TripState, rid: string): PairRow[] {
   const pr = S.pairs[rid];
   if (!pr) return [];
-  const rows = pr.pairs.map((pair) => {
+  const rows: PairRow[] = pr.pairs.map((pair) => {
     const ts = pair.map((pid) => playerTally(S, rid, pid));
     return { pair, total: ts.reduce((a, t) => a + t.pts, 0), complete: ts.every((t) => t.complete) };
   });
   rows.sort((a, b) => b.total - a.total);
+  // No countback for pairs: ties on aggregate share the points, e.g. two pairs
+  // level at the top take (6+4)/2 = 5 each.
+  award(rows, RULES.pairPoints, (a, b) => a.total === b.total);
   return rows;
 }
+// Each player in a pair earns the pair's full points (6/4/2/0 per head).
+export const pairPointsFor = (S: TripState, rid: string, pid: string): number =>
+  pairTotals(S, rid).find((r) => r.pair.includes(pid))?.points ?? 0;
 
 export function firstUnfinishedHole(S: TripState, rid: string, group: number) {
   const r = R(rid)!;

@@ -63,7 +63,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="course-edit">
           <h3>Rules in play</h3>
-          <p className="help">Week points {RULES.placePoints.join(' · ')} for 1st–4th (ties share) · index ±0.5 per point from {RULES.par} · scramble winners {RULES.scrambleWin} pts each · {RULES.allowance}% allowance. Change these in the code.</p>
+          <p className="help">Week points {RULES.placePoints.join(' · ')} for 1st–8th, ties on the back 9/6/3 · pairs &amp; scramble add {RULES.pairPoints.join(' · ')} each (ties share) · index ±0.5 per point from {RULES.par} · {RULES.allowance}% allowance. Change these in the code.</p>
         </div>
         <div className="course-edit">
           <div className="btn-row">

@@ -67,7 +67,7 @@ export function PlayerPage() {
             if (drawn) line.push(<span key="t">{gname(grp!, t)} · Team HCP {teamHandicap(S, r.id, t)}</span>);
             else line.push(<span key="t">Teams to be set</span>);
             if (tt.played > 0) line.push(<span key="s"> · {tt.pts} pts{tt.complete ? '' : ` thru ${tt.played}`}</span>);
-            if (mine) line.push(<b key="r"> · {mine.tie ? 'Tied' : mine.won ? 'Won' : 'Lost'} · {trim(mine.points)} week pts</b>);
+            if (mine) line.push(<b key="r"> · {mine.place}{['st', 'nd', 'rd'][mine.place - 1] || 'th'}{mine.tie ? '=' : ''} · {trim(mine.points)} week pts</b>);
           } else {
             const tl = playerTally(S, r.id, pid);
             line.push(<span key="h">CH {courseHandicap(before, r.id)}</span>);
