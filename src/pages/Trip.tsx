@@ -1,13 +1,42 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUNDS, RULES, first, gname } from '../data/trip';
 import { groupsFor, roundStatus } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { FormatChips } from '../components/RoundBits';
 
+// First tee of the week: Elsham, Mon 7 Sept 2026, 12:28.
+const TRIP_START = new Date(2026, 8, 7, 12, 28);
+
+function Countdown() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
+  const mins = Math.floor((TRIP_START.getTime() - now) / 60000);
+  if (mins < 0) return null;   // trip's underway — the rounds list takes over
+  const d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), m = mins % 60;
+  const cell = (v: number, l: string) => (
+    <div className="cd-cell" key={l}><span className="v">{v}</span><span className="l">{l}</span></div>
+  );
+  return (
+    <div className="countdown">
+      <span className="eyebrow">First tee · Mon 7 Sept · 12:28 · Elsham</span>
+      <div className="cd-row">
+        {d > 0 && cell(d, d === 1 ? 'day' : 'days')}
+        {cell(h, h === 1 ? 'hour' : 'hours')}
+        {cell(m, m === 1 ? 'min' : 'mins')}
+      </div>
+    </div>
+  );
+}
+
 export function TripPage() {
   const { S } = useStore();
   return (
     <>
+      <Countdown />
       <div className="section-title"><h2>Rounds</h2><span className="eyebrow">tap a round for details</span></div>
       <div className="itin">
         {ROUNDS.map((r) => (

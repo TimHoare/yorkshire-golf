@@ -93,6 +93,14 @@ p { margin: 0; }
 .chip.gorse { background: var(--gorse-soft); color: var(--gorse); }
 .chip.ghost { background: var(--soft); color: var(--ink-2); }
 
+/* ---------- Countdown (trip page, until the first tee) ---------- */
+.countdown { background: var(--pine); border-radius: var(--radius); padding: 16px 18px 14px; margin: 4px 0 18px; box-shadow: var(--shadow); }
+.countdown .eyebrow { color: #CFC29B; }
+.cd-row { display: flex; gap: 26px; margin-top: 8px; }
+.cd-cell { display: flex; flex-direction: column; }
+.cd-cell .v { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1; color: var(--brass-soft); }
+.cd-cell .l { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: #93A695; margin-top: 4px; }
+
 /* ---------- Itinerary ---------- */
 .itin { display: grid; gap: 0; }
 .itin-day { display: grid; grid-template-columns: 52px 1fr; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--line); }
