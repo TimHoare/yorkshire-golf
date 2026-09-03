@@ -51,6 +51,9 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 <span className="stake-in">
                   <input
                     type="number" inputMode="numeric" min={0} max={1000} value={S.stakes[k]}
+                    // Tapping in selects the whole value, so typing replaces it.
+                    onFocus={(e) => e.target.select()}
+                    onClick={(e) => e.currentTarget.select()}
                     onChange={(e) => {
                       const n = Math.round(parseFloat(e.target.value));
                       setStakes({ ...S.stakes, [k]: Number.isNaN(n) ? 0 : Math.min(1000, Math.max(0, n)) });
