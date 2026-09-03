@@ -6,7 +6,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
   bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
-  relPar, teamHandicap, teamHoles, teamTally,
+  phFor, relPar, shotsOn, teamHandicap, teamHoles, teamTally,
 } from '../lib/scoring';
 import { setBonusBall, setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -150,7 +150,7 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
   );
 }
 
-function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: number; h: Hole; readOnly: boolean }) {
+function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; group: number; h: Hole; readOnly: boolean; myPh: number | null }) {
   const i = h.n - 1;
   const scramble = r.format === 'scramble';
   const g = groupsFor(S, r.id)[group];
@@ -172,6 +172,8 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
   const shotsBit = (shots: number) => shots
     ? <><b>{shots} shot{shots > 1 ? 's' : ''}</b> · </>
     : null;
+  // Your shots here, marked on the SI the same way as the course card.
+  const myShots = myPh !== null ? Math.max(0, shotsOn(myPh, h.si)) : 0;
 
   return (
     <section className="slide" data-slide={h.n}>
@@ -180,7 +182,7 @@ function Slide({ S, r, group, h, readOnly }: { S: TripState; r: Round; group: nu
         <div className="hf">
           <span>Par <b>{h.par}</b></span>
           {h.yds && <span><b>{h.yds}</b> yds</span>}
-          <span>SI <b>{h.si}</b></span>
+          <span>SI {myShots ? <span className={`si-pill s${Math.min(myShots, 2)}`}>{h.si}</span> : <b>{h.si}</b>}</span>
         </div>
         <div className="hnav" />
       </div>
@@ -229,6 +231,9 @@ export function ScoringPage() {
   const units: { tee: string; players: string[] }[] = scramble ? flights : groups;
   // -1 for a watcher (or an unpicked phone): they can look, not score.
   const myGroupIdx = units.findIndex((u) => !!me && me !== 'watcher' && u.players.includes(me));
+  // Your playing handicap, for marking shot holes (individual formats only —
+  // the scramble plays off a team handicap).
+  const myPh = r && me && me !== 'watcher' && !scramble ? phFor(S, me, r.id) : null;
   const myGroup = Math.max(0, myGroupIdx);
   const [group, setGroup] = useState(myGroup);
   const g = groups[group] || groups[0];
@@ -304,9 +309,9 @@ export function ScoringPage() {
             : `${uname(group)}’s card — you enter scores for your own ${scramble ? 'flight' : 'group'}`}
       </p>
       <div className="swipe" ref={swipeRef} onScroll={onScroll}>
-        {r.holes.map((h) => <Slide key={h.n} S={S} r={r} group={group} h={h} readOnly={!canEdit} />)}
+        {r.holes.map((h) => <Slide key={h.n} S={S} r={r} group={group} h={h} readOnly={!canEdit} myPh={myPh} />)}
       </div>
-      <LiveScorecard r={r} group={group} selHole={holeN} onHole={goHole} />
+      <LiveScorecard r={r} group={group} selHole={holeN} onHole={goHole} myPh={myPh} />
       <GroupBet r={r} group={group} title={uname(group)} />
     </>
   );

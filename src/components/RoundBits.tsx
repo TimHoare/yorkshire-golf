@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
-  groupsFor, pairTotals, playerTally, stablefordResults, teamTally, phFor, scrambleResults, trim,
+  groupsFor, pairTotals, playerTally, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
   type Tally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
@@ -259,7 +259,7 @@ export function Leaderboard({ r }: { r: Round }) {
 }
 
 // Live scorecard: gross + stableford points per hole for the selected group (or teams).
-export function LiveScorecard({ r, group, selHole, onHole }: { r: Round; group: number; selHole?: number; onHole?: (n: number) => void }) {
+export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: Round; group: number; selHole?: number; onHole?: (n: number) => void; myPh?: number | null }) {
   const { S } = useStore();
   const scramble = r.format === 'scramble';
   const groups = groupsFor(S, r.id);
@@ -300,9 +300,10 @@ export function LiveScorecard({ r, group, selHole, onHole }: { r: Round; group: 
           </thead>
           <tbody>
             {r.holes.flatMap((hh, i) => {
+              const shots = myPh !== null ? Math.max(0, shotsOn(myPh, hh.si)) : 0;
               const tr = (
                 <tr key={hh.n} className={hh.n === selHole ? 'cur' : ''} onClick={onHole ? () => onHole(hh.n) : undefined} style={onHole ? { cursor: 'pointer' } : undefined}>
-                  <td>{hh.n}</td><td>{hh.par}</td><td>{hh.si}</td>
+                  <td>{hh.n}</td><td>{hh.par}</td><td>{shots ? <span className={`si-pill s${Math.min(shots, 2)}`}>{hh.si}</span> : hh.si}</td>
                   {cols.map((c, k) => cell(c.tally.rows[i], k))}
                 </tr>
               );
@@ -313,6 +314,11 @@ export function LiveScorecard({ r, group, selHole, onHole }: { r: Round; group: 
           </tbody>
         </table>
       </div>
+      {myPh !== null && myPh > 18 && (
+        <p className="small muted si-legend">
+          <span className="si-pill s1">SI</span> one shot · <span className="si-pill s2">SI</span> two shots
+        </p>
+      )}
     </>
   );
 }
