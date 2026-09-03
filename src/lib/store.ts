@@ -7,9 +7,9 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { CONFIG } from '../config';
 import { PLAYERS, R } from '../data/trip';
 import {
-  defaultState, defaultStakes, loadState, persistState, migrate, cleanBonusBall, cleanHoleBits, cleanStakes,
+  defaultState, loadState, persistState, migrate, cleanBonusBall, cleanHoleBits, cleanStakes,
   BIT_KINDS, ME_KEY, OUTBOX_KEY,
-  type TripState, type PairDraw, type HoleScores, type BitKind, type BonusBall, type HoleBits, type Stakes,
+  type TripState, type PairDraw, type BitKind, type BonusBall, type HoleBits, type Stakes,
 } from './state';
 import { blank18, blankBits } from './scoring';
 
@@ -269,6 +269,25 @@ function onRowChange(table: string, type: string, row: Row) {
   save(); emit();
 }
 
+// Replay one queued (unsent) edit onto local state — the local half of what
+// flushOutbox will do on the server.
+function applyOp(op: Op) {
+  const [k0, k1, k2, k3] = op.k;
+  if (op.t === 'hole') applyHole(String(k0), String(k1), Number(k2), op.v as number | null);
+  else if (op.t === 'team') applyTeamHole(String(k0), Number(k1), Number(k2), op.v as number | null);
+  else if (op.t === 'bits') applyBits(String(k0), Number(k1), String(k2), Number(k3), cleanHoleBits(op.v as HoleBits | null));
+  else if (op.t === 'stake') S.stakes = cleanStakes(op.v);
+  else if (op.t === 'bonus') applyBonus(String(k0), cleanBonusBall(op.v));
+  else if (op.t === 'tee') { if (op.v === null) delete S.teeChoice[String(k0)]; else S.teeChoice[String(k0)] = op.v as string; }
+  else if (op.t === 'group') { if (op.v === null) delete S.groups[String(k0)]; else S.groups[String(k0)] = op.v as string[][]; }
+  else if (op.t === 'pair') { if (op.v === null) delete S.pairs[String(k0)]; else S.pairs[String(k0)] = op.v as PairDraw; }
+}
+
+// The shared database is the truth. Hydration rebuilds local state from it
+// wholesale, then replays whatever this phone has queued but not yet sent.
+// Anything local that the server no longer has was cleared by someone else
+// while this phone wasn't listening — it must NOT be pushed back up, or a
+// phone that slept through a "clear the teams" would quietly restore them.
 async function hydrateFromServer(client: SupabaseClient) {
   const [hs, ts, pd, gd, be, sk, bb, tc] = await Promise.all([
     client.from('hole_scores').select('*'),
@@ -288,34 +307,17 @@ async function hydrateFromServer(client: SupabaseClient) {
   const skRows: Row[] = sk.error ? [] : (sk.data as Row[]);
   const bbRows: Row[] = bb.error ? [] : (bb.data as Row[]);
   const tcRows: Row[] = tc.error ? [] : (tc.data as Row[]);
-  const seen = new Set<string>();
-  for (const r of hs.data as Row[]) { seen.add(`hole|${r.round_id}|${r.player_id}|${r.hole}`); applyHole(r.round_id, r.player_id!, r.hole!, r.gross ?? null); }
-  for (const r of ts.data as Row[]) { seen.add(`team|${r.round_id}|${r.team}|${r.hole}`); applyTeamHole(r.round_id, Number(r.team), r.hole!, r.gross ?? null); }
-  for (const r of pd.data as Row[]) { seen.add(`pair|${r.round_id}`); S.pairs[r.round_id] = { pairs: r.pairs!, revealed: !!r.revealed }; }
-  for (const r of gdRows) { seen.add(`group|${r.round_id}`); S.groups[r.round_id] = r.groups!; }
-  for (const r of beRows) { seen.add(`bits|${r.round_id}|${r.grp}|${r.kind}|${r.hole}`); applyBits(r.round_id, Number(r.grp), r.kind!, r.hole!, cleanHoleBits({ counts: r.counts, last: r.last_pid })); }
-  for (const r of skRows) { seen.add('stake'); S.stakes = cleanStakes(r.stakes); }
-  for (const r of bbRows) { seen.add(`bonus|${r.player_id}`); applyBonus(r.player_id!, cleanBonusBall({ used: r.used, lost: r.lost_round })); }
-  for (const r of tcRows) { seen.add(`tee|${r.round_id}`); if (R(r.round_id) && typeof r.tee === 'string') S.teeChoice[r.round_id] = r.tee; }
-  // Push anything this phone has that the server doesn't (first phone to connect seeds it).
-  for (const [rid, byP] of Object.entries(S.scores)) for (const [pid, arr] of Object.entries(byP))
-    arr.forEach((g, i) => { if (g !== null && !seen.has(`hole|${rid}|${pid}|${i + 1}`)) pushOp('hole', [rid, pid, i + 1], g); });
-  for (const [rid, byT] of Object.entries(S.scramble)) for (const [t, arr] of Object.entries(byT))
-    (arr as HoleScores).forEach((g, i) => { if (g !== null && !seen.has(`team|${rid}|${t}|${i + 1}`)) pushOp('team', [rid, Number(t), i + 1], g); });
-  for (const [rid, pr] of Object.entries(S.pairs))
-    if (!seen.has(`pair|${rid}`)) pushOp('pair', [rid], pr);
-  for (const [rid, g] of Object.entries(S.groups))
-    if (!seen.has(`group|${rid}`)) pushOp('group', [rid], g);
-  for (const [rid, byG] of Object.entries(S.bits)) for (const [grp, sheet] of Object.entries(byG))
-    for (const kind of BIT_KINDS) (sheet[kind] || []).forEach((hb, i) => {
-      if (hb && !seen.has(`bits|${rid}|${grp}|${kind}|${i + 1}`)) pushOp('bits', [rid, Number(grp), kind, i + 1], hb);
-    });
-  if (!seen.has('stake') && JSON.stringify(S.stakes) !== JSON.stringify(defaultStakes()))
-    pushOp('stake', ['all'], S.stakes);
-  for (const [pid, rec] of Object.entries(S.bonus))
-    if (!seen.has(`bonus|${pid}`) && (rec.lost || Object.keys(rec.used).length)) pushOp('bonus', [pid], rec);
-  for (const [rid, tee] of Object.entries(S.teeChoice))
-    if (!seen.has(`tee|${rid}`)) pushOp('tee', [rid], tee);
+  S = defaultState();
+  for (const r of hs.data as Row[]) applyHole(r.round_id, r.player_id!, r.hole!, r.gross ?? null);
+  for (const r of ts.data as Row[]) applyTeamHole(r.round_id, Number(r.team), r.hole!, r.gross ?? null);
+  for (const r of pd.data as Row[]) S.pairs[r.round_id] = { pairs: r.pairs!, revealed: !!r.revealed };
+  for (const r of gdRows) S.groups[r.round_id] = r.groups!;
+  for (const r of beRows) applyBits(r.round_id, Number(r.grp), r.kind!, r.hole!, cleanHoleBits({ counts: r.counts, last: r.last_pid }));
+  for (const r of skRows) S.stakes = cleanStakes(r.stakes);
+  for (const r of bbRows) applyBonus(r.player_id!, cleanBonusBall({ used: r.used, lost: r.lost_round }));
+  for (const r of tcRows) if (R(r.round_id) && typeof r.tee === 'string') S.teeChoice[r.round_id] = r.tee;
+  // Edits made while offline are still queued: keep them on screen until they land.
+  for (const op of outbox) applyOp(op);
   save(); emit();
 }
 

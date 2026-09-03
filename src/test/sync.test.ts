@@ -1,5 +1,5 @@
-// Sync engine against a mocked Supabase client: hydration (server wins, local
-// extras seeded up), every kind of edit reaching its table, realtime
+// Sync engine against a mocked Supabase client: hydration (server wins, stale
+// local state dropped, unsent edits kept), every kind of edit reaching its table, realtime
 // application, and the outbox when the network is down.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -55,10 +55,15 @@ describe('sync engine', () => {
   });
   afterEach(() => { vi.useRealTimers(); });
 
-  it('hydrates server rows, seeds local-only scores up, and applies realtime changes', async () => {
+  it('hydrates server rows over stale local state, keeps unsent edits, and applies realtime changes', async () => {
+    // This phone slept through a clear: it still holds a score and the Cave
+    // Castle teams that were wiped from the shared database meanwhile, plus
+    // one score it entered offline that never got sent.
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      v: 3, scores: { d1: { p2: [5, ...Array(17).fill(null)] } }, pairs: {}, scramble: {},
+      v: 3, scores: { d1: { p2: [5, ...Array(17).fill(null)], p4: [null, null, 6, ...Array(15).fill(null)] } },
+      pairs: {}, scramble: {}, groups: { d3: [['p1', 'p2'], ['p3', 'p4'], ['p5', 'p6'], ['p7', 'p8']] },
     }));
+    localStorage.setItem(OUTBOX_KEY, JSON.stringify([{ t: 'hole', k: ['d1', 'p4', 3], v: 6, key: 'hole|d1|p4|3' }]));
     reloadFromStorage();
 
     const m = mockSupabase({
@@ -70,8 +75,15 @@ describe('sync engine', () => {
 
     // server row applied locally (server wins)
     expect(stored().scores.d1.p1[0]).toBe(4);
-    // local-only p2 score pushed to server
-    expect(m.upserts.some((u) => u.table === 'hole_scores' && u.row.player_id === 'p2' && u.row.hole === 1 && u.row.gross === 5)).toBe(true);
+    // stale local-only state is dropped, not pushed back up to resurrect it
+    expect(stored().scores.d1.p2).toBeUndefined();
+    expect(stored().groups.d3).toBeUndefined();
+    expect(m.upserts.some((u) => u.table === 'group_draws')).toBe(false);
+    expect(m.upserts.some((u) => u.table === 'hole_scores' && u.row.player_id === 'p2')).toBe(false);
+    // the queued offline edit stays on screen and is the only thing sent
+    expect(stored().scores.d1.p4[2]).toBe(6);
+    expect(m.upserts.filter((u) => u.table === 'hole_scores').map((u) => [u.row.player_id, u.row.hole, u.row.gross])).toEqual([['p4', 3, 6]]);
+    expect(outbox()).toHaveLength(0);
 
     // entering a score upserts with the right hole number
     m.upserts.length = 0;
@@ -89,6 +101,23 @@ describe('sync engine', () => {
     expect(stored().pairs.d1.revealed).toBe(false);
 
     await flushOutbox();
+  });
+
+  it('a cleared draw stays cleared when a phone that missed the clear reconnects', async () => {
+    // Someone set the teams, they synced, then someone else cleared them
+    // while this phone was asleep. Reconnecting must not bring them back.
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      v: 3, scores: {}, pairs: {}, scramble: { d3: { 0: [4, ...Array(17).fill(null)] } },
+      groups: { d3: [['p1', 'p2'], ['p3', 'p4'], ['p5', 'p6'], ['p7', 'p8']] },
+    }));
+    reloadFromStorage();
+    const m = mockSupabase({ hole_scores: [], team_scores: [], pair_draws: [], group_draws: [] });
+    m.start();
+    await tick();
+    expect(stored().groups.d3).toBeUndefined();
+    expect(stored().scramble.d3).toBeUndefined();
+    expect(m.upserts).toHaveLength(0);
+    expect(getSnapshot().syncStatus).toBe('live');
   });
 
   it('every kind of edit reaches its own table; clearing one deletes the row', async () => {
