@@ -107,7 +107,6 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
         </button>
         {open && (
           <div className="bit-edit">
-            <p className="small muted" style={{ margin: '0 0 6px' }}>Has to go on one hole every round. Not called by the 18th and it's the 18th.</p>
             {players.map((pid) => {
               const bb = rec(pid);
               const gone = bonusGoneBy(S, r.id, pid);
