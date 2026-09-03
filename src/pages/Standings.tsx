@@ -1,4 +1,4 @@
-import { ROUNDS, pName, PL } from '../data/trip';
+import { ROUNDS, RULES, pName, PL } from '../data/trip';
 import {
   currentIndex, fmt1, playerTally, roundPlace, roundPoints, roundStatus,
   scrambleResults, signed, standings, trim,
@@ -73,7 +73,7 @@ export function StandingsPage() {
           </tbody>
         </table>
       </div>
-      <p className="small muted" style={{ marginTop: 6 }}>* round in progress · 🎱 bonus ball kept all trip: +5 in the total, added once the last round is in</p>
+      <p className="small muted" style={{ marginTop: 6 }}>* round in progress · 🎱 bonus ball kept all trip: +{RULES.bonusKeep} in the total, added once the last round is in</p>
     </>
   );
 }

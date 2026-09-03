@@ -93,7 +93,8 @@ describe('ties', () => {
     S.scores.d1 = Object.fromEntries(PIDS.map((pid, i) => [pid, netParFor(S, 'd1', pid, bogeys(i < 4 ? 0 : i < 6 ? 1 : 2))]));
     S.pairs.d1 = { pairs: [['p1', 'p2'], ['p3', 'p4'], ['p5', 'p6'], ['p7', 'p8']], revealed: true };
     const rows = pairTotals(S, 'd1');
-    expect(rows.map((r) => r.total)).toEqual([72, 72, 70, 68]);
+    // 38 a head for net par: the uncalled bonus ball doubles the 18th
+    expect(rows.map((r) => r.total)).toEqual([76, 76, 74, 72]);
     expect(rows[0]).toMatchObject({ place: 1, points: 5, tied: true });
     expect(rows[1]).toMatchObject({ place: 1, points: 5, tied: true });
     expect(rows[2]).toMatchObject({ place: 3, points: 2, tied: false });
@@ -143,19 +144,20 @@ describe('standings', () => {
     S.scores.d1 = { p1: netParFor(S, 'd1', 'p1'), p2: netParFor(S, 'd1', 'p2') };
     const st = standings(S);
     expect(st.slice(0, 2).map((r) => r.pid).sort()).toEqual(['p1', 'p2']);
-    expect(st[0]).toMatchObject({ rank: 1, pts: 9, stab: 36 });
-    expect(st[1]).toMatchObject({ rank: 1, pts: 9, stab: 36 });
+    expect(st[0]).toMatchObject({ rank: 1, pts: 9, stab: 38 }); // 36 + the 18th doubled
+    expect(st[1]).toMatchObject({ rank: 1, pts: 9, stab: 38 });
     expect(st[2].rank).toBe(3);
     expect(st[7].rank).toBe(3);
   });
   it('splits equal week points on total stableford', () => {
     const S = defaultState();
     // Elsham: Tim first (10), Matthew second (8). Ganton: the other way round —
-    // level on 18 for the week, but Matthew's birdie gives him 72 stableford to Tim's 71.
+    // level on 18 for the week, but Matthew's birdie gives him 76 stableford to
+    // Tim's 75 (each round's 18th doubled by the uncalled bonus ball).
     S.scores.d1 = { p1: netParFor(S, 'd1', 'p1'), p2: netParFor(S, 'd1', 'p2', bogeys(1)) };
     S.scores.d2 = { p1: netParFor(S, 'd2', 'p1', bogeys(1)), p2: netParFor(S, 'd2', 'p2', [-1]) };
     const [a, b] = standings(S);
-    expect(a).toMatchObject({ pid: 'p2', rank: 1, pts: 18, stab: 72 });
-    expect(b).toMatchObject({ pid: 'p1', rank: 2, pts: 18, stab: 71 });
+    expect(a).toMatchObject({ pid: 'p2', rank: 1, pts: 18, stab: 76 });
+    expect(b).toMatchObject({ pid: 'p1', rank: 2, pts: 18, stab: 75 });
   });
 });

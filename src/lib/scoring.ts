@@ -68,15 +68,16 @@ export function tally(rid: string, gross: HoleScores, ph: number, bonusHole: num
 
 // ---------- Bonus balls ----------
 const roundIdx = (rid: string) => ROUNDS.findIndex((r) => r.id === rid);
-// The hole (0–17) whose points double for pid this round — null if they
-// haven't played the bonus ball this round, lost it in an earlier round, or
-// lost it this round: losing the ball on its hole voids the 2×, either/or.
+// The hole (0–17) whose points double for pid this round. The ball has to be
+// played once every stableford round: not called by the time the 18th is
+// scored, it's deemed played on the 18th. Null once it's lost — in an earlier
+// round, or this one: losing the ball on its hole voids the 2×, either/or.
 export function bonusHoleFor(S: TripState, rid: string, pid: string): number | null {
   const bb = S.bonus[pid];
+  if (bb?.lost && roundIdx(bb.lost) <= roundIdx(rid)) return null;
   const h = bb?.used[rid];
-  if (h === undefined) return null;
-  if (bb.lost && roundIdx(bb.lost) <= roundIdx(rid)) return null;
-  return h;
+  if (h !== undefined) return h;
+  return R(rid)!.format === 'stableford' && holesOf(S, rid, pid)[17] !== null ? 17 : null;
 }
 // Ball lost in this round or any earlier one → no more 2×s from here on.
 export const bonusGoneBy = (S: TripState, rid: string, pid: string): boolean => {
@@ -184,7 +185,7 @@ export const roundPlace = (S: TripState, rid: string, pid: string) =>
 
 export interface StandingsRow { pid: string; i: number; pts: number; stab: number; played: number; rank: number; bonusKept: number }
 export function standings(S: TripState): StandingsRow[] {
-  // +5 for a bonus ball that survives the whole trip, added once every round is in.
+  // +1 for a bonus ball that survives the whole trip, added once every round is in.
   const tripDone = ROUNDS.every((r) => roundStatus(S, r.id) === 'done');
   const rows = PLAYERS.map((p, i) => {
     let pts = 0, stab = 0, played = 0;

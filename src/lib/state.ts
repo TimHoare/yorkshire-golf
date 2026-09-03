@@ -11,8 +11,9 @@ export type BitSheet = Partial<Record<BitKind, (HoleBits | null)[]>>;
 export type Stakes = Record<BitKind, number>;            // pence per one
 
 // Bonus balls: one per player for the whole trip. used[rid] = the hole index
-// (0–17) they played it on that round (that hole's points double); lost = the
-// round it was lost in, if it was — no more 2×s after that round, and no +5
+// (0–17) they played it on that round (that hole's points double; it must go
+// on one hole a round, and defaults to the 18th if never called); lost = the
+// round it was lost in, if it was — no more 2×s after that round, and no +1
 // for keeping it to the end.
 export interface BonusBall { used: Record<string, number>; lost: string | null }
 

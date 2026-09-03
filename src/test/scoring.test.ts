@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultState, migrate } from '../lib/state';
 import {
   blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
-  holePoints, pairPointsFor, pairTotals, playerBitTotal, roundPoints, scrambleResults, shotsOn,
+  holePoints, pairPointsFor, pairTotals, playerBitTotal, playerTally, roundPoints, scrambleResults, shotsOn,
   stablefordResults, standings, tally,
 } from '../lib/scoring';
 
@@ -78,8 +78,9 @@ describe('results', () => {
     const S = defaultState();
     // p5 and p8 both start on 9.1 → identical playing handicaps. Same total
     // gross, but p8's better holes are on the back 9 → p8 takes the place.
+    // (Neither touches the 18th, which the uncalled bonus ball doubles for both.)
     const a = filled(4); a[0] = 3; a[1] = 3;   // front-loaded
-    const b = filled(4); b[16] = 3; b[17] = 3; // back-loaded
+    const b = filled(4); b[15] = 3; b[16] = 3; // back-loaded
     S.scores.d1 = { p5: a, p8: b };
     const rows = stablefordResults(S, 'd1');
     expect(rows[0].pts).toBe(rows[1].pts);
@@ -207,16 +208,39 @@ describe('bonus balls', () => {
     S.bonus.p2 = { used: { d1: 4 }, lost: 'd2' };
     expect(bonusHoleFor(S, 'd1', 'p2')).toBe(4);
   });
-  it('+5 for a kept ball, only once every round is in', () => {
+  it('must be played every round: uncalled by the time the 18th is in, it doubles the 18th', () => {
+    const S = defaultState();
+    // nothing scored yet: no default, nothing to double
+    expect(bonusHoleFor(S, 'd1', 'p1')).toBeNull();
+    // 17 holes in, 18th still open: they can still call it
+    S.scores.d1 = { p1: [...Array(17).fill(4), null] };
+    expect(bonusHoleFor(S, 'd1', 'p1')).toBeNull();
+    // 18th scored without a call → the 18th it is
+    S.scores.d1.p1[17] = 4;
+    expect(bonusHoleFor(S, 'd1', 'p1')).toBe(17);
+    expect(playerTally(S, 'd1', 'p1').rows[17].bonus).toBe(true);
+    // a call anywhere overrides the default
+    S.bonus.p1 = { used: { d1: 2 }, lost: null };
+    expect(bonusHoleFor(S, 'd1', 'p1')).toBe(2);
+    // lost earlier in the trip: no default either
+    S.bonus.p1 = { used: { d1: 2 }, lost: 'd1' };
+    S.scores.d2 = { p1: filled(4) };
+    expect(bonusHoleFor(S, 'd2', 'p1')).toBeNull();
+    // the scramble plays as teams: no bonus ball there
+    S.bonus.p2 = { used: {}, lost: null };
+    S.scramble.d3 = { 0: filled(4) };
+    expect(bonusHoleFor(S, 'd3', 'p2')).toBeNull();
+  });
+  it('+1 for a kept ball, only once every round is in', () => {
     const S = defaultState();
     const pids = ['p1','p2','p3','p4','p5','p6','p7','p8'];
     for (const rid of ['d1','d2','d4','d5']) S.scores[rid] = Object.fromEntries(pids.map((pid) => [pid, filled(5)]));
     S.bonus.p1 = { used: {}, lost: 'd2' };
-    // trip not finished: no +5 for anyone yet
+    // trip not finished: no +1 for anyone yet
     expect(standings(S).every((r) => r.bonusKept === 0)).toBe(true);
     S.scramble.d3 = { 0: filled(5), 1: filled(5), 2: filled(5), 3: filled(5) };
     const st = standings(S);
-    for (const row of st) expect(row.bonusKept).toBe(row.pid === 'p1' ? 0 : 5);
+    for (const row of st) expect(row.bonusKept).toBe(row.pid === 'p1' ? 0 : 1);
   });
 });
 

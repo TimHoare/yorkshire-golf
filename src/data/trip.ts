@@ -76,7 +76,7 @@ export const RULES = {
   placePoints: [10, 8, 6, 4, 3, 2, 1, 0],  // individual stableford, 1st–8th
   pairPoints: [6, 4, 2, 0],                // hidden pairs, per player, 1st–4th
   scramblePoints: [6, 4, 2, 0],            // scramble teams, per player, 1st–4th
-  bonusKeep: 5,                            // still holding your bonus ball at the end of the trip
+  bonusKeep: 1,                            // still holding your bonus ball at the end of the trip
   allowance: 100,
   par: 32,                     // stableford points pivot for index adjustment
   scrambleAllowance: [35, 15], // % of course handicaps, lowest first (2-man teams)

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
-  bonusGoneBy, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
+  bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
   relPar, teamHandicap, teamHoles, teamTally,
 } from '../lib/scoring';
 import { setBonusBall, setGross } from '../lib/store';
@@ -64,8 +64,9 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
   );
 }
 
-// Bonus balls, one per player for the trip: play it on one hole a round for
-// double points; mark it lost and it's gone for good (+5 at the end if kept).
+// Bonus balls, one per player for the trip: it must be played on one hole a
+// round for double points (the 18th if never called); mark it lost and it's
+// gone for good (+1 at the end if kept).
 // One collapsible row per slide, in the style of the side-bet panel.
 function BonusPanel({ S, r, players, holeIdx, readOnly }: {
   S: TripState; r: Round; players: string[]; holeIdx: number; readOnly: boolean;
@@ -90,10 +91,9 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
 
   const bits: string[] = [];
   for (const pid of players) {
-    const bb = rec(pid);
-    if (bb.used[r.id] !== undefined && !bonusGoneBy(S, r.id, pid) && bb.lost !== r.id)
-      bits.push(`${first(pid)} · ${bb.used[r.id] + 1}`);
-    if (bb.lost) bits.push(`${first(pid)} ✕`);
+    const h = bonusHoleFor(S, r.id, pid);   // includes the 18th-by-default
+    if (h !== null) bits.push(`${first(pid)} · ${h + 1}`);
+    if (rec(pid).lost) bits.push(`${first(pid)} ✕`);
   }
 
   return (
@@ -101,24 +101,27 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
       <div className="bit">
         <button className="bit-row" onClick={() => setOpen(!open)} aria-expanded={open}>
           <span className="bit-ic" aria-hidden>🎱</span>
-          <span className="bit-l"><b>Bonus balls</b><small>2× one hole a round</small></span>
+          <span className="bit-l"><b>Bonus balls</b><small>2× one hole a round · must be played</small></span>
           <span className="bit-sum">{bits.join(' · ')}</span>
           <span className={`bit-n${bits.length ? '' : ' off'}`}>{bits.length || '–'}</span>
         </button>
         {open && (
           <div className="bit-edit">
+            <p className="small muted" style={{ margin: '0 0 6px' }}>Has to go on one hole every round. Not called by the 18th and it's the 18th.</p>
             {players.map((pid) => {
               const bb = rec(pid);
               const gone = bonusGoneBy(S, r.id, pid);
               const usedHole = gone ? undefined : bb.used[r.id];
               const here = usedHole === holeIdx;
               const lostHere = bb.lost === r.id;
+              const defaulted = usedHole === undefined && !lostHere && bonusHoleFor(S, r.id, pid) === 17;
               return (
                 <div className="bit-p" key={pid}>
                   <Avatar p={PL(pid)} size="sm" />
                   <span className="bit-pn">
                     {first(pid)}
                     {!here && !lostHere && usedHole !== undefined && <span className="chip">2× on {usedHole + 1}</span>}
+                    {defaulted && <span className="chip">Not called · 2× on 18</span>}
                     {(gone || lostHere) && (
                       <span className="chip">
                         {gone && bb.lost
