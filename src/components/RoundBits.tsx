@@ -291,18 +291,24 @@ export function Leaderboard({ r }: { r: Round }) {
 // over, nothing for par. Solid fills — red circle for a birdie, gold for an
 // eagle or better, black square for a bogey, blue for a double or worse.
 // A pickup (0) shows as ✕ with no mark; empty holes as a dot.
-export function Gross({ gross, par }: { gross: number | null; par: number }) {
-  if (gross === null) return <span className="gs e">·</span>;
-  if (gross === 0) return <span className="gs x">✕</span>;
-  const d = gross - par;
-  const cls = d <= -2 ? 'eagle' : d === -1 ? 'birdie' : d === 0 ? 'par' : d === 1 ? 'bogey' : 'double';
-  return <span className={`gs ${cls}`}>{gross}</span>;
+// bonus wraps the mark in a fixed brass box — the bonus-ball hole — the same
+// size for everyone, whatever width their column happens to be.
+export function Gross({ gross, par, bonus = false }: { gross: number | null; par: number; bonus?: boolean }) {
+  let mark;
+  if (gross === null) mark = <span className="gs e">·</span>;
+  else if (gross === 0) mark = <span className="gs x">✕</span>;
+  else {
+    const d = gross - par;
+    const cls = d <= -2 ? 'eagle' : d === -1 ? 'birdie' : d === 0 ? 'par' : d === 1 ? 'bogey' : 'double';
+    mark = <span className={`gs ${cls}`}>{gross}</span>;
+  }
+  return bonus ? <span className="bbx" title="Bonus ball · double points">{mark}</span> : mark;
 }
 
 export function GrossLegend() {
   return (
     <p className="small muted gs-legend">
-      <span className="gs eagle">3</span> eagle · <span className="gs birdie">3</span> birdie · <span className="gs par">4</span> par · <span className="gs bogey">5</span> bogey · <span className="gs double">6</span> double+ · <span className="bb-swatch">🎱</span> bonus ball · + a pickup in the total
+      <span className="gs eagle">3</span> eagle · <span className="gs birdie">3</span> birdie · <span className="gs par">4</span> par · <span className="gs bogey">5</span> bogey · <span className="gs double">6</span> double+ · <span className="bbx sw"><span className="gs par">4</span></span> bonus ball · + a pickup in the total
     </p>
   );
 }
@@ -320,7 +326,7 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
   const cell = (row: Tally['rows'][number], key: number) =>
     row.gross === null
       ? <td className="e" key={key}>·</td>
-      : <td key={key} className={`${row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}${row.bonus ? ' bb' : ''}`} title={row.bonus ? 'Bonus ball · double points' : undefined}><Gross gross={row.gross} par={row.par} /><sup>{row.pts}</sup></td>;
+      : <td key={key} className={`${row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}${row.bonus ? ' bb' : ''}`}><Gross gross={row.gross} par={row.par} bonus={row.bonus} /><sup>{row.pts}</sup></td>;
 
   const sumRow = (label: string, from: number, to: number) => (
     <tr className="sum" key={label}>

@@ -163,7 +163,7 @@ export function PlayerRoundPage() {
                   {row.gross === null
                     ? <><td className="e">·</td><td className="e">·</td></>
                     : <>
-                        <td className={row.bonus ? 'bb' : ''}><Gross gross={row.gross} par={h.par} /></td>
+                        <td className={row.bonus ? 'bb' : ''}><Gross gross={row.gross} par={h.par} bonus={row.bonus} /></td>
                         <td className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.pts}</td>
                       </>}
                   <td className="x">{extras(i)}</td>
