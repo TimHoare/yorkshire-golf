@@ -308,7 +308,13 @@ export function Gross({ gross, par, bonus = false }: { gross: number | null; par
 export function GrossLegend() {
   return (
     <p className="small muted gs-legend">
-      <span className="gs eagle">3</span> eagle · <span className="gs birdie">3</span> birdie · <span className="gs par">4</span> par · <span className="gs bogey">5</span> bogey · <span className="gs double">6</span> double+ · <span className="bbx sw"><span className="gs par">4</span></span> bonus ball · + a pickup in the total
+      <span className="lg"><span className="gs eagle">3</span> eagle</span>
+      <span className="lg"><span className="gs birdie">3</span> birdie</span>
+      <span className="lg"><span className="gs par">4</span> par</span>
+      <span className="lg"><span className="gs bogey">5</span> bogey</span>
+      <span className="lg"><span className="gs double">6</span> double+</span>
+      <span className="lg"><span className="bbx sw"><span className="gs par">4</span></span> bonus ball</span>
+      <span className="lg"><b>48+</b> a pickup in there</span>
     </p>
   );
 }
@@ -373,7 +379,8 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
       <GrossLegend />
       {myPh !== null && myPh > 18 && (
         <p className="small muted si-legend">
-          <span className="si-pill s1">SI</span> one shot · <span className="si-pill s2">SI</span> two shots
+          <span className="lg"><span className="si-pill s1">SI</span> one shot</span>
+          <span className="lg"><span className="si-pill s2">SI</span> two shots</span>
         </p>
       )}
     </>

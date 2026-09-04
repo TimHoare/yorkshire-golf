@@ -415,13 +415,28 @@ p { margin: 0; }
 .gs.double { background: var(--double); color: #FCF9EF; border-radius: 5px; }
 .gs.x, .gs.e { color: var(--ink-3); }
 .sc td .gs + sup, .sc td .bbx + sup { margin-left: 3px; }
+/* Narrow phones (320–359px): the four-player card needs every pixel —
+   tighter cells, and the card borrows most of the page margin. */
+@media (max-width: 359px) {
+  .sc-wrap { padding: 0 6px; }
+  .sc { font-size: 13px; }
+  .sc th, .sc td { padding: 7px 2px; }
+  .sc td:first-child, .sc th:first-child { padding-left: 4px; }
+  .sc td .gs + sup, .sc td .bbx + sup { margin-left: 1px; }
+  .gs { min-width: 22px; height: 22px; padding: 0 2px; }
+  .bbx { width: 28px; height: 28px; }
+}
 /* The hole a bonus ball doubled: a fixed brass box round the mark, the same
    size in every column. */
 .bbx { display: inline-grid; place-items: center; width: 32px; height: 30px; border-radius: 5px; background: var(--brass-soft); box-shadow: inset 0 0 0 1px var(--brass); vertical-align: middle; }
 .bbx.sw { width: 26px; height: 24px; }
 .bbx.sw .gs { min-width: 18px; height: 18px; font-size: 11px; }
 .sc td.bb sup { color: var(--brass); }
-.gs-legend { margin-top: 10px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+/* Legends: each mark travels with its label as one unbreakable pair; the
+   pairs wrap between themselves to suit the width. */
+.gs-legend { margin-top: 10px; display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; }
+.lg { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.lg b { color: var(--ink); }
 .gs-legend .gs { min-width: 20px; height: 20px; font-size: 11px; }
 .sc td.e { color: var(--ink-3); }
 .sc tr.sum td { font-weight: 700; background: var(--soft); }
@@ -461,7 +476,7 @@ p { margin: 0; }
 .si-pill { display: inline-block; min-width: 22px; padding: 2px 3px; border-radius: 999px; font-weight: 700; text-align: center; line-height: 1.2; }
 .si-pill.s1 { background: var(--brass); color: #FCF9EF; }
 .si-pill.s2 { background: var(--pine); color: #F0E7CF; }
-.si-legend { margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+.si-legend { margin-top: 8px; display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; }
 .si-legend .si-pill { font-size: 10px; min-width: 20px; }
 
 /* ---------- Score entry (swipe) ---------- */

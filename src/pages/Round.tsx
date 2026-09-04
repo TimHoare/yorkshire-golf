@@ -126,7 +126,8 @@ export function RoundPage() {
       </div>
       {myPh !== null && myPh > 18 && (
         <p className="small muted si-legend">
-          <span className="si-pill s1">SI</span> one shot · <span className="si-pill s2">SI</span> two shots
+          <span className="lg"><span className="si-pill s1">SI</span> one shot</span>
+          <span className="lg"><span className="si-pill s2">SI</span> two shots</span>
         </p>
       )}
 
