@@ -5,7 +5,7 @@
 // With no Supabase keys configured everything runs single-phone.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { CONFIG } from '../config';
-import { PLAYERS, R } from '../data/trip';
+import { BITS, PLAYERS, R } from '../data/trip';
 import {
   defaultState, loadState, persistState, migrate, cleanBonusBall, cleanHoleBits, cleanStakes,
   BIT_KINDS, ME_KEY, OUTBOX_KEY,
@@ -96,6 +96,9 @@ export function setGroupDraw(rid: string, groups: string[][] | null) {
 // One hole's side-bet log for one kind in one tee group. Empty logs store as
 // null (and upsert an empty row) so clearing syncs like any other edit.
 export function setHoleBits(rid: string, group: number, kind: BitKind, holeIdx: number, hb: HoleBits | null) {
+  const max = BITS[kind].max;
+  if (hb && max !== undefined)
+    hb = { ...hb, counts: Object.fromEntries(Object.entries(hb.counts).map(([pid, n]) => [pid, Math.min(n, max)])) };
   const v = cleanHoleBits(hb);
   S.bits[rid] = S.bits[rid] || {};
   S.bits[rid][group] = S.bits[rid][group] || {};

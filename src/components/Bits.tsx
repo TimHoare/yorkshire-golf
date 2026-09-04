@@ -21,7 +21,8 @@ export function HoleBitsPanel({ rid, group, holeIdx, players, readOnly }: {
 
   const bump = (kind: BitKind, pid: string, d: number) => {
     const hb = bitsOf(S, rid, group, kind)[holeIdx] || { counts: {}, last: null };
-    const c = Math.max(0, (hb.counts[pid] || 0) + d);
+    const c = Math.min(BITS[kind].max ?? Infinity, Math.max(0, (hb.counts[pid] || 0) + d));
+    if (c === (hb.counts[pid] || 0)) return;
     const counts = { ...hb.counts };
     if (c) counts[pid] = c; else delete counts[pid];
     let last = d > 0 ? pid : hb.last;
@@ -67,7 +68,8 @@ export function HoleBitsPanel({ rid, group, holeIdx, players, readOnly }: {
                           <span className="stepper sm">
                             <button onClick={() => bump(kind, pid, -1)} aria-label={`One ${BITS[kind].one} fewer for ${first(pid)}`}>−</button>
                             <span className={`v${n ? '' : ' off'}`}>{n}</span>
-                            <button onClick={() => bump(kind, pid, 1)} aria-label={`One ${BITS[kind].one} more for ${first(pid)}`}>+</button>
+                            <button onClick={() => bump(kind, pid, 1)} disabled={n >= (BITS[kind].max ?? Infinity)}
+                              aria-label={n >= (BITS[kind].max ?? Infinity) ? `${first(pid)} already has the ${BITS[kind].one}` : `One ${BITS[kind].one} more for ${first(pid)}`}>+</button>
                           </span>
                         )}
                     </div>
