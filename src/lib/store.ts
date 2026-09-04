@@ -208,7 +208,10 @@ export async function flushOutbox() {
         ({ error } = await sb.from('pair_draws').upsert({ round_id: op.k[0], pairs: d.pairs, revealed: d.revealed, updated_at: now }));
       }
       if (error) throw error;
-      outbox.shift(); saveOutbox();
+      // Remove the op we sent — by identity, not position: a newer edit to the
+      // same key may have replaced it in the queue while the request was out,
+      // and that one still has to go.
+      outbox = outbox.filter((o) => o !== op); saveOutbox();
     }
     setSyncStatus('live');
   } catch {
@@ -249,8 +252,29 @@ function applyBonus(pid: string, bb: BonusBall) {
   S.bonus[pid] = bb;
 }
 
+// The outbox key a server row would carry, so realtime echoes of a value this
+// phone is still writing over can be told apart from other phones' edits.
+function rowKey(table: string, row: Row): string | null {
+  switch (table) {
+    case 'hole_scores': return `hole|${row.round_id}|${row.player_id}|${row.hole}`;
+    case 'team_scores': return `team|${row.round_id}|${row.team}|${row.hole}`;
+    case 'bit_events': return `bits|${row.round_id}|${row.grp}|${row.kind}|${row.hole}`;
+    case 'stakes': return 'stake|all';
+    case 'bonus_balls': return `bonus|${row.player_id}`;
+    case 'tee_choices': return `tee|${row.round_id}`;
+    case 'group_draws': return `group|${row.round_id}`;
+    case 'pair_draws': return `pair|${row.round_id}`;
+    default: return null;
+  }
+}
+
 interface Row { round_id: string; player_id?: string; team?: number; hole?: number; gross?: number | null; pairs?: string[][]; revealed?: boolean; groups?: string[][]; grp?: number; kind?: string; counts?: Record<string, number>; last_pid?: string | null; stakes?: unknown; used?: unknown; lost_round?: string | null; tee?: string }
 function onRowChange(table: string, type: string, row: Row) {
+  // While an edit to this key is queued or in flight, the local value is
+  // newer than anything the server can tell us — the echo of our own earlier
+  // write would only flick the screen back for a moment.
+  const key = rowKey(table, row);
+  if (key && outbox.some((o) => o.key === key)) return;
   if (table === 'bonus_balls') {
     if (type === 'DELETE') delete S.bonus[row.player_id!];
     else applyBonus(row.player_id!, cleanBonusBall({ used: row.used, lost: row.lost_round }));

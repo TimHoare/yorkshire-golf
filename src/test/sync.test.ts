@@ -215,6 +215,55 @@ describe('sync engine', () => {
     expect(stored().scores.d9).toBeUndefined();
   });
 
+  it('rapid taps: a newer edit queued while the first is in flight still gets sent, and echoes of the older value are ignored', async () => {
+    // A client whose upserts only complete when told to, so two taps can
+    // overlap the way they do on a phone.
+    const pending: (() => void)[] = [];
+    const upserts: Record<string, unknown>[] = [];
+    const handlers: { table: string; cb: Handler }[] = [];
+    const client = {
+      from: (table: string) => ({
+        select: async () => ({ data: [], error: null }),
+        upsert: (row: Record<string, unknown>) => new Promise((resolve) => {
+          pending.push(() => { upserts.push({ table, ...row }); resolve({ error: null }); });
+        }),
+        delete: () => ({ eq: async () => ({ error: null }), neq: async () => ({ error: null }) }),
+      }),
+      channel: () => {
+        const ch = {
+          on: (_ev: string, filter: { table: string }, cb: Handler) => { handlers.push({ table: filter.table, cb }); return ch; },
+          subscribe: (cb: (s: string) => void) => { setTimeout(() => cb('SUBSCRIBED'), 0); return ch; },
+        };
+        return ch;
+      },
+    };
+    initSync(vi.fn().mockReturnValue(client) as never);
+    await tick();
+    const echo = (gross: number) => handlers.find((h) => h.table === 'hole_scores')!.cb({ eventType: 'UPDATE', new: { round_id: 'd1', player_id: 'p6', hole: 3, gross }, old: {} });
+
+    setGross('d1', { pid: 'p6' }, 2, 4);      // first tap: 4, goes out immediately
+    await tick();
+    setGross('d1', { pid: 'p6' }, 2, 5);      // second tap while the first is in flight
+    setGross('d1', { pid: 'p6' }, 2, 6);      // and a third
+    expect(getSnapshot().S.scores.d1.p6[2]).toBe(6);
+
+    echo(4);                                   // server echoes the first write back
+    expect(getSnapshot().S.scores.d1.p6[2]).toBe(6);   // ignored: we're still writing
+
+    pending.shift()!();                        // first write lands
+    await tick();
+    expect(pending).toHaveLength(1);           // the replacement (6) is now on its way
+    pending.shift()!();
+    await tick();
+    expect(upserts.map((u) => u.gross)).toEqual([4, 6]);
+    expect(outbox()).toEqual([]);
+    echo(6);
+    expect(getSnapshot().S.scores.d1.p6[2]).toBe(6);
+    // and a genuine change from another phone still applies once nothing's queued
+    echo(5);
+    expect(getSnapshot().S.scores.d1.p6[2]).toBe(5);
+  });
+
   it('offline: edits queue, later writes to the same hole replace earlier ones, the retry drains them', async () => {
     const realSetTimeout = globalThis.setTimeout;
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
