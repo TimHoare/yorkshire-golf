@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import App from './App';
 import { importState, initSync } from './lib/store';
-import { ROUTE_KEY } from './lib/state';
+import { ROUTE_KEY, STORE_KEY } from './lib/state';
 import './styles.css';
 
 // Legacy share links carry the whole state in the hash (#s=...): import once.
@@ -14,7 +14,7 @@ import './styles.css';
     let str = m[1].replace(/-/g, '+').replace(/_/g, '/');
     while (str.length % 4) str += '=';
     const json = decodeURIComponent(escape(atob(str)));
-    if (!localStorage.getItem('yorkshire-golf-2026') || confirm("This link carries trip data. Replace what's on this phone with it?")) {
+    if (!localStorage.getItem(STORE_KEY) || confirm("This link carries trip data. Replace what's on this phone with it?")) {
       importState(json);
     }
   } catch { /* bad link — ignore */ }
