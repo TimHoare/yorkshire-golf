@@ -1,6 +1,6 @@
 // Round-level widgets shared by pages: format chips, hidden-pairs box,
 // scramble result, the round leaderboard, and the live gross/points scorecard.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
@@ -191,7 +191,7 @@ export function ScrambleResult({ r }: { r: Round }) {
           const won = res.decided && res.winner === t;
           return (
             <div className={`team${won ? ' won' : ''}`} key={t}>
-              <TeamAvatar players={grp.players} t={t} size="sm" />
+              <TeamAvatar players={grp.players} />
               <h4>{grp.name || 'Team ' + (t + 1)} {won && <span className="chip gorse">Winners</span>}</h4>
               <div className="big">{tt.pts}<small>pts thru {tt.played}</small></div>
               <div className="members">{grp.players.map((pid) => <div className="m" key={pid}>{pName(pid)}</div>)}</div>
@@ -263,7 +263,7 @@ export function Leaderboard({ r }: { r: Round }) {
               <span className="rlb-place">{place}</span>
               {'pid' in x
                 ? <Avatar p={PL(x.pid)} size="sm" />
-                : <TeamAvatar players={x.grp.players} t={x.t} size="sm" />}
+                : <TeamAvatar players={x.grp.players} size="sm" />}
               <div className="rlb-who">
                 <b>{'pid' in x ? first(x.pid) : gname(x.grp, x.t)}</b>
                 <small>
@@ -326,8 +326,10 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
   const scramble = r.format === 'scramble';
   const groups = groupsFor(S, r.id);
   const g = groups[group] || groups[0];
-  const cols: { label: string; tally: Tally }[] = scramble
-    ? groups.map((grp, t) => ({ label: gname(grp, t).replace('Team ', ''), tally: teamTally(S, r.id, t) }))
+  // Team columns are headed by the two names, one above the other — a
+  // letter alone means nothing at a glance.
+  const cols: { label: ReactNode; tally: Tally }[] = scramble
+    ? groups.map((grp, t) => ({ label: <>{first(grp.players[0])}<br />{first(grp.players[1])}</>, tally: teamTally(S, r.id, t) }))
     : g.players.map((pid) => ({ label: first(pid), tally: playerTally(S, r.id, pid) }));
 
   const cell = (row: Tally['rows'][number], key: number) =>

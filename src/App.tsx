@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
-import { PL, R, first } from './data/trip';
+import { PL, R } from './data/trip';
 import { ROUTE_KEY } from './lib/state';
-import { recordNav } from './lib/nav';
+import { recordNav, teamOrFirst } from './lib/nav';
 import { useStore } from './lib/useStore';
 import { Header, Tabs, Toast } from './components/Chrome';
 import { Welcome } from './components/Welcome';
@@ -19,7 +19,7 @@ function titleFor(path: string) {
   const p = path.split('/').filter(Boolean);
   const base =
     p[0] === 'players' ? 'Players' :
-    p[0] === 'player' && PL(p[1]) && p[2] === 'round' && R(p[3]) ? first(p[1]) + ' · ' + R(p[3])!.short :
+    p[0] === 'player' && PL(p[1]) && p[2] === 'round' && R(p[3]) ? teamOrFirst(p[1], p[3]) + ' · ' + R(p[3])!.short :
     p[0] === 'player' && PL(p[1]) ? PL(p[1]).name :
     p[0] === 'standings' ? 'Standings' :
     p[0] === 'round' && R(p[1]) ? (p[2] === 'score' ? 'Scores · ' + R(p[1])!.short : R(p[1])!.short) :

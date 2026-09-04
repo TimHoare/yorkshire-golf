@@ -6,6 +6,14 @@
 import type { Location, NavigationType } from 'react-router-dom';
 import { PL, R, first } from '../data/trip';
 
+// On scramble day a player's round page is their team's page.
+export const teamOrFirst = (pid: string, rid: string) => {
+  const r = R(rid)!;
+  if (r.format !== 'scramble') return first(pid);
+  const t = r.groups.findIndex((g) => g.players.includes(pid));
+  return t >= 0 ? r.groups[t].name || `Team ${t + 1}` : first(pid);
+};
+
 const trail: { key: string; path: string }[] = [];
 
 // Called on every render of the route shell, before the page renders. Keyed
@@ -36,7 +44,7 @@ export function backLabel(path: string): string {
   if (p[0] === 'trip') return 'Trip';
   if (p[0] === 'players') return 'Players';
   if (p[0] === 'standings') return 'Standings';
-  if (p[0] === 'player' && PL(p[1])) return p[2] === 'round' && R(p[3]) ? `${first(p[1])} · ${R(p[3])!.short}` : first(p[1]);
+  if (p[0] === 'player' && PL(p[1])) return p[2] === 'round' && R(p[3]) ? `${teamOrFirst(p[1], p[3])} · ${R(p[3])!.short}` : first(p[1]);
   if (p[0] === 'round' && R(p[1])) return p[2] === 'score' ? `${R(p[1])!.short} scores` : R(p[1])!.short;
   return 'Back';
 }

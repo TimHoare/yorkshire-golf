@@ -24,15 +24,12 @@ export function Avatar({ p, size, badge }: { p: Player; size?: 'sm'; badge?: Rea
   );
 }
 
-// A scramble team: both faces set diagonally in one avatar-sized footprint,
-// with the team letter as a badge in the team's colour. `t` is the team
-// index (0–3), which also picks the badge colour used elsewhere for teams.
-export function TeamAvatar({ players, t, size }: { players: string[]; t: number; size?: 'sm' }) {
-  const letter = String.fromCharCode(65 + t);
+// A scramble team: both faces set diagonally in one avatar-sized footprint.
+// No letter — wherever this appears the team's name is right beside it.
+export function TeamAvatar({ players, size }: { players: string[]; size?: 'sm' | 'lg' }) {
   return (
-    <span className={`team-av${size ? ' ' + size : ''}`} role="img" aria-label={`Team ${letter}`}>
+    <span className={`team-av${size ? ' ' + size : ''}`} role="img" aria-label={players.map((pid) => PL(pid).name).join(' & ')}>
       {players.slice(0, 2).map((pid) => <Avatar key={pid} p={PL(pid)} />)}
-      <em className={`t${t}`}>{letter}</em>
     </span>
   );
 }

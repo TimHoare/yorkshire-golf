@@ -161,10 +161,12 @@ describe('app flow', () => {
     }));
     reloadFromStorage();
     const { container } = mount('/player/p6/round/d3');
-    expect(screen.getByText('Cave Castle Golf Club')).toBeTruthy();
-    expect(screen.getByText(/Team D/)).toBeTruthy();
-    expect(screen.getByText(/Team D/).textContent).toContain('with Liam C');   // his scramble partner
+    expect(screen.getByText(/Cave Castle Golf Club/)).toBeTruthy();
+    expect(container.querySelector('h1')!.textContent).toBe('Team D');          // the team's page, not Rob's
+    expect(screen.getByText(/Rob Ellis & Liam Cameron/)).toBeTruthy();
     expect(screen.getByText('Team pts')).toBeTruthy();
+    expect(screen.getByText('Rob · course hcp')).toBeTruthy();
+    expect(screen.getByText('Liam C · course hcp')).toBeTruthy();
     expect(screen.queryByText('Bonus ball')).toBeNull();
     const rows = [...container.querySelectorAll('table.player-sc tbody tr:not(.sum)')];
     expect(rows[0].textContent).toContain('4');

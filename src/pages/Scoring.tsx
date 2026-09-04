@@ -192,7 +192,7 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               const tt = teamTally(S, r.id, t);
               const tr = tt.rows[i];
               return row(
-                <TeamAvatar players={grp.players} t={t} />,
+                <TeamAvatar players={grp.players} />,
                 gname(grp, t),
                 <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}{shotsBit(tr.shots)}Team HCP {teamHandicap(S, r.id, t)}</>,
                 { team: t }, tr.gross, tr.pts,

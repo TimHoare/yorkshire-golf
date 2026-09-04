@@ -8,11 +8,11 @@ import { BITS, PL, R, RULES, first, gname } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
   bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor,
-  indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
+  indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
   teamTally, trim, type Tally,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
-import { Avatar } from '../components/Avatar';
+import { Avatar, TeamAvatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { FormatChips, Gross, GrossLegend } from '../components/RoundBits';
 
@@ -32,7 +32,8 @@ export function PlayerRoundPage() {
   const drawn = !!S.groups[r.id];
   const t = groups.findIndex((g) => g.players.includes(pid));
   const grp = groups[t];
-  const partner = scramble && grp ? grp.players.find((x) => x !== pid) : undefined;
+  // On scramble day this is the team's page: both members throughout.
+  const members = scramble && grp ? grp.players : [pid];
   // Bits are logged per tee group — per flight on scramble day.
   const bitGroup = scramble ? flightsFor(S, r.id).findIndex((f) => f.players.includes(pid)) : t;
   const bitTitle = bitGroup < 0 ? '' : scramble ? flightName(S, r.id, bitGroup) : gname(grp, t);
@@ -53,14 +54,15 @@ export function PlayerRoundPage() {
     : bonusHole !== null ? bb?.used[r.id] === undefined ? 'Not called, so 2× on the 18th' : `2× on the ${ord(bonusHole + 1)}`
     : status === 'done' ? 'Not played' : 'Still to play';
 
-  // This player's bits on each hole, and their round totals per kind.
-  const myBits = (i: number) => BIT_KINDS
-    .map((k) => ({ k, n: bitGroup < 0 ? 0 : bitsOf(S, r.id, bitGroup, k)[i]?.counts[pid] || 0 }))
+  // Bits on each hole for one member, and round totals per kind for all of them.
+  const bitsOn = (i: number, who: string) => BIT_KINDS
+    .map((k) => ({ k, n: bitGroup < 0 ? 0 : bitsOf(S, r.id, bitGroup, k)[i]?.counts[who] || 0 }))
     .filter((x) => x.n > 0);
   const bitTotals = BIT_KINDS.map((k) => {
-    const n = Array.from({ length: 18 }, (_, i) => myBits(i).find((x) => x.k === k)?.n || 0).reduce((a, b) => a + b, 0);
+    const by = members.map((who) => ({ who, n: Array.from({ length: 18 }, (_, i) => bitsOn(i, who).find((x) => x.k === k)?.n || 0).reduce((a, b) => a + b, 0) }));
     const grpT = bitGroup < 0 ? null : groupBitTally(S, r.id, bitGroup, k);
-    return { k, n, last: !!grpT && grpT.last === pid && grpT.total > 0, owes: grpT ? grpT.total * S.stakes[k] : 0 };
+    const last = grpT && grpT.total > 0 && grpT.last && members.includes(grpT.last) ? grpT.last : null;
+    return { k, by, n: by.reduce((a, x) => a + x.n, 0), last, owes: grpT ? grpT.total * S.stakes[k] : 0 };
   });
 
   // Result lines: place and week points once the round's decided.
@@ -73,8 +75,9 @@ export function PlayerRoundPage() {
     const out: ReactNode[] = [];
     if (bonusHole === i) out.push(<span className="xb bonus" key="bb" title="Bonus ball · double points">🎱 2×</span>);
     if (lostHere === i) out.push(<span className="xb lost" key="bl" title="Bonus ball lost">🎱 ✕</span>);
-    for (const { k, n } of myBits(i))
-      out.push(<span className="xb" key={k} title={BITS[k].one}>{BITS[k].icon}{n > 1 ? `×${n}` : ''}</span>);
+    for (const who of members)
+      for (const { k, n } of bitsOn(i, who))
+        out.push(<span className="xb" key={who + k} title={BITS[k].one}>{BITS[k].icon}{n > 1 ? `×${n}` : ''}{scramble && <small> {first(who)}</small>}</span>);
     return out;
   };
 
@@ -97,12 +100,14 @@ export function PlayerRoundPage() {
     <>
       <BackButton to={`/player/${pid}`} label={first(pid)} />
       <div className="player-head pr">
-        <Avatar p={p} />
+        {scramble && grp ? <TeamAvatar players={grp.players} size="lg" /> : <Avatar p={p} />}
         <div>
-          <span className="eyebrow">Round {r.n} · {r.dow} {r.dnum} {r.mon}</span>
-          <h1>{r.club}</h1>
+          <span className="eyebrow">Round {r.n} · {r.dow} {r.dnum} {r.mon}{scramble ? ` · ${r.club}` : ''}</span>
+          <h1>{scramble && grp ? gname(grp, t) : r.club}</h1>
           <div className="sub">
-            {p.name}{drawn && grp ? <> · {gname(grp, t)}{scramble && partner && <> with <b>{first(partner)}</b></>} · {grp.tee}</> : null}
+            {scramble && grp
+              ? <>{grp.players.map((x) => PL(x).name).join(' & ')}{drawn ? <> · {grp.tee}</> : <> · teams to be set</>}</>
+              : <>{p.name}{drawn && grp ? <> · {gname(grp, t)} · {grp.tee}</> : null}</>}
           </div>
         </div>
       </div>
@@ -128,14 +133,21 @@ export function PlayerRoundPage() {
         }</div>
       </div>
 
-      <div className="course-facts card">
-        <div className="cf"><span className="l">Index in</span><b>{fmt1(before)}</b></div>
-        <div className="cf"><span className="l">Course hcp</span><b>{ch}</b></div>
-        {scramble
-          ? <div className="cf"><span className="l">Team hcp</span><b>{drawn && t >= 0 ? teamHandicap(S, r.id, t) : '–'}</b></div>
-          : <div className="cf"><span className="l">Playing hcp</span><b>{ph}</b></div>}
-        <div className="cf"><span className="l">Index out</span><b>{applied ? <>{fmt1(after)} <span className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}>{after === before ? '' : (after < before ? '−' : '+') + fmt1(Math.abs(after - before))}</span></> : '–'}</b></div>
-      </div>
+      {scramble ? (
+        <div className="course-facts card">
+          <div className="cf"><span className="l">Team hcp</span><b>{drawn && t >= 0 ? teamHandicap(S, r.id, t) : '–'}</b></div>
+          {members.map((who) => (
+            <div className="cf" key={who}><span className="l">{first(who)} · course hcp</span><b>{courseHandicap(S, indexBefore(S, who, r.id), r.id)}</b></div>
+          ))}
+        </div>
+      ) : (
+        <div className="course-facts card">
+          <div className="cf"><span className="l">Index in</span><b>{fmt1(before)}</b></div>
+          <div className="cf"><span className="l">Course hcp</span><b>{ch}</b></div>
+          <div className="cf"><span className="l">Playing hcp</span><b>{ph}</b></div>
+          <div className="cf"><span className="l">Index out</span><b>{applied ? <>{fmt1(after)} <span className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}>{after === before ? '' : (after < before ? '−' : '+') + fmt1(Math.abs(after - before))}</span></> : '–'}</b></div>
+        </div>
+      )}
 
       {pair && (
         <p className="small muted" style={{ margin: '2px 0 4px' }}>
@@ -193,11 +205,11 @@ export function PlayerRoundPage() {
             <span className="bit-sum wrap">{bonusText}</span>
           </div>
         )}
-        {bitTotals.map(({ k, n, last, owes }) => (
+        {bitTotals.map(({ k, by, n, last, owes }) => (
           <div className="xrow" key={k}>
             <span className="bit-ic" aria-hidden>{BITS[k].icon}</span>
-            <span className="bit-l"><b>{BITS[k].label}</b><small>{BITS[k].desc}</small></span>
-            <span className="bit-sum wrap">{last ? <>Had the last one · puts in <b>{fmtMoney(owes)}</b></> : ''}</span>
+            <span className="bit-l"><b>{BITS[k].label}</b><small>{scramble ? by.map((x) => `${first(x.who)} ${x.n || '–'}`).join(' · ') : BITS[k].desc}</small></span>
+            <span className="bit-sum wrap">{last ? <>{scramble ? first(last) + ' had' : 'Had'} the last one · puts in <b>{fmtMoney(owes)}</b></> : ''}</span>
             <span className={`bit-n${n ? '' : ' off'}`}>{n || '–'}</span>
           </div>
         ))}
