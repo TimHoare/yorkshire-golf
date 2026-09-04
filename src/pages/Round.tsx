@@ -21,7 +21,11 @@ export function RoundPage() {
   const yds = tee.yds;
   const yardsKnown = !!yds && yds.every((v) => v != null);
   const totalYds = yardsKnown ? yds!.reduce((a: number, v) => a + (v ?? 0), 0) : null;
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.club + ', ' + r.address)}`;
+  // On Android a geo: link brings up the system chooser (Google Maps, Waze,
+  // whatever's installed); elsewhere fall back to a Google Maps search.
+  const where = encodeURIComponent(r.club + ', ' + r.address);
+  const android = /android/i.test(navigator.userAgent);
+  const mapsUrl = android ? `geo:0,0?q=${where}` : `https://www.google.com/maps/search/?api=1&query=${where}`;
   const groups = groupsFor(S, r.id);
   const drawn = !!S.groups[r.id];
   const status = roundStatus(S, r.id);
@@ -48,7 +52,7 @@ export function RoundPage() {
         {drawn
           ? <Link className="btn primary grow" to={`/round/${r.id}/score`}>Enter scores</Link>
           : <button className="btn primary grow" disabled title={`Set the ${scramble ? 'teams' : 'groups'} first`}>Enter scores</button>}
-        <a className="btn ghost" href={mapsUrl} target="_blank" rel="noopener noreferrer">Map ↗</a>
+        <a className="btn ghost" href={mapsUrl} target={android ? undefined : '_blank'} rel="noopener noreferrer">Map ↗</a>
       </div>
       {!drawn && <p className="small muted" style={{ margin: '0 0 4px' }}>Scoring opens once the {scramble ? 'teams' : 'groups'} are set below.</p>}
 
