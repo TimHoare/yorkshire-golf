@@ -284,7 +284,7 @@ export function ScoringPage() {
     <>
       <BackButton to={`/round/${r.id}`} label={r.short} />
       <div className="score-page-head">
-        <h2>Enter scores</h2>
+        <h2>Scores</h2>
         {units.length > 1 && (
           <div className="seg">
             {units.map((u, t) => (

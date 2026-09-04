@@ -181,7 +181,7 @@ describe('app flow', () => {
     const map = screen.getByText('Map ↗').closest('a')!;
     expect(map.href).toContain('google.com/maps');
     expect(screen.queryByLabelText('One stroke more')).toBeNull();
-    expect(screen.getByText('Enter scores')).toBeTruthy();
+    expect(screen.getByText('Scores')).toBeTruthy();
     // real Ganton yardage on the course card
     expect(screen.getByText('6,440 yds')).toBeTruthy();
   });
@@ -271,9 +271,9 @@ describe('app flow', () => {
   it('scoring is closed until the groups are saved', () => {
     setMe('p1');
     mount('/round/d1/score/1');
-    // bounced back to the round page, where Enter scores is disabled
+    // bounced back to the round page, where Scores is disabled
     expect(screen.getByText('Elsham Golf Club')).toBeTruthy();
-    const enter = screen.getByText('Enter scores') as HTMLButtonElement;
+    const enter = screen.getByText('Scores') as HTMLButtonElement;
     expect(enter.closest('a')).toBeNull();
     expect(enter.closest('button')!.disabled).toBe(true);
   });
