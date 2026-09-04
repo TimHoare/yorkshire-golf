@@ -29,10 +29,14 @@ export interface TripState {
   teeChoice: Record<string, string>;                     // teeChoice[rid] = alt tee key, absent = the round's default tees
 }
 
-export const STORE_KEY = 'yorkshire-golf-2026';
-export const ME_KEY = STORE_KEY + '-me';
+// Storage generation: bumping the suffix orphans whatever an older build
+// saved (state and outbox alike), so a phone that last ran old sync code
+// starts clean from the server instead of replaying stale local data.
+// Who you are and where you were stay put across generations.
+export const STORE_KEY = 'yorkshire-golf-2026-g2';
+export const ME_KEY = 'yorkshire-golf-2026-me';
 export const OUTBOX_KEY = STORE_KEY + '-outbox';
-export const ROUTE_KEY = STORE_KEY + '-route';
+export const ROUTE_KEY = 'yorkshire-golf-2026-route';
 
 export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
 export function defaultState(): TripState {

@@ -42,7 +42,7 @@ describe('app flow', () => {
 
   it('player page shows their index and a row per round', () => {
     setMe('p1');
-    localStorage.setItem('yorkshire-golf-2026', JSON.stringify({
+    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
       v: 3, scores: {}, pairs: {}, scramble: {},
       groups: { d3: [['p1', 'p3'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']] },
     }));
@@ -85,17 +85,17 @@ describe('app flow', () => {
     const robRow2 = [...slide2.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Rob'))! as HTMLElement;
     fireEvent.click(within(robRow2).getByLabelText(/One stroke fewer/));
     expect((within(robRow2).getByPlaceholderText('4') as HTMLInputElement).value).toBe('3'); // birdie
-    let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026')!);
+    let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.scores.d1.p6[0]).toBe(4);
     expect(saved.scores.d1.p6[1]).toBe(3);
     expect(within(robRow2).getByText('Birdie')).toBeTruthy();
     // typing 0 marks a pickup (hold − does the same); − then clears it
     fireEvent.change(within(robRow2).getByPlaceholderText('4'), { target: { value: '0' } });
     expect(within(robRow2).getByText('Pickup')).toBeTruthy();
-    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026')!);
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.scores.d1.p6[1]).toBe(0);
     fireEvent.click(within(robRow2).getByLabelText('Undo the X'));
-    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026')!);
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.scores.d1.p6[1]).toBeNull();
   });
 
@@ -117,7 +117,7 @@ describe('app flow', () => {
   it('scoring deep link with no hole lands on first unfinished hole for my group', () => {
     setMe('p1');
     // ragged 3-entry arrays on purpose: migrate() must pad them to 18
-    localStorage.setItem('yorkshire-golf-2026', JSON.stringify({
+    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
       v: 3,
       scores: { d1: { p1: [4, 4, 4], p2: [4, 4, 4], p3: [4, 4, 4], p4: [4, 4, 4] } },
       pairs: {}, scramble: {},
