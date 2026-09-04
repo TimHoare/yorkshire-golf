@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ROUNDS, RULES, pName, PL } from '../data/trip';
 import {
   currentIndex, fmt1, playerTally, roundPlace, roundPoints, roundStatus,
@@ -14,7 +15,7 @@ export function StandingsPage() {
 
   return (
     <>
-      <div className="section-title"><h2>Standings</h2><span className="eyebrow">{doneCount} of {ROUNDS.length} rounds in</span></div>
+      <div className="section-title"><h2>Standings</h2><span className="eyebrow">{doneCount} of {ROUNDS.length} rounds in · tap a name</span></div>
       {!anyPts && <div className="empty">No results yet. Once a round's scores are in, week points appear here.</div>}
       <div className="lb">
         {st.map((row) => {
@@ -22,7 +23,7 @@ export function StandingsPage() {
           const cur = currentIndex(S, row.pid);
           const d = cur - p.start;
           return (
-            <div className="lb-row" key={row.pid}>
+            <Link className="lb-row" to={`/player/${row.pid}`} key={row.pid}>
               <Avatar p={p} badge={<em className={row.rank === 1 && anyPts ? 'lead' : ''}>{row.rank}</em>} />
               <div style={{ minWidth: 0 }}>
                 <div className="nm">{pName(row.pid)}{row.pid === me && <> <span className="chip you">you</span></>}</div>
@@ -43,12 +44,13 @@ export function StandingsPage() {
                 </div>
               </div>
               <div className="pts">{trim(row.pts)}<small>pts</small></div>
-            </div>
+              <svg className="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+            </Link>
           );
         })}
       </div>
 
-      <div className="section-title"><h2>Round by round</h2><span className="eyebrow">stableford (week pts)</span></div>
+      <div className="section-title"><h2>Round by round</h2><span className="eyebrow">stableford (week pts) · tap for a card</span></div>
       <div className="card table-wrap">
         <table className="rounds-table">
           <thead>
@@ -57,15 +59,17 @@ export function StandingsPage() {
           <tbody>
             {st.map((row) => (
               <tr key={row.pid}>
-                <td>{pName(row.pid)}</td>
+                <td><Link to={`/player/${row.pid}`}>{pName(row.pid)}</Link></td>
                 {ROUNDS.map((rd) => {
+                  // Every cell opens that player's card for the round, scored or not.
+                  const card = `/player/${row.pid}/round/${rd.id}`;
                   if (rd.format === 'scramble') {
                     const sr = scrambleResults(S, rd.id).rows[row.pid];
-                    return <td key={rd.id}>{sr ? <><span className={sr.won ? 'win' : ''}>{sr.place}{['st', 'nd', 'rd'][sr.place - 1] || 'th'}{sr.tie ? '=' : ''}</span> <span className="pt">({trim(sr.points)})</span></> : '·'}</td>;
+                    return <td key={rd.id}><Link to={card}>{sr ? <><span className={sr.won ? 'win' : ''}>{sr.place}{['st', 'nd', 'rd'][sr.place - 1] || 'th'}{sr.tie ? '=' : ''}</span> <span className="pt">({trim(sr.points)})</span></> : '·'}</Link></td>;
                   }
                   const t = playerTally(S, rd.id, row.pid);
                   const rp = roundPoints(S, rd.id, row.pid);
-                  return <td key={rd.id}>{t.played === 0 ? '·' : <>{t.pts}{t.complete ? '' : '*'} <span className="pt">({trim(rp ?? 0)})</span></>}</td>;
+                  return <td key={rd.id}><Link to={card}>{t.played === 0 ? '·' : <>{t.pts}{t.complete ? '' : '*'} <span className="pt">({trim(rp ?? 0)})</span></>}</Link></td>;
                 })}
                 <td><b>{trim(row.pts)}</b>{row.bonusKept > 0 && <span className="pt"> 🎱</span>}</td>
               </tr>

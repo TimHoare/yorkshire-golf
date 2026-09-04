@@ -203,9 +203,16 @@ describe('app flow', () => {
     expect(enter.closest('button')!.disabled).toBe(true);
   });
 
-  it('standings tags my row with a you chip', () => {
+  it('standings tags my row with a you chip, and links rows and round cells to cards', () => {
     setMe('p1');
     const { container } = mount('/standings');
     expect(container.querySelector('.lb-row .chip.you')).toBeTruthy();
+    // standings rows open the profile; round-by-round cells open that round's card
+    const row = container.querySelector('a.lb-row .chip.you')!.closest('a')!;
+    expect(row.getAttribute('href')).toBe('/player/p1');
+    const cells = [...container.querySelectorAll('.rounds-table tbody tr:first-child td a')];
+    expect(cells.map((a) => a.getAttribute('href'))).toEqual([
+      '/player/p1', '/player/p1/round/d1', '/player/p1/round/d2', '/player/p1/round/d3', '/player/p1/round/d4', '/player/p1/round/d5',
+    ]);
   });
 });

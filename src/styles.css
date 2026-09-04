@@ -30,7 +30,7 @@
 
 * { box-sizing: border-box; }
 /* Router links render as anchors; keep them looking like the app chrome. */
-a.tab, a.itin-day, a.back, a.btn, a.cf, a.player-row, a.pweek-row, a.rlb-row, a.wordmark { text-decoration: none; color: inherit; }
+a.tab, a.itin-day, a.back, a.btn, a.cf, a.player-row, a.pweek-row, a.rlb-row, a.lb-row, .rounds-table a, a.wordmark { text-decoration: none; color: inherit; }
 a.back { color: var(--pine); }
 a.btn.primary { color: #F6F1E4; }
 html { -webkit-text-size-adjust: 100%; }
@@ -235,7 +235,11 @@ p { margin: 0; }
 
 /* ---------- Standings ---------- */
 .lb { display: grid; gap: 0; }
-.lb-row { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.lb-row { display: grid; grid-template-columns: 44px 1fr auto 16px; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.lb-row .chev { color: var(--ink-3); }
+.lb-row:active { background: var(--soft); }
+/* Round-by-round cells are links to the card: the anchor fills the cell so the whole thing is the tap target. */
+.rounds-table td a { display: block; margin: -9px -6px; padding: 9px 6px; }
 .lb-row .nm { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-row .meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: 12.5px; color: var(--ink-2); flex-wrap: wrap; }
 .lb-row .pts { font-weight: 700; font-size: 21px; line-height: 1; text-align: right; color: var(--pine); }
