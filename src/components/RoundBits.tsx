@@ -1,6 +1,7 @@
 // Round-level widgets shared by pages: format chips, hidden-pairs box,
 // scramble result, the round leaderboard, and the live gross/points scorecard.
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
@@ -230,14 +231,17 @@ export function Leaderboard({ r }: { r: Round }) {
 
   return (
     <>
-      <div className="section-title"><h2>Leaderboard</h2><span className="eyebrow">live · all {scramble ? 'teams' : 'groups'}</span></div>
+      <div className="section-title"><h2>Leaderboard</h2><span className="eyebrow">live · tap for a card</span></div>
       <div className="rlb">
         {rows.map((x) => {
           const t = 'tally' in x ? x.tally : x;
           const place = `${x.place}${x.tied ? '=' : ''}`;
           const mine = 'pid' in x ? x.pid === me : ('grp' in x && !!me && x.grp.players.includes(me));
+          // Each row opens that player's card for the round; a team row opens
+          // the team's card (the same for either member).
+          const to = `/player/${'pid' in x ? x.pid : x.grp.players[0]}/round/${r.id}`;
           return (
-            <div className={`rlb-row${mine ? ' me' : ''}`} key={x.key}>
+            <Link className={`rlb-row${mine ? ' me' : ''}`} to={to} key={x.key}>
               <span className="rlb-place">{place}</span>
               {'pid' in x
                 ? <Avatar p={PL(x.pid)} size="sm" />
@@ -250,7 +254,8 @@ export function Leaderboard({ r }: { r: Round }) {
                 </small>
               </div>
               <span className="rlb-pts">{t.pts}<small>pts</small></span>
-            </div>
+              <svg className="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+            </Link>
           );
         })}
       </div>

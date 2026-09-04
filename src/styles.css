@@ -30,7 +30,7 @@
 
 * { box-sizing: border-box; }
 /* Router links render as anchors; keep them looking like the app chrome. */
-a.tab, a.itin-day, a.back, a.btn, a.cf, a.player-row, a.pweek-row, a.wordmark { text-decoration: none; color: inherit; }
+a.tab, a.itin-day, a.back, a.btn, a.cf, a.player-row, a.pweek-row, a.rlb-row, a.wordmark { text-decoration: none; color: inherit; }
 a.back { color: var(--pine); }
 a.btn.primary { color: #F6F1E4; }
 html { -webkit-text-size-adjust: 100%; }
@@ -485,7 +485,9 @@ p { margin: 0; }
 
 /* ---------- Round leaderboard ---------- */
 .rlb { display: grid; gap: 0; }
-.rlb-row { display: grid; grid-template-columns: 26px 28px 1fr auto; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rlb-row { display: grid; grid-template-columns: 26px 28px 1fr auto 16px; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rlb-row .chev { color: var(--ink-3); }
+.rlb-row:active { background: var(--soft); }
 .rlb-row:last-child { border-bottom: 0; }
 .rlb-row.me { background: var(--brass-soft); border-radius: var(--radius-sm); padding-left: 6px; padding-right: 6px; margin: 0 -6px; }
 .rlb-place { font-family: var(--serif); font-size: 18px; color: var(--brass); text-align: center; }

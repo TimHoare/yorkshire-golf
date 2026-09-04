@@ -88,6 +88,21 @@ describe('app flow', () => {
     expect(screen.getAllByText(/Had the last one/)).toHaveLength(2);
   });
 
+  it("round page leaderboard rows link to each player's card", () => {
+    setMe('p1');
+    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+      v: 3, pairs: {}, scramble: {},
+      scores: { d1: { p6: [4, 3, 4], p1: [5, 5, 5] } },
+      groups: { d1: [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']] },
+    }));
+    reloadFromStorage();
+    const { container } = mount('/round/d1');
+    const rows = [...container.querySelectorAll('a.rlb-row')];
+    expect(rows).toHaveLength(2);
+    expect(rows[0].getAttribute('href')).toBe('/player/p6/round/d1');   // Rob leads
+    expect(rows[1].getAttribute('href')).toBe('/player/p1/round/d1');
+  });
+
   it("player round page on scramble day shows the team's card", () => {
     setMe('p1');
     localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
