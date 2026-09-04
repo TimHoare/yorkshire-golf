@@ -53,7 +53,7 @@ export const ROUNDS: Round[] = [
     address: 'Anti Mill, The Westwood, Beverley, HU17 8RG',
     holes: card([4,4,5,3,4,3,4,3,4, 4,4,4,4,4,5,3,4,3], [11,3,13,7,9,17,1,15,5, 14,16,10,8,2,12,6,4,18], [333,435,558,183,319,178,402,171,362, 320,315,316,301,337,477,186,324,136]),
     altTees: [{ key: 'white', label: 'white', cr: 69.4, slope: 125, yds: [340,463,568,185,326,181,410,179,392, 348,317,334,340,377,481,215,369,141] }],
-    groups: [{ tee: 'TBC', players: ['p1','p6','p4','p7'] }, { tee: 'TBC', players: ['p2','p5','p3','p8'] }] },
+    groups: [{ tee: '11:20', players: ['p1','p6','p4','p7'] }, { tee: '11:30', players: ['p2','p5','p3','p8'] }] },
   { id: 'd5', n: 5, dow: 'Fri', dnum: 11, mon: 'Sept', club: 'York Golf Club',        short: 'York',        town: 'Strensall, York',          format: 'stableford', pairs: false, par: 70, cr: 69.6, slope: 123, tees: 'yellow',
     address: 'Lords Moor Lane, Strensall, York, YO32 5XF',
     holes: card([4,3,5,4,4,4,3,4,4, 4,3,4,4,4,5,4,3,4], [7,17,9,11,1,5,13,3,15, 4,18,12,2,16,6,10,14,8], [431,140,500,345,392,414,145,450,336, 394,115,352,367,370,503,379,176,373]),
