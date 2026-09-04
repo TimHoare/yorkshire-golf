@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
-  groupsFor, pairTotals, playerTally, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
+  groupsFor, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
   type Tally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
@@ -229,14 +229,31 @@ export function Leaderboard({ r }: { r: Round }) {
 
   if (!rows.length) return null;
 
+  // Week points land once the round's complete: place points for the
+  // individual, plus the hidden-pair share where there is one. Shown as the
+  // split as well as the total, so nobody has to work out where a 16 came from.
+  const done = roundStatus(S, r.id) === 'done';
+  const pairsDrawn = !!S.pairs[r.id]?.revealed;
+  const scr = scramble ? scrambleResults(S, r.id) : null;
+
   return (
     <>
-      <div className="section-title"><h2>Leaderboard</h2><span className="eyebrow">live · tap for a card</span></div>
+      <div className="section-title"><h2>Leaderboard</h2><span className="eyebrow">{done ? 'final' : 'live'} · tap for a card</span></div>
       <div className="rlb">
         {rows.map((x) => {
           const t = 'tally' in x ? x.tally : x;
           const place = `${x.place}${x.tied ? '=' : ''}`;
+          const placeOrd = `${x.place}${['st', 'nd', 'rd'][x.place! - 1] || 'th'}${x.tied ? '=' : ''}`;
           const mine = 'pid' in x ? x.pid === me : ('grp' in x && !!me && x.grp.players.includes(me));
+          let wk: number | null = null, split = '';
+          if ('pid' in x && done) {
+            const ind = x.points ?? 0, pair = pairPointsFor(S, r.id, x.pid);
+            wk = ind + pair;
+            split = `${trim(ind)} for ${placeOrd}` + (r.pairs ? (pairsDrawn ? ` + ${trim(pair)} pair` : ' · pairs still to draw') : '');
+          } else if ('grp' in x && scr?.decided) {
+            const o = scr.rows[x.grp.players[0]];
+            if (o) { wk = o.points; split = `${trim(o.points)} each for ${placeOrd}`; }
+          }
           // Each row opens that player's card for the round; a team row opens
           // the team's card (the same for either member).
           const to = `/player/${'pid' in x ? x.pid : x.grp.players[0]}/round/${r.id}`;
@@ -252,13 +269,20 @@ export function Leaderboard({ r }: { r: Round }) {
                   {'pid' in x ? `PH ${phFor(S, x.pid, r.id)}` : x.grp.players.map(first).join(' · ')}
                   {t.complete ? ` · ${t.strokes}${t.pickups ? '+' : ''} strokes` : ` · thru ${t.played}`}
                 </small>
+                {wk !== null && <small className="wk">Week pts: {split}</small>}
               </div>
               <span className="rlb-pts">{t.pts}<small>pts</small></span>
+              <span className="rlb-wk">{wk !== null && <>{trim(wk)}<small>wk</small></>}</span>
               <svg className="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </Link>
           );
         })}
       </div>
+      {done && !scramble && (
+        <p className="small muted" style={{ marginTop: 8 }}>
+          Week points {RULES.placePoints.join(' · ')} for 1st–8th (ties share, after countback){r.pairs ? <>, plus {RULES.pairPoints.join(' · ')} each for the hidden pairs</> : null}.
+        </p>
+      )}
     </>
   );
 }

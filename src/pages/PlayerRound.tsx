@@ -118,11 +118,13 @@ export function PlayerRoundPage() {
             ? mine ? `${ord(mine.place)}${mine.tie ? '=' : ''}` : '–'
             : status === 'done' && res?.place ? `${ord(res.place)}${res.tied ? '=' : ''}` : '–'
         }</b></div>
-        <div className="cf"><span className="l">Week pts</span><b>{
+        <div className="cf"><span className="l">Week pts</span>{
           scramble
-            ? mine ? trim(mine.points) : '–'
-            : status === 'done' && res?.points !== undefined ? trim(res.points + (pair?.points ?? 0)) : '–'
-        }</b></div>
+            ? <b>{mine ? trim(mine.points) : '–'}</b>
+            : status === 'done' && res?.points !== undefined
+              ? <><b>{trim(res.points + (pair?.points ?? 0))}</b><span className="s">{trim(res.points)} for {ord(res.place!)}{res.tied ? '=' : ''}{r.pairs ? (pair ? ` + ${trim(pair.points ?? 0)} pair` : ' · pairs to draw') : ''}</span></>
+              : <b>–</b>
+        }</div>
       </div>
 
       <div className="course-facts card">

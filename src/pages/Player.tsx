@@ -4,7 +4,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { BITS, PL, R, RULES, gname } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
-  courseHandicap, fmt1, groupsFor, indexHistory, playerBitTotal, playerTally, roundPlace,
+  courseHandicap, fmt1, groupsFor, indexHistory, pairPointsFor, playerBitTotal, playerTally, roundPlace,
   roundPoints, roundStatus, scrambleResults, signed, standings, teamHandicap, trim,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
@@ -78,7 +78,11 @@ export function PlayerPage() {
             if (tl.played > 0) {
               line.push(<span key="s"> · <b>{tl.pts} pts</b>{tl.complete ? ` · ${tl.strokes}${tl.pickups ? '+' : ''} strokes` : ` thru ${tl.played}`}</span>);
               const pl = roundPlace(S, r.id, pid), wp = roundPoints(S, r.id, pid);
-              if (status === 'done' && pl) line.push(<span key="p"> · {pl}{['st','nd','rd'][pl - 1] || 'th'} · <b>{trim(wp ?? 0)} week pts</b></span>);
+              if (status === 'done' && pl) {
+                const pair = pairPointsFor(S, r.id, pid), ind = (wp ?? 0) - pair;
+                const split = r.pairs ? (S.pairs[r.id]?.revealed ? ` (${trim(ind)} + ${trim(pair)} pair)` : ' · pairs to draw') : '';
+                line.push(<span key="p"> · {pl}{['st','nd','rd'][pl - 1] || 'th'} · <b>{trim(wp ?? 0)} week pts</b>{split}</span>);
+              }
             }
             if (applied) line.push(<span key="i" className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}> · Index {fmt1(before)} → {fmt1(after)}</span>);
           }

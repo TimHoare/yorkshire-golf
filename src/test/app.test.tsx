@@ -88,6 +88,30 @@ describe('app flow', () => {
     expect(screen.getAllByText(/Had the last one/)).toHaveLength(2);
   });
 
+  it('a finished round shows week points as individual + pair on the leaderboard, card and profile', () => {
+    setMe('p1');
+    const par = [4,4,4,5,5,3,4,4,3, 5,4,3,4,3,4,4,4,4];
+    const scores = Object.fromEntries(['p1','p2','p3','p4','p5','p6','p7','p8'].map((pid, i) => [pid, par.map((p) => p + (i % 3))]));
+    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+      v: 3, scramble: {}, scores: { d1: scores },
+      groups: { d1: [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']] },
+      pairs: { d1: { pairs: [['p1', 'p2'], ['p3', 'p4'], ['p5', 'p6'], ['p7', 'p8']], revealed: true } },
+    }));
+    reloadFromStorage();
+    const { container, unmount } = mount('/round/d1');
+    const top = container.querySelector('a.rlb-row')!;
+    expect(top.querySelector('.rlb-wk')!.textContent).toMatch(/^\d+(\.\d)?wk$/);
+    expect(top.querySelector('small.wk')!.textContent).toMatch(/^Week pts: \d+(\.\d)? for \d(st|nd|rd|th)=? \+ \d+(\.\d)? pair$/);
+    expect(screen.getByText(/plus 6 · 4 · 2 · 0 each for the hidden pairs/)).toBeTruthy();
+    unmount();
+    const pid = top.getAttribute('href')!.split('/')[2];
+    mount(`/player/${pid}/round/d1`);
+    expect(screen.getByText('Week pts').parentElement!.querySelector('.s')!.textContent).toMatch(/ for \d(st|nd|rd|th)=? \+ .* pair$/);
+    cleanup();
+    mount(`/player/${pid}`);
+    expect(screen.getByText(/week pts/).parentElement!.textContent).toMatch(/week pts \(\S+ \+ \S+ pair\)/);
+  });
+
   it("round page leaderboard rows link to each player's card", () => {
     setMe('p1');
     localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({

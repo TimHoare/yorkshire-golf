@@ -401,6 +401,7 @@ p { margin: 0; }
 .course-facts .cf { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
 .course-facts .cf .l { font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; }
 .course-facts .cf b { font-weight: 700; font-size: 16px; color: var(--pine); }
+.course-facts .cf .s { font-size: 11px; color: var(--ink-2); line-height: 1.3; }
 /* More than a handful of facts (player page side bets + bonus ball): a tidy
    grid instead of one bunched-up flex row. */
 .course-facts.facts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 16px; }
@@ -489,7 +490,7 @@ p { margin: 0; }
 
 /* ---------- Round leaderboard ---------- */
 .rlb { display: grid; gap: 0; }
-.rlb-row { display: grid; grid-template-columns: 26px 28px 1fr auto 16px; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rlb-row { display: grid; grid-template-columns: 26px 28px 1fr auto auto 16px; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .rlb-row .chev { color: var(--ink-3); }
 .rlb-row:active { background: var(--soft); }
 .rlb-row:last-child { border-bottom: 0; }
@@ -500,4 +501,9 @@ p { margin: 0; }
 .rlb-who small { display: block; font-size: 11.5px; color: var(--ink-2); }
 .rlb-pts { font-weight: 700; font-size: 17px; color: var(--pine); font-variant-numeric: tabular-nums; text-align: right; }
 .rlb-pts small { font-size: 9px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 3px; }
+/* Week points, once the round's decided: a second figure in brass, with the
+   individual + pairs split spelled out under the name. */
+.rlb-wk { font-weight: 700; font-size: 17px; color: var(--brass); font-variant-numeric: tabular-nums; text-align: right; min-width: 0; }
+.rlb-wk small { font-size: 9px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 3px; }
+.rlb-who small.wk { color: var(--brass); font-weight: 600; }
 .team-dot.sm { width: 28px; height: 28px; font-size: 12px; }
