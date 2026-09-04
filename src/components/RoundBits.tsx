@@ -287,22 +287,22 @@ export function Leaderboard({ r }: { r: Round }) {
   );
 }
 
-// A gross score marked the way a scorecard is: circle for a birdie, double
-// circle for an eagle or better, square for a bogey, double square for a
-// double or worse, nothing for par. Red under par, blue over — the broadcast
-// convention. A pickup (0) shows as ✕ with no mark; empty holes as a dot.
+// A gross score marked the way a scorecard is: circles under par, squares
+// over, nothing for par. Solid fills — red circle for a birdie, gold for an
+// eagle or better, black square for a bogey, blue for a double or worse.
+// A pickup (0) shows as ✕ with no mark; empty holes as a dot.
 export function Gross({ gross, par }: { gross: number | null; par: number }) {
   if (gross === null) return <span className="gs e">·</span>;
   if (gross === 0) return <span className="gs x">✕</span>;
   const d = gross - par;
-  const cls = d <= -2 ? 'e2' : d === -1 ? 'b1' : d === 0 ? 'p' : d === 1 ? 'o1' : 'o2';
+  const cls = d <= -2 ? 'eagle' : d === -1 ? 'birdie' : d === 0 ? 'par' : d === 1 ? 'bogey' : 'double';
   return <span className={`gs ${cls}`}>{gross}</span>;
 }
 
 export function GrossLegend() {
   return (
     <p className="small muted gs-legend">
-      <span className="gs e2">3</span> eagle · <span className="gs b1">3</span> birdie · <span className="gs p">4</span> par · <span className="gs o1">5</span> bogey · <span className="gs o2">6</span> double+
+      <span className="gs eagle">3</span> eagle · <span className="gs birdie">3</span> birdie · <span className="gs par">4</span> par · <span className="gs bogey">5</span> bogey · <span className="gs double">6</span> double+
     </p>
   );
 }

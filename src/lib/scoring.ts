@@ -297,13 +297,14 @@ export const fmtMoney = (pence: number) =>
   pence >= 100 ? '£' + (pence / 100).toFixed(2) : pence + 'p';
 
 // Score relative to par, for entry labels: ['birdie', 'under'] etc.
-export function relPar(diff: number): [string, 'under' | 'level' | 'over'] {
-  if (diff <= -3) return ['Albatross', 'under'];
-  if (diff === -2) return ['Eagle', 'under'];
+export type ParBand = 'eagle' | 'under' | 'level' | 'over' | 'double';
+export function relPar(diff: number): [string, ParBand] {
+  if (diff <= -3) return ['Albatross', 'eagle'];
+  if (diff === -2) return ['Eagle', 'eagle'];
   if (diff === -1) return ['Birdie', 'under'];
   if (diff === 0) return ['Par', 'level'];
   if (diff === 1) return ['Bogey', 'over'];
-  return ['+' + diff, 'over'];
+  return ['+' + diff, 'double'];
 }
 
 export const fmt1 = (n: number) => (Math.round(n * 10) / 10).toFixed(1);

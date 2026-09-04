@@ -15,9 +15,11 @@
   --down: #3E6E38;      /* index going down = good */
   --down-soft: #E6EDDC;
   --up: #A84B2F;        /* index going up */
-  --under: #B8302A;     /* under par — red, as on the TV graphics */
-  --over: #3B5A8A;      /* over par — blue */
-  --over2: #263F66;     /* double bogey or worse */
+  --birdie: #B8302A;    /* solid red circle */
+  --eagle: #D4A72C;     /* solid gold circle — dark text on it, gold's too light for white */
+  --eagle-ink: #7A5A0E; /* eagle as text on the cream ground */
+  --bogey: #1C2B22;     /* solid black square */
+  --double: #2F4F86;    /* solid blue square */
   --up-soft: #F3E2D8;
   --heather: #5F4E8C;   /* hidden pairs */
   --heather-soft: #E9E4EF;
@@ -387,7 +389,7 @@ p { margin: 0; }
 .team-dot.t3 { background: var(--up); }
 .sc-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
 .sc { border-collapse: collapse; width: 100%; min-width: 320px; font-size: 14px; }
-.sc th, .sc td { padding: 8px 4px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.sc th, .sc td { padding: 7px 4px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .sc th { font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
 .sc td:first-child, .sc th:first-child { text-align: left; font-weight: 700; padding-left: 8px; }
 .sc td:nth-child(2), .sc td:nth-child(3) { color: var(--ink-2); font-size: 12.5px; }
@@ -399,18 +401,18 @@ p { margin: 0; }
    red/blue score marks alongside stay the loudest thing on the card. */
 .sc td.z { color: var(--ink-3); }
 .sc td.g { color: var(--pine); font-weight: 700; }
-/* Gross scores wear the scorecard shapes: circle = birdie, double circle =
-   eagle+, square = bogey, double square = double+, nothing for par. */
-.gs { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 3px; border-radius: 50%; font-weight: 700; line-height: 1; box-sizing: border-box; border: 1.5px solid transparent; font-variant-numeric: tabular-nums; }
-.gs.b1, .gs.e2 { border-color: var(--under); color: var(--under); }
-.gs.e2 { outline: 1.5px solid var(--under); outline-offset: 2px; }
-.gs.o1, .gs.o2 { border-radius: 5px; border-color: var(--over); color: var(--over); }
-.gs.o2 { border-color: var(--over2); color: var(--over2); outline: 1.5px solid var(--over2); outline-offset: 2px; }
+/* Gross scores wear the scorecard shapes, filled solid: red circle = birdie,
+   gold circle = eagle+, black square = bogey, blue square = double+, and a
+   plain number for par. Light text on the dark fills; dark on the gold. */
+.gs { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 3px; border-radius: 50%; font-weight: 700; line-height: 1; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+.gs.birdie { background: var(--birdie); color: #FCF9EF; }
+.gs.eagle { background: var(--eagle); color: #1C2B22; }
+.gs.bogey { background: var(--bogey); color: #FCF9EF; border-radius: 5px; }
+.gs.double { background: var(--double); color: #FCF9EF; border-radius: 5px; }
 .gs.x, .gs.e { color: var(--ink-3); }
 .sc td .gs + sup { margin-left: 3px; }
 .gs-legend { margin-top: 10px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .gs-legend .gs { min-width: 20px; height: 20px; font-size: 11px; }
-.gs-legend .gs.e2, .gs-legend .gs.o2 { margin: 0 3px; }
 .sc td.e { color: var(--ink-3); }
 .sc tr.sum td { font-weight: 700; background: var(--soft); }
 .sc tr.sum td sup { color: var(--ink-2); }
@@ -460,9 +462,13 @@ p { margin: 0; }
 .swipe::-webkit-scrollbar { display: none; }
 .slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; padding: 0 20px; }
 .rel { font-weight: 700; }
-.rel.under { color: var(--under); }
+/* Score labels on the entry rows follow the marks: gold text is too pale on
+   cream, so eagle uses a darker gold; bogey uses the ink rather than pure black. */
+.rel.eagle { color: var(--eagle-ink); }
+.rel.under { color: var(--birdie); }
 .rel.level { color: var(--brass); }
-.rel.over { color: var(--over); }
+.rel.over { color: var(--ink); }
+.rel.double { color: var(--double); }
 .rel.bonus { color: var(--down); }
 
 .team .big { font-weight: 700; font-size: 22px; line-height: 1; margin: 2px 0 8px; color: var(--pine); }
