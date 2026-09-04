@@ -112,6 +112,26 @@ describe('app flow', () => {
     expect(screen.getByText(/week pts/).parentElement!.textContent).toMatch(/week pts \(\S+ \+ \S+ pair\)/);
   });
 
+  it('back returns to the page you came from, or the natural parent on a cold start', () => {
+    setMe('p1');
+    // deep link: nothing behind us, so back goes to the profile
+    const { container, unmount } = mount('/player/p6/round/d1');
+    let back = container.querySelector('a.back')!;
+    expect(back.textContent).toBe('Rob');
+    expect(back.getAttribute('href')).toBe('/player/p6');
+    unmount();
+
+    // via the standings table: back goes to the standings, not the profile
+    const { container: c } = mount('/standings');
+    fireEvent.click([...c.querySelectorAll('.rounds-table tbody tr td a')].find((a) => a.getAttribute('href') === '/player/p6/round/d1')!);
+    expect(screen.getByText('Elsham Golf Club')).toBeTruthy();
+    back = c.querySelector('a.back')!;
+    expect(back.textContent).toBe('Standings');
+    fireEvent.click(back);
+    expect(screen.getByText('Round by round')).toBeTruthy();
+    expect(c.querySelector('a.back')).toBeNull();
+  });
+
   it("round page leaderboard rows link to each player's card", () => {
     setMe('p1');
     localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({

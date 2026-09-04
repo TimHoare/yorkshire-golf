@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
 import { PL, R, first } from './data/trip';
 import { ROUTE_KEY } from './lib/state';
+import { recordNav } from './lib/nav';
 import { useStore } from './lib/useStore';
 import { Header, Tabs, Toast } from './components/Chrome';
 import { Welcome } from './components/Welcome';
@@ -30,7 +31,11 @@ function titleFor(path: string) {
 // tab title in step, and scroll to the top on page changes — but not when only
 // the hole number in a scoring URL changes (that's a swipe, not a navigation).
 function RouteEffects() {
-  const { pathname } = useLocation();
+  const loc = useLocation();
+  const { pathname } = loc;
+  // Recorded during render, not in an effect: this sits above the routes, so
+  // the page's back button sees the trail on the same pass (idempotent per key).
+  recordNav(loc, useNavigationType());
   const prevBase = useRef<string>(undefined);
   useEffect(() => {
     localStorage.setItem(ROUTE_KEY, pathname);
