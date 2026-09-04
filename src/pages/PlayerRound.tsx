@@ -50,7 +50,7 @@ export function PlayerRoundPage() {
   const bonusText = scramble ? null
     : goneBefore ? `Lost at ${R(bb!.lost!)?.short ?? '?'} · no 2× here`
     : lostHere !== null ? `Lost on the ${ord(lostHere + 1)} · 2× void`
-    : bonusHole !== null ? `2× on the ${ord(bonusHole + 1)}${bb?.used[r.id] === undefined ? ' · not called, so the 18th' : ''}`
+    : bonusHole !== null ? bb?.used[r.id] === undefined ? 'Not called, so 2× on the 18th' : `2× on the ${ord(bonusHole + 1)}`
     : status === 'done' ? 'Not played' : 'Still to play';
 
   // This player's bits on each hole, and their round totals per kind.
