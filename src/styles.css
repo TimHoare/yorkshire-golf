@@ -239,7 +239,7 @@ p { margin: 0; }
 .lb-row .chev { color: var(--ink-3); }
 .lb-row:active { background: var(--soft); }
 /* Round-by-round cells are links to the card: the anchor fills the cell so the whole thing is the tap target. */
-.rounds-table td a { display: block; margin: -9px -6px; padding: 9px 6px; }
+.rounds-table td a { display: block; margin: -7px -2px; padding: 7px 2px; }
 .lb-row .nm { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-row .meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: 12.5px; color: var(--ink-2); flex-wrap: wrap; }
 .lb-row .pts { font-weight: 700; font-size: 21px; line-height: 1; text-align: right; color: var(--pine); }
@@ -255,12 +255,16 @@ p { margin: 0; }
 .idx-cell .v { font-size: 12.5px; }
 .idx-cell .v small { font-size: 12.5px; }
 
-.rounds-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.rounds-table th, .rounds-table td { padding: 9px 6px; text-align: right; border-bottom: 1px solid var(--line); }
-.rounds-table th { font-weight: 700; font-size: 10px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; }
-.rounds-table td:first-child, .rounds-table th:first-child { text-align: left; font-weight: 700; padding-left: 0; }
+/* Sized to fit a narrow phone without sideways scrolling: first names, day
+   headers, and the week points stacked under each stableford score. */
+.rounds-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.rounds-table th, .rounds-table td { padding: 7px 2px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rounds-table th { font-weight: 700; font-size: 10px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.rounds-table td:first-child, .rounds-table th:first-child { text-align: left; font-weight: 700; padding-left: 0; width: 22%; overflow: hidden; text-overflow: ellipsis; }
+.rounds-table td.tot, .rounds-table th:last-child { width: 14%; }
+.rounds-table td.tot b { color: var(--pine); font-size: 14px; }
 .rounds-table tr:last-child td { border-bottom: 0; }
-.rounds-table .pt { color: var(--ink-3); font-size: 11px; }
+.rounds-table .pt { display: block; color: var(--brass); font-size: 10.5px; font-weight: 600; line-height: 1.2; min-height: 13px; }
 .rounds-table .win { color: var(--brass); font-weight: 700; }
 .table-wrap { overflow-x: auto; }
 .card.table-wrap { padding: 4px 16px; }

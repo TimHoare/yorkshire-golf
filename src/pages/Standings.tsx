@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ROUNDS, RULES, pName, PL } from '../data/trip';
+import { ROUNDS, RULES, first, pName, PL } from '../data/trip';
 import {
   currentIndex, fmt1, playerTally, roundPlace, roundPoints, roundStatus,
   scrambleResults, signed, standings, trim,
@@ -50,28 +50,28 @@ export function StandingsPage() {
         })}
       </div>
 
-      <div className="section-title"><h2>Round by round</h2><span className="eyebrow">stableford (week pts) · tap for a card</span></div>
+      <div className="section-title"><h2>Round by round</h2><span className="eyebrow">week pts in brass</span></div>
       <div className="card table-wrap">
         <table className="rounds-table">
           <thead>
-            <tr><th>Player</th>{ROUNDS.map((r) => <th key={r.id}>{r.short}</th>)}<th>Total</th></tr>
+            <tr><th>Player</th>{ROUNDS.map((r) => <th key={r.id} title={r.club}>{r.dow}</th>)}<th>Total</th></tr>
           </thead>
           <tbody>
             {st.map((row) => (
               <tr key={row.pid}>
-                <td><Link to={`/player/${row.pid}`}>{pName(row.pid)}</Link></td>
+                <td><Link to={`/player/${row.pid}`} title={pName(row.pid)}>{first(row.pid)}</Link></td>
                 {ROUNDS.map((rd) => {
                   // Every cell opens that player's card for the round, scored or not.
                   const card = `/player/${row.pid}/round/${rd.id}`;
                   if (rd.format === 'scramble') {
                     const sr = scrambleResults(S, rd.id).rows[row.pid];
-                    return <td key={rd.id}><Link to={card}>{sr ? <><span className={sr.won ? 'win' : ''}>{sr.place}{['st', 'nd', 'rd'][sr.place - 1] || 'th'}{sr.tie ? '=' : ''}</span> <span className="pt">({trim(sr.points)})</span></> : '·'}</Link></td>;
+                    return <td key={rd.id}><Link to={card}>{sr ? <><span className={sr.won ? 'win' : ''}>{sr.place}{['st', 'nd', 'rd'][sr.place - 1] || 'th'}{sr.tie ? '=' : ''}</span><span className="pt">{trim(sr.points)}</span></> : '·'}</Link></td>;
                   }
                   const t = playerTally(S, rd.id, row.pid);
                   const rp = roundPoints(S, rd.id, row.pid);
-                  return <td key={rd.id}><Link to={card}>{t.played === 0 ? '·' : <>{t.pts}{t.complete ? '' : '*'} <span className="pt">({trim(rp ?? 0)})</span></>}</Link></td>;
+                  return <td key={rd.id}><Link to={card}>{t.played === 0 ? '·' : <>{t.pts}{t.complete ? '' : '*'}<span className="pt">{rp === null ? '' : trim(rp)}</span></>}</Link></td>;
                 })}
-                <td><b>{trim(row.pts)}</b>{row.bonusKept > 0 && <span className="pt"> 🎱</span>}</td>
+                <td className="tot"><b>{trim(row.pts)}</b>{row.bonusKept > 0 && <span className="pt">🎱</span>}</td>
               </tr>
             ))}
           </tbody>
