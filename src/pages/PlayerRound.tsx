@@ -14,7 +14,7 @@ import {
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
-import { FormatChips } from '../components/RoundBits';
+import { FormatChips, Gross, GrossLegend } from '../components/RoundBits';
 
 const ord = (n: number) => n + (['st', 'nd', 'rd'][n - 1] || 'th');
 
@@ -162,7 +162,7 @@ export function PlayerRoundPage() {
                   {row.gross === null
                     ? <><td className="e">·</td><td className="e">·</td></>
                     : <>
-                        <td>{row.gross === 0 ? '✕' : row.gross}</td>
+                        <td><Gross gross={row.gross} par={h.par} /></td>
                         <td className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.pts}</td>
                       </>}
                   <td className="x">{extras(i)}</td>
@@ -175,6 +175,7 @@ export function PlayerRoundPage() {
           </tbody>
         </table>
       </div>
+      <GrossLegend />
       {ph !== null && ph > 18 && (
         <p className="small muted si-legend">
           <span className="si-pill s1">SI</span> one shot · <span className="si-pill s2">SI</span> two shots

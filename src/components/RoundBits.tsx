@@ -287,6 +287,26 @@ export function Leaderboard({ r }: { r: Round }) {
   );
 }
 
+// A gross score marked the way a scorecard is: circle for a birdie, double
+// circle for an eagle or better, square for a bogey, double square for a
+// double or worse, nothing for par. Red under par, blue over — the broadcast
+// convention. A pickup (0) shows as ✕ with no mark; empty holes as a dot.
+export function Gross({ gross, par }: { gross: number | null; par: number }) {
+  if (gross === null) return <span className="gs e">·</span>;
+  if (gross === 0) return <span className="gs x">✕</span>;
+  const d = gross - par;
+  const cls = d <= -2 ? 'e2' : d === -1 ? 'b1' : d === 0 ? 'p' : d === 1 ? 'o1' : 'o2';
+  return <span className={`gs ${cls}`}>{gross}</span>;
+}
+
+export function GrossLegend() {
+  return (
+    <p className="small muted gs-legend">
+      <span className="gs e2">3</span> eagle · <span className="gs b1">3</span> birdie · <span className="gs p">4</span> par · <span className="gs o1">5</span> bogey · <span className="gs o2">6</span> double+
+    </p>
+  );
+}
+
 // Live scorecard: gross + stableford points per hole for the selected group (or teams).
 export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: Round; group: number; selHole?: number; onHole?: (n: number) => void; myPh?: number | null }) {
   const { S } = useStore();
@@ -300,7 +320,7 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
   const cell = (row: Tally['rows'][number], key: number) =>
     row.gross === null
       ? <td className="e" key={key}>·</td>
-      : <td key={key} className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.gross === 0 ? '✕' : row.gross}<sup>{row.pts}</sup></td>;
+      : <td key={key} className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}><Gross gross={row.gross} par={row.par} /><sup>{row.pts}</sup></td>;
 
   const sumRow = (label: string, from: number, to: number) => (
     <tr className="sum" key={label}>
@@ -343,6 +363,7 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
           </tbody>
         </table>
       </div>
+      <GrossLegend />
       {myPh !== null && myPh > 18 && (
         <p className="small muted si-legend">
           <span className="si-pill s1">SI</span> one shot · <span className="si-pill s2">SI</span> two shots

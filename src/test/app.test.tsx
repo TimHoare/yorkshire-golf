@@ -79,6 +79,9 @@ describe('app flow', () => {
     const rows = [...c.querySelectorAll('table.player-sc tbody tr:not(.sum)')];
     expect(rows).toHaveLength(18);
     expect(rows[0].textContent).toContain('🐫');          // camel on the 1st
+    expect(rows[0].querySelector('.gs')!.className).toBe('gs p');    // 4 on a par 4
+    expect(rows[1].querySelector('.gs')!.className).toBe('gs b1');   // 3 on the par-4 2nd: birdie, circled
+    expect(rows[2].querySelector('.gs')!.className).toBe('gs x');    // pickup: no shape
     expect(rows[2].textContent).toContain('✕');           // pickup on the 3rd
     expect(rows[2].textContent).toContain('🐦×2');        // two cuckoos on the 3rd
     expect(rows[4].textContent).toContain('🎱 2×');       // bonus ball on the 5th

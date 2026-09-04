@@ -205,7 +205,7 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               return row(
                 <Avatar p={PL(pid)} />,
                 first(pid),
-                <>{tr.bonus && <><b className="rel under">2× bonus</b> · </>}{relBit(tr.gross)}{tr.shots ? shotsBit(tr.shots) : 'No shot · '}{t.pts} pts thru {t.played}</>,
+                <>{tr.bonus && <><b className="rel bonus">2× bonus</b> · </>}{relBit(tr.gross)}{tr.shots ? shotsBit(tr.shots) : 'No shot · '}{t.pts} pts thru {t.played}</>,
                 { pid }, tr.gross, tr.pts,
               );
             })}
