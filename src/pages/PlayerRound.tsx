@@ -32,6 +32,7 @@ export function PlayerRoundPage() {
   const drawn = !!S.groups[r.id];
   const t = groups.findIndex((g) => g.players.includes(pid));
   const grp = groups[t];
+  const partner = scramble && grp ? grp.players.find((x) => x !== pid) : undefined;
   // Bits are logged per tee group — per flight on scramble day.
   const bitGroup = scramble ? flightsFor(S, r.id).findIndex((f) => f.players.includes(pid)) : t;
   const bitTitle = bitGroup < 0 ? '' : scramble ? flightName(S, r.id, bitGroup) : gname(grp, t);
@@ -99,7 +100,9 @@ export function PlayerRoundPage() {
         <div>
           <span className="eyebrow">Round {r.n} · {r.dow} {r.dnum} {r.mon}</span>
           <h1>{r.club}</h1>
-          <div className="sub">{p.name}{drawn && grp ? <> · {gname(grp, t)} · {grp.tee}</> : null}</div>
+          <div className="sub">
+            {p.name}{drawn && grp ? <> · {gname(grp, t)}{scramble && partner && <> with <b>{first(partner)}</b></>} · {grp.tee}</> : null}
+          </div>
         </div>
       </div>
       <div className="itin-meta" style={{ marginTop: 8 }}>

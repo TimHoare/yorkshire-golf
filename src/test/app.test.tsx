@@ -99,6 +99,7 @@ describe('app flow', () => {
     const { container } = mount('/player/p6/round/d3');
     expect(screen.getByText('Cave Castle Golf Club')).toBeTruthy();
     expect(screen.getByText(/Team D/)).toBeTruthy();
+    expect(screen.getByText(/Team D/).textContent).toContain('with Liam C');   // his scramble partner
     expect(screen.getByText('Team pts')).toBeTruthy();
     expect(screen.queryByText('Bonus ball')).toBeNull();
     const rows = [...container.querySelectorAll('table.player-sc tbody tr:not(.sum)')];
