@@ -57,6 +57,55 @@ describe('app flow', () => {
     expect(screen.getByText(/Team D/)).toBeTruthy();
   });
 
+  it("player round page: the player's own card with bonus ball and side bets on the holes", () => {
+    setMe('p1');
+    const eighteen = (g: number) => Array(18).fill(g);
+    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+      v: 3, pairs: {}, scramble: {},
+      scores: { d1: { p6: [4, 3, 0, ...eighteen(4).slice(3)] } },
+      groups: { d1: [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']] },
+      bits: { d1: { 1: { cuckoo: [null, null, { counts: { p6: 2, p5: 1 }, last: 'p6' }], camel: [{ counts: { p6: 1 }, last: 'p6' }] } } },
+      bonus: { p6: { used: { d1: 4 }, lost: null } },
+    }));
+    reloadFromStorage();
+    // the profile's round rows link to the player's card, not the course page
+    const { container, unmount } = mount('/player/p6');
+    expect(container.querySelector('a.pweek-row')!.getAttribute('href')).toBe('/player/p6/round/d1');
+    unmount();
+
+    const { container: c } = mount('/player/p6/round/d1');
+    expect(screen.getByText('Elsham Golf Club')).toBeTruthy();
+    expect(screen.getByText(/Rob Ellis/)).toBeTruthy();
+    const rows = [...c.querySelectorAll('table.player-sc tbody tr:not(.sum)')];
+    expect(rows).toHaveLength(18);
+    expect(rows[0].textContent).toContain('🐫');          // camel on the 1st
+    expect(rows[2].textContent).toContain('✕');           // pickup on the 3rd
+    expect(rows[2].textContent).toContain('🐦×2');        // two cuckoos on the 3rd
+    expect(rows[4].textContent).toContain('🎱 2×');       // bonus ball on the 5th
+    expect(rows[1].textContent).not.toContain('🐦');
+    // totals in the extras list: 2 cuckoos, 1 camel, and Rob had the last cuckoo
+    expect(screen.getByText('2× on the 5th')).toBeTruthy();
+    expect(screen.getAllByText(/Had the last one/)).toHaveLength(2);
+  });
+
+  it("player round page on scramble day shows the team's card", () => {
+    setMe('p1');
+    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+      v: 3, pairs: {}, scores: {},
+      scramble: { d3: { 3: [4, 4] } },
+      groups: { d3: [['p1', 'p3'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']] },
+    }));
+    reloadFromStorage();
+    const { container } = mount('/player/p6/round/d3');
+    expect(screen.getByText('Cave Castle Golf Club')).toBeTruthy();
+    expect(screen.getByText(/Team D/)).toBeTruthy();
+    expect(screen.getByText('Team pts')).toBeTruthy();
+    expect(screen.queryByText('Bonus ball')).toBeNull();
+    const rows = [...container.querySelectorAll('table.player-sc tbody tr:not(.sum)')];
+    expect(rows[0].textContent).toContain('4');
+    expect(rows[2].textContent).toContain('·');
+  });
+
   it('round info page shows course facts, map link and my course handicap — but no steppers', () => {
     setMe('p1');
     mount('/round/d2');

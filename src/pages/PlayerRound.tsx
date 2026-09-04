@@ -1,0 +1,204 @@
+// One player's card for one round: their gross and points hole by hole, with
+// the bonus ball and any side bets (cuckoos, camels, fish, three-putts, lost
+// balls) marked on the holes they happened. On scramble day it's the team's
+// card, with the player's own bits from the flight log.
+import type { ReactNode } from 'react';
+import { Link, Navigate, useParams } from 'react-router-dom';
+import { BITS, PL, R, RULES, first, gname } from '../data/trip';
+import { BIT_KINDS } from '../lib/state';
+import {
+  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor,
+  indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
+  teamTally, trim, type Tally,
+} from '../lib/scoring';
+import { useStore } from '../lib/useStore';
+import { Avatar } from '../components/Avatar';
+import { BackButton } from '../components/BackButton';
+import { FormatChips } from '../components/RoundBits';
+
+const ord = (n: number) => n + (['st', 'nd', 'rd'][n - 1] || 'th');
+
+export function PlayerRoundPage() {
+  const { pid, rid } = useParams();
+  const { S } = useStore();
+  const p = pid ? PL(pid) : undefined;
+  const r = rid ? R(rid) : undefined;
+  if (!p || !pid) return <Navigate to="/players" replace />;
+  if (!r) return <Navigate to={`/player/${pid}`} replace />;
+
+  const scramble = r.format === 'scramble';
+  const status = roundStatus(S, r.id);
+  const groups = groupsFor(S, r.id);
+  const drawn = !!S.groups[r.id];
+  const t = groups.findIndex((g) => g.players.includes(pid));
+  const grp = groups[t];
+  // Bits are logged per tee group — per flight on scramble day.
+  const bitGroup = scramble ? flightsFor(S, r.id).findIndex((f) => f.players.includes(pid)) : t;
+  const bitTitle = bitGroup < 0 ? '' : scramble ? flightName(S, r.id, bitGroup) : gname(grp, t);
+
+  const { before, after, applied } = indexHistory(S, pid).find((h) => h.round.id === r.id)!;
+  const ch = courseHandicap(S, before, r.id);
+  const ph = scramble ? null : phFor(S, pid, r.id);
+  const tally: Tally = scramble ? teamTally(S, r.id, Math.max(0, t)) : playerTally(S, r.id, pid);
+
+  // Bonus ball, individual rounds only: the hole it doubled, or where it went.
+  const bb = S.bonus[pid];
+  const bonusHole = scramble ? null : bonusHoleFor(S, r.id, pid);
+  const lostHere = bb?.lost === r.id ? bb.used[r.id] ?? null : null;
+  const goneBefore = !scramble && bonusGoneBy(S, r.id, pid);
+  const bonusText = scramble ? null
+    : goneBefore ? `Lost at ${R(bb!.lost!)?.short ?? '?'} · no 2× here`
+    : lostHere !== null ? `Lost on the ${ord(lostHere + 1)} · 2× void`
+    : bonusHole !== null ? `2× on the ${ord(bonusHole + 1)}${bb?.used[r.id] === undefined ? ' · not called, so the 18th' : ''}`
+    : status === 'done' ? 'Not played' : 'Still to play';
+
+  // This player's bits on each hole, and their round totals per kind.
+  const myBits = (i: number) => BIT_KINDS
+    .map((k) => ({ k, n: bitGroup < 0 ? 0 : bitsOf(S, r.id, bitGroup, k)[i]?.counts[pid] || 0 }))
+    .filter((x) => x.n > 0);
+  const bitTotals = BIT_KINDS.map((k) => {
+    const n = Array.from({ length: 18 }, (_, i) => myBits(i).find((x) => x.k === k)?.n || 0).reduce((a, b) => a + b, 0);
+    const grpT = bitGroup < 0 ? null : groupBitTally(S, r.id, bitGroup, k);
+    return { k, n, last: !!grpT && grpT.last === pid && grpT.total > 0, owes: grpT ? grpT.total * S.stakes[k] : 0 };
+  });
+
+  // Result lines: place and week points once the round's decided.
+  const res = scramble ? null : stablefordResults(S, r.id).find((x) => x.pid === pid);
+  const scr = scramble ? scrambleResults(S, r.id) : null;
+  const mine = scr?.rows[pid];
+  const pair = r.pairs ? pairTotals(S, r.id).find((row) => row.pair.includes(pid)) : undefined;
+
+  const extras = (i: number) => {
+    const out: ReactNode[] = [];
+    if (bonusHole === i) out.push(<span className="xb bonus" key="bb" title="Bonus ball · double points">🎱 2×</span>);
+    if (lostHere === i) out.push(<span className="xb lost" key="bl" title="Bonus ball lost">🎱 ✕</span>);
+    for (const { k, n } of myBits(i))
+      out.push(<span className="xb" key={k} title={BITS[k].one}>{BITS[k].icon}{n > 1 ? `×${n}` : ''}</span>);
+    return out;
+  };
+
+  const sumRow = (label: string, from: number, to: number) => {
+    const pl = tally.rows.slice(from, to).filter((x) => x.gross !== null);
+    return (
+      <tr className="sum" key={label}>
+        <td>{label}</td>
+        <td>{r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td>
+        <td />
+        <td>{pl.length ? pl.reduce((a, x) => a + (x.gross ?? 0), 0) : '·'}</td>
+        <td>{pl.length ? pl.reduce((a, x) => a + (x.pts ?? 0), 0) : '·'}</td>
+        <td />
+      </tr>
+    );
+  };
+
+  return (
+    <>
+      <BackButton to={`/player/${pid}`} label={first(pid)} />
+      <div className="player-head pr">
+        <Avatar p={p} />
+        <div>
+          <span className="eyebrow">Round {r.n} · {r.dow} {r.dnum} {r.mon}</span>
+          <h1>{r.club}</h1>
+          <div className="sub">{p.name}{drawn && grp ? <> · {gname(grp, t)} · {grp.tee}</> : null}</div>
+        </div>
+      </div>
+      <div className="itin-meta" style={{ marginTop: 8 }}>
+        <FormatChips r={r} />
+        <span className="chip ghost">{status === 'done' ? 'Round complete' : status === 'partial' ? 'In progress' : 'Not started'}</span>
+      </div>
+
+      <div className="course-facts card">
+        <div className="cf"><span className="l">{scramble ? 'Team pts' : 'Points'}</span><b>{tally.played ? <>{tally.pts}{tally.complete ? '' : <small className="muted"> thru {tally.played}</small>}</> : '–'}</b></div>
+        <div className="cf"><span className="l">Strokes</span><b>{tally.complete ? `${tally.strokes}${tally.pickups ? '+' : ''}` : '–'}</b></div>
+        <div className="cf"><span className="l">Place</span><b>{
+          scramble
+            ? mine ? `${ord(mine.place)}${mine.tie ? '=' : ''}` : '–'
+            : status === 'done' && res?.place ? `${ord(res.place)}${res.tied ? '=' : ''}` : '–'
+        }</b></div>
+        <div className="cf"><span className="l">Week pts</span><b>{
+          scramble
+            ? mine ? trim(mine.points) : '–'
+            : status === 'done' && res?.points !== undefined ? trim(res.points + (pair?.points ?? 0)) : '–'
+        }</b></div>
+      </div>
+
+      <div className="course-facts card">
+        <div className="cf"><span className="l">Index in</span><b>{fmt1(before)}</b></div>
+        <div className="cf"><span className="l">Course hcp</span><b>{ch}</b></div>
+        {scramble
+          ? <div className="cf"><span className="l">Team hcp</span><b>{drawn && t >= 0 ? teamHandicap(S, r.id, t) : '–'}</b></div>
+          : <div className="cf"><span className="l">Playing hcp</span><b>{ph}</b></div>}
+        <div className="cf"><span className="l">Index out</span><b>{applied ? <>{fmt1(after)} <span className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}>{after === before ? '' : (after < before ? '−' : '+') + fmt1(Math.abs(after - before))}</span></> : '–'}</b></div>
+      </div>
+
+      {pair && (
+        <p className="small muted" style={{ margin: '2px 0 4px' }}>
+          Hidden pair with <b>{first(pair.pair.find((x) => x !== pid)!)}</b> · {pair.total} pts{pair.complete && pair.place ? ` · ${ord(pair.place)}${pair.tied ? '=' : ''} · +${trim(pair.points ?? 0)} week pts each` : ' so far'}
+        </p>
+      )}
+
+      <div className="section-title">
+        <h2>Scorecard</h2>
+        <span className="eyebrow">{scramble ? `team gross · points` : `gross · points · shots off PH ${ph}`}</span>
+      </div>
+      <div className="sc-wrap">
+        <table className="sc player-sc">
+          <thead>
+            <tr><th>Hole</th><th>Par</th><th>SI</th><th>{scramble ? 'Team' : 'Gross'}</th><th>Pts</th><th className="x">Extras</th></tr>
+          </thead>
+          <tbody>
+            {r.holes.flatMap((h, i) => {
+              const row = tally.rows[i];
+              const shots = Math.max(0, row.shots);
+              const tr = (
+                <tr key={h.n}>
+                  <td>{h.n}</td><td>{h.par}</td>
+                  <td>{shots ? <span className={`si-pill s${Math.min(shots, 2)}`}>{h.si}</span> : h.si}</td>
+                  {row.gross === null
+                    ? <><td className="e">·</td><td className="e">·</td></>
+                    : <>
+                        <td>{row.gross === 0 ? '✕' : row.gross}</td>
+                        <td className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.pts}</td>
+                      </>}
+                  <td className="x">{extras(i)}</td>
+                </tr>
+              );
+              return i === 8 ? [tr, sumRow('Out', 0, 9)] : [tr];
+            })}
+            {sumRow('In', 9, 18)}
+            {sumRow('Total', 0, 18)}
+          </tbody>
+        </table>
+      </div>
+      {ph !== null && ph > 18 && (
+        <p className="small muted si-legend">
+          <span className="si-pill s1">SI</span> one shot · <span className="si-pill s2">SI</span> two shots
+        </p>
+      )}
+
+      <div className="section-title"><h2>Extras</h2><span className="eyebrow">{[bitTitle, !scramble && 'bonus ball', 'side bets'].filter(Boolean).join(' · ')}</span></div>
+      <div className="card xlist">
+        {!scramble && (
+          <div className="xrow">
+            <span className="bit-ic" aria-hidden>🎱</span>
+            <span className="bit-l"><b>Bonus ball</b><small>2× one hole a round · +{RULES.bonusKeep} if kept all week</small></span>
+            <span className="bit-sum wrap">{bonusText}</span>
+          </div>
+        )}
+        {bitTotals.map(({ k, n, last, owes }) => (
+          <div className="xrow" key={k}>
+            <span className="bit-ic" aria-hidden>{BITS[k].icon}</span>
+            <span className="bit-l"><b>{BITS[k].label}</b><small>{BITS[k].desc}</small></span>
+            <span className="bit-sum wrap">{last ? <>Had the last one · puts in <b>{fmtMoney(owes)}</b></> : ''}</span>
+            <span className={`bit-n${n ? '' : ' off'}`}>{n || '–'}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="btn-row" style={{ margin: '14px 0 4px' }}>
+        <Link className="btn ghost grow" to={`/round/${r.id}`}>Course, groups &amp; leaderboard</Link>
+        {drawn && <Link className="btn primary" to={`/round/${r.id}/score`}>Scores</Link>}
+      </div>
+    </>
+  );
+}

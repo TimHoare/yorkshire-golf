@@ -55,7 +55,7 @@ export function PlayerPage() {
         </div>
       </div>
 
-      <div className="section-title"><h2>The week</h2><span className="eyebrow">tap a round</span></div>
+      <div className="section-title"><h2>The week</h2><span className="eyebrow">tap a round for the card</span></div>
       <div className="pweek">
         {hist.map(({ round: r, before, after, applied }) => {
           const groups = groupsFor(S, r.id);
@@ -83,7 +83,7 @@ export function PlayerPage() {
             if (applied) line.push(<span key="i" className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}> · Index {fmt1(before)} → {fmt1(after)}</span>);
           }
           return (
-            <Link className="pweek-row" to={`/round/${r.id}`} key={r.id}>
+            <Link className="pweek-row" to={`/player/${pid}/round/${r.id}`} key={r.id}>
               <div className="itin-date">
                 <span className="n">{r.dnum}</span>
                 <span className="m">{r.dow}</span>
