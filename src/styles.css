@@ -412,6 +412,10 @@ p { margin: 0; }
 .gs.double { background: var(--double); color: #FCF9EF; border-radius: 5px; }
 .gs.x, .gs.e { color: var(--ink-3); }
 .sc td .gs + sup { margin-left: 3px; }
+/* The hole a bonus ball doubled: a brass wash behind the cell. */
+.sc td.bb { background: var(--brass-soft); box-shadow: inset 0 0 0 1px var(--brass); }
+.sc td.bb sup { color: var(--brass); }
+.bb-swatch { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 4px; background: var(--brass-soft); box-shadow: inset 0 0 0 1px var(--brass); font-size: 11px; }
 .gs-legend { margin-top: 10px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .gs-legend .gs { min-width: 20px; height: 20px; font-size: 11px; }
 .sc td.e { color: var(--ink-3); }
@@ -443,9 +447,9 @@ p { margin: 0; }
 .player-head.pr h1 { font-size: 24px; }
 .course-facts .cf b small { font-size: 11px; font-weight: 600; }
 .xlist { padding: 4px 16px; }
-.xrow { display: grid; grid-template-columns: 28px 1fr auto 30px; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.xrow { display: grid; grid-template-columns: 28px minmax(104px, 1fr) minmax(0, auto) 30px; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .xrow:last-child { border-bottom: 0; }
-.xrow .bit-sum.wrap { white-space: normal; max-width: 180px; }
+.xrow .bit-sum { font-size: 12px; color: var(--ink-2); text-align: right; min-width: 0; white-space: normal; max-width: 150px; }
 .xrow .bit-sum b { color: var(--ink); }
 /* Holes where the current player gets shots: the SI wears a solid pill —
    brass for one shot, pine for the rarer two. */
@@ -480,13 +484,16 @@ p { margin: 0; }
 .bits { margin-top: 2px; }
 .bits-head { display: flex; align-items: baseline; justify-content: space-between; margin: 14px 0 2px; }
 .bit { border-bottom: 1px solid var(--line); }
-.bit-row { display: grid; grid-template-columns: 28px minmax(96px, 1fr) minmax(0, auto) 30px; align-items: center; gap: 10px; width: 100%; background: transparent; border: 0; padding: 9px 0; text-align: left; color: inherit; }
+.bit-row { display: grid; grid-template-columns: 28px 1fr auto 16px; align-items: center; gap: 10px; width: 100%; background: transparent; border: 0; padding: 9px 0; text-align: left; color: inherit; }
+.bit-chev { color: var(--ink-3); transition: transform .15s ease; }
+.bit.open .bit-chev { transform: rotate(180deg); color: var(--pine); }
+.bit.open .bit-row { background: var(--soft); margin: 0 -8px; width: calc(100% + 16px); padding-left: 8px; padding-right: 8px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.bit-n small { font-size: 11px; color: var(--ink-3); font-weight: 600; }
 .bit-row:active { background: var(--soft); }
 .bit-ic { font-size: 18px; line-height: 1; text-align: center; }
 .bit-l { min-width: 0; }
 .bit-l b { display: block; font-size: 14px; font-weight: 700; }
 .bit-l small { display: block; font-size: 11px; color: var(--ink-2); }
-.bit-sum { font-size: 12px; color: var(--ink-2); text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bit-n { font-weight: 700; font-size: 16px; text-align: right; color: var(--pine); font-variant-numeric: tabular-nums; }
 .bit-n.off { color: var(--ink-3); font-weight: 600; }
 /* The open editor: full width rather than indented under the icon, and a

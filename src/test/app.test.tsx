@@ -85,6 +85,8 @@ describe('app flow', () => {
     expect(rows[2].textContent).toContain('✕');           // pickup on the 3rd
     expect(rows[2].textContent).toContain('🐦×2');        // two cuckoos on the 3rd
     expect(rows[4].textContent).toContain('🎱 2×');       // bonus ball on the 5th
+    expect(rows[4].querySelector('td.bb')).toBeTruthy();  // and its gross cell wears the brass box
+    expect(c.querySelector('table.player-sc tr.sum')!.textContent).toContain('+');   // Out total: a pickup in there
     expect(rows[1].textContent).not.toContain('🐦');
     // totals in the extras list: 2 cuckoos, 1 camel, and Rob had the last cuckoo
     expect(screen.getByText('2× on the 5th')).toBeTruthy();

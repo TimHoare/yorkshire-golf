@@ -14,7 +14,7 @@ import type { BonusBall, TripState } from '../lib/state';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { LiveScorecard } from '../components/RoundBits';
-import { GroupBet, HoleBitsPanel } from '../components/Bits';
+import { Chevron, GroupBet, HoleBitsPanel } from '../components/Bits';
 
 type Target = { pid: string } | { team: number };
 
@@ -89,21 +89,20 @@ function BonusPanel({ S, r, players, holeIdx, readOnly }: {
     else setBonusBall(pid, { used: { ...bb.used, [r.id]: holeIdx }, lost: r.id });
   };
 
-  const bits: string[] = [];
-  for (const pid of players) {
-    const h = bonusHoleFor(S, r.id, pid);   // includes the 18th-by-default
-    if (h !== null) bits.push(`${first(pid)} · ${h + 1}`);
-    if (rec(pid).lost) bits.push(`${first(pid)} ✕`);
-  }
+  // How many of the group have played (or lost) theirs this round — the
+  // 18th-by-default counts once the 18th is scored.
+  const played = players.filter((pid) => bonusHoleFor(S, r.id, pid) !== null || rec(pid).lost === r.id).length;
+  // Whose ball doubles this very hole: that's worth a word on the closed row.
+  const here = players.filter((pid) => bonusHoleFor(S, r.id, pid) === holeIdx).map(first);
 
   return (
     <div className="bits">
-      <div className="bit">
+      <div className={`bit${open ? ' open' : ''}`}>
         <button className="bit-row" onClick={() => setOpen(!open)} aria-expanded={open}>
           <span className="bit-ic" aria-hidden>🎱</span>
-          <span className="bit-l"><b>Bonus balls</b><small>2× one hole a round · must be played</small></span>
-          <span className="bit-sum">{bits.join(' · ')}</span>
-          <span className={`bit-n${bits.length ? '' : ' off'}`}>{bits.length || '–'}</span>
+          <span className="bit-l"><b>Bonus balls</b><small>{here.length ? `2× here: ${here.join(', ')}` : '2× one hole a round · must be played'}</small></span>
+          <span className={`bit-n${played ? '' : ' off'}`}>{played}<small>/{players.length}</small></span>
+          <Chevron />
         </button>
         {open && (
           <div className="bit-edit">

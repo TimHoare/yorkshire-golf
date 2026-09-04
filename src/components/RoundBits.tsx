@@ -302,7 +302,7 @@ export function Gross({ gross, par }: { gross: number | null; par: number }) {
 export function GrossLegend() {
   return (
     <p className="small muted gs-legend">
-      <span className="gs eagle">3</span> eagle · <span className="gs birdie">3</span> birdie · <span className="gs par">4</span> par · <span className="gs bogey">5</span> bogey · <span className="gs double">6</span> double+
+      <span className="gs eagle">3</span> eagle · <span className="gs birdie">3</span> birdie · <span className="gs par">4</span> par · <span className="gs bogey">5</span> bogey · <span className="gs double">6</span> double+ · <span className="bb-swatch">🎱</span> bonus ball · + a pickup in the total
     </p>
   );
 }
@@ -320,7 +320,7 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
   const cell = (row: Tally['rows'][number], key: number) =>
     row.gross === null
       ? <td className="e" key={key}>·</td>
-      : <td key={key} className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}><Gross gross={row.gross} par={row.par} /><sup>{row.pts}</sup></td>;
+      : <td key={key} className={`${row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}${row.bonus ? ' bb' : ''}`} title={row.bonus ? 'Bonus ball · double points' : undefined}><Gross gross={row.gross} par={row.par} /><sup>{row.pts}</sup></td>;
 
   const sumRow = (label: string, from: number, to: number) => (
     <tr className="sum" key={label}>
@@ -329,7 +329,8 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
       <td />
       {cols.map((c, k) => {
         const pl = c.tally.rows.slice(from, to).filter((x) => x.gross !== null);
-        return <td key={k}>{pl.length ? <>{pl.reduce((a, x) => a + (x.gross ?? 0), 0)}<sup>{pl.reduce((a, x) => a + (x.pts ?? 0), 0)}</sup></> : '·'}</td>;
+        const plus = pl.some((x) => x.gross === 0) ? '+' : '';   // a pickup in there: strokes are a floor
+        return <td key={k}>{pl.length ? <>{pl.reduce((a, x) => a + (x.gross ?? 0), 0)}{plus}<sup>{pl.reduce((a, x) => a + (x.pts ?? 0), 0)}</sup></> : '·'}</td>;
       })}
     </tr>
   );

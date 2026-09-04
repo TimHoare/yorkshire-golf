@@ -10,6 +10,11 @@ import { setHoleBits } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { Avatar } from './Avatar';
 
+// The disclosure arrow on a collapsible row: points down when shut, up when open.
+export const Chevron = () => (
+  <svg className="bit-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 9l6 6 6-6" /></svg>
+);
+
 // Per-hole editor shown on each scoring slide: four collapsible rows, one per
 // kind. Tap a row to open per-player − / + steppers; + marks that player as
 // having the last one, so entering them in the order they happened just works.
@@ -34,22 +39,19 @@ export function HoleBitsPanel({ rid, group, holeIdx, players, readOnly }: {
     <div className="bits">
       <div className="bits-head">
         <span className="eyebrow">Group bet · this hole</span>
+        <span className="eyebrow">tap a row to log</span>
       </div>
       {BIT_KINDS.map((kind) => {
         const hb = bitsOf(S, rid, group, kind)[holeIdx];
         const total = holeBitTotal(hb);
         const isOpen = open === kind;
-        const summary = hb
-          ? players.filter((pid) => hb.counts[pid]).map((pid) =>
-              first(pid) + (hb.counts[pid] > 1 ? ` ×${hb.counts[pid]}` : '')).join(' · ')
-          : '';
         return (
-          <div className="bit" key={kind}>
+          <div className={`bit${isOpen ? ' open' : ''}`} key={kind}>
             <button className="bit-row" onClick={() => setOpen(isOpen ? null : kind)} aria-expanded={isOpen}>
               <span className="bit-ic" aria-hidden>{BITS[kind].icon}</span>
               <span className="bit-l"><b>{BITS[kind].label}</b><small>{BITS[kind].desc}</small></span>
-              <span className="bit-sum">{summary}</span>
               <span className={`bit-n${total ? '' : ' off'}`}>{total || '–'}</span>
+              <Chevron />
             </button>
             {isOpen && (
               <div className="bit-edit">

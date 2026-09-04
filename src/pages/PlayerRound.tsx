@@ -80,12 +80,13 @@ export function PlayerRoundPage() {
 
   const sumRow = (label: string, from: number, to: number) => {
     const pl = tally.rows.slice(from, to).filter((x) => x.gross !== null);
+    const plus = pl.some((x) => x.gross === 0) ? '+' : '';   // a pickup in there: strokes are a floor
     return (
       <tr className="sum" key={label}>
         <td>{label}</td>
         <td>{r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td>
         <td />
-        <td>{pl.length ? pl.reduce((a, x) => a + (x.gross ?? 0), 0) : '·'}</td>
+        <td>{pl.length ? <>{pl.reduce((a, x) => a + (x.gross ?? 0), 0)}{plus}</> : '·'}</td>
         <td>{pl.length ? pl.reduce((a, x) => a + (x.pts ?? 0), 0) : '·'}</td>
         <td />
       </tr>
@@ -162,7 +163,7 @@ export function PlayerRoundPage() {
                   {row.gross === null
                     ? <><td className="e">·</td><td className="e">·</td></>
                     : <>
-                        <td><Gross gross={row.gross} par={h.par} /></td>
+                        <td className={row.bonus ? 'bb' : ''}><Gross gross={row.gross} par={h.par} /></td>
                         <td className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.pts}</td>
                       </>}
                   <td className="x">{extras(i)}</td>
