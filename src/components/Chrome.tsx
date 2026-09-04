@@ -19,8 +19,21 @@ export function SyncPill() {
 }
 
 export function Header({ onSettings }: { onSettings: () => void }) {
+  // Publish the header's height as --top-h, so anything else that sticks
+  // (scorecard headers) can sit just under it — the safe-area inset and
+  // wrapping make it vary from phone to phone.
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const set = () => document.documentElement.style.setProperty('--top-h', el.offsetHeight + 'px');
+    set();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(set) : null;
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, []);
   return (
-    <header className="top">
+    <header className="top" ref={ref}>
       <div className="top-inner">
         <Link className="wordmark" to="/trip" aria-label="Home">
           <span className="wm-line1">Yorkshire <i>2026</i></span>

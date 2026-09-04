@@ -388,10 +388,13 @@ p { margin: 0; }
 .team-dot.t1 { background: var(--brass); }
 .team-dot.t2 { background: var(--heather); }
 .team-dot.t3 { background: var(--up); }
-.sc-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
-.sc { border-collapse: collapse; width: 100%; min-width: 320px; font-size: 14px; }
+/* No overflow on the wrapper: a scroll container would trap the sticky
+   header inside itself. The cards are built to fit a phone's width. */
+.sc-wrap { margin: 0 -20px; padding: 0 20px; }
+.sc { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
 .sc th, .sc td { padding: 7px 4px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.sc th { font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
+/* Header row stays put under the app header as the card scrolls. */
+.sc th { position: sticky; top: var(--top-h, 64px); z-index: 2; background: var(--bg); font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
 .sc td:first-child, .sc th:first-child { text-align: left; font-weight: 700; padding-left: 8px; }
 .sc td:nth-child(2), .sc td:nth-child(3) { color: var(--ink-2); font-size: 12.5px; }
 .sc th .ph { display: block; font-size: 10px; font-weight: 600; color: var(--ink-3); text-transform: none; letter-spacing: 0.02em; margin-top: 1px; }
