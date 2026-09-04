@@ -9,7 +9,7 @@ import { Avatar } from './Avatar';
 export function Welcome() {
   const pick = (id: string) => {
     setMe(id);
-    toast(id === 'watcher' ? 'Welcome — enjoy the golf' : `Welcome, ${first(id)}`);
+    toast(`Welcome, ${first(id)}`);
   };
   return (
     <div className="welcome">
@@ -24,9 +24,6 @@ export function Welcome() {
               <span><b>{p.name}</b><small>Index {fmt1(p.start)}</small></span>
             </button>
           ))}
-        </div>
-        <div className="btn-row">
-          <button className="btn ghost sm" onClick={() => pick('watcher')}>I'm just watching</button>
         </div>
       </div>
     </div>
