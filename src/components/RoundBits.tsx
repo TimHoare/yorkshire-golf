@@ -11,7 +11,7 @@ import {
 import { setPairDraw } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { toast } from '../lib/toast';
-import { Avatar } from './Avatar';
+import { Avatar, TeamAvatar } from './Avatar';
 
 export function FormatChips({ r }: { r: Round }) {
   if (r.format === 'scramble') return <span className="chip gorse">2-man scramble</span>;
@@ -191,6 +191,7 @@ export function ScrambleResult({ r }: { r: Round }) {
           const won = res.decided && res.winner === t;
           return (
             <div className={`team${won ? ' won' : ''}`} key={t}>
+              <TeamAvatar players={grp.players} t={t} size="sm" />
               <h4>{grp.name || 'Team ' + (t + 1)} {won && <span className="chip gorse">Winners</span>}</h4>
               <div className="big">{tt.pts}<small>pts thru {tt.played}</small></div>
               <div className="members">{grp.players.map((pid) => <div className="m" key={pid}>{pName(pid)}</div>)}</div>
@@ -262,7 +263,7 @@ export function Leaderboard({ r }: { r: Round }) {
               <span className="rlb-place">{place}</span>
               {'pid' in x
                 ? <Avatar p={PL(x.pid)} size="sm" />
-                : <div className={`team-dot sm t${x.t}`}>{gname(x.grp, x.t).replace('Team ', '')}</div>}
+                : <TeamAvatar players={x.grp.players} t={x.t} size="sm" />}
               <div className="rlb-who">
                 <b>{'pid' in x ? first(x.pid) : gname(x.grp, x.t)}</b>
                 <small>

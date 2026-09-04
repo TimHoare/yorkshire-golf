@@ -384,10 +384,21 @@ p { margin: 0; }
 .score-row .hp { text-align: right; font-weight: 700; font-size: 17px; line-height: 1; color: var(--pine); }
 .score-row .hp small { display: block; font-family: var(--font); font-size: 9px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
 .score-row .hp.off { color: var(--ink-3); }
-.team-dot { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #F6F1E4; background: var(--pine); flex: none; }
-.team-dot.t1 { background: var(--brass); }
-.team-dot.t2 { background: var(--heather); }
-.team-dot.t3 { background: var(--up); }
+/* Scramble team avatar: two faces on the diagonal in one avatar's footprint,
+   a cream ring keeping them apart, and the team letter badged top-right in
+   the team's colour (pine, brass, heather, rust for A–D). */
+.team-av { position: relative; width: 44px; height: 44px; flex: none; display: block; }
+.team-av .avatar { position: absolute; width: 30px; height: 30px; font-size: 10px; box-shadow: 0 0 0 2px var(--bg); }
+.team-av .avatar:nth-child(1) { top: 0; left: 0; }
+.team-av .avatar:nth-child(2) { bottom: 0; right: 0; }
+.team-av em { position: absolute; top: -3px; right: -3px; min-width: 17px; height: 17px; padding: 0 3px; border-radius: 999px; font-style: normal; font-size: 9.5px; font-weight: 700; color: #F6F1E4; background: var(--pine); display: grid; place-items: center; box-shadow: 0 0 0 2px var(--bg); z-index: 1; }
+.team-av em.t1 { background: var(--brass); }
+.team-av em.t2 { background: var(--heather); }
+.team-av em.t3 { background: var(--up); }
+.team-av.sm { width: 28px; height: 28px; }
+.team-av.sm .avatar { width: 19px; height: 19px; font-size: 7px; box-shadow: 0 0 0 1.5px var(--bg); }
+.team-av.sm em { top: -4px; right: -6px; min-width: 13px; height: 13px; padding: 0 2px; font-size: 8px; box-shadow: 0 0 0 1.5px var(--bg); }
+.team-grid .team-av { margin-bottom: 8px; }
 /* No overflow on the wrapper: a scroll container would trap the sticky
    header inside itself. The cards are built to fit a phone's width. */
 .sc-wrap { margin: 0 -20px; padding: 0 20px; }
@@ -565,4 +576,3 @@ p { margin: 0; }
 .rlb-wk { font-weight: 700; font-size: 17px; color: var(--brass); font-variant-numeric: tabular-nums; text-align: right; min-width: 0; }
 .rlb-wk small { font-size: 9px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 3px; }
 .rlb-who small.wk { color: var(--brass); font-weight: 600; }
-.team-dot.sm { width: 28px; height: 28px; font-size: 12px; }

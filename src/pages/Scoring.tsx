@@ -11,7 +11,7 @@ import {
 import { setBonusBall, setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import type { BonusBall, TripState } from '../lib/state';
-import { Avatar } from '../components/Avatar';
+import { Avatar, TeamAvatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { LiveScorecard } from '../components/RoundBits';
 import { Chevron, GroupBet, HoleBitsPanel } from '../components/Bits';
@@ -192,7 +192,7 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               const tt = teamTally(S, r.id, t);
               const tr = tt.rows[i];
               return row(
-                <div className={`team-dot t${t}`}>{String.fromCharCode(65 + t)}</div>,
+                <TeamAvatar players={grp.players} t={t} />,
                 gname(grp, t),
                 <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}{shotsBit(tr.shots)}Team HCP {teamHandicap(S, r.id, t)}</>,
                 { team: t }, tr.gross, tr.pts,

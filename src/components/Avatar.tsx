@@ -1,6 +1,6 @@
 // A player's face in a circle. The photo sits over the coloured initials,
 // which stay behind it as the fallback while it loads or if it fails.
-import { colour, initials, playerIdx, type Player } from '../data/trip';
+import { PL, colour, initials, playerIdx, type Player } from '../data/trip';
 import type { ReactNode } from 'react';
 import p1 from '../assets/avatars/p1.webp';
 import p2 from '../assets/avatars/p2.webp';
@@ -20,6 +20,19 @@ export function Avatar({ p, size, badge }: { p: Player; size?: 'sm'; badge?: Rea
       {initials(p)}
       {photo && <img src={photo} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
       {badge}
+    </span>
+  );
+}
+
+// A scramble team: both faces set diagonally in one avatar-sized footprint,
+// with the team letter as a badge in the team's colour. `t` is the team
+// index (0–3), which also picks the badge colour used elsewhere for teams.
+export function TeamAvatar({ players, t, size }: { players: string[]; t: number; size?: 'sm' }) {
+  const letter = String.fromCharCode(65 + t);
+  return (
+    <span className={`team-av${size ? ' ' + size : ''}`} role="img" aria-label={`Team ${letter}`}>
+      {players.slice(0, 2).map((pid) => <Avatar key={pid} p={PL(pid)} />)}
+      <em className={`t${t}`}>{letter}</em>
     </span>
   );
 }
