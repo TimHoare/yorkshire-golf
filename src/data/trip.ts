@@ -63,7 +63,7 @@ export const ROUNDS: Round[] = [
 
 export const PLAYERS: Player[] = [
   { id: 'p1', name: 'Tim Hoare',         start: 14.0 },
-  { id: 'p2', name: 'Matthew Braybrook', start: 18.3 },
+  { id: 'p2', name: 'Matthew Braybrook', start: 19.3 },
   { id: 'p3', name: 'Adam Gooch',        start: 16.7 },
   { id: 'p4', name: 'Joshua Watts',      start: 17.2 },
   { id: 'p5', name: 'Liam Kevern',       start: 9.1 },
