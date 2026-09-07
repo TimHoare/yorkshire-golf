@@ -3,7 +3,7 @@ export type HoleScores = (number | null)[];
 export interface PairDraw { pairs: string[][]; revealed: boolean }
 
 // Side bets: cuckoo = hit a tree, camel = bunker, fish = water, threeputt = 3+ putts,
-// lostball = lost a ball, equipment = equipment abuse (club thrown, slammed or snapped).
+// lostball = lost a ball, equipment = equipment abuse (club, ball or bag thrown, slammed or snapped).
 export const BIT_KINDS = ['cuckoo', 'camel', 'fish', 'threeputt', 'lostball', 'equipment'] as const;
 export type BitKind = (typeof BIT_KINDS)[number];
 // One hole's log for one kind: how many each player had, and who had the last one.

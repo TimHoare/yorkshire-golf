@@ -92,7 +92,7 @@ export const BITS: Record<BitKind, { label: string; one: string; icon: string; d
   fish:      { label: 'Fish',        one: 'fish',       icon: '🐟', desc: 'In the water' },
   threeputt: { label: 'Three-putts', one: 'three-putt', icon: '⛳', desc: '3 or more putts', max: 1 },
   lostball:  { label: 'Lost balls',  one: 'lost ball',  icon: '🔍', desc: 'Lost a ball' },
-  equipment: { label: 'Equipment abuse', one: 'equipment abuse', icon: '💢', desc: 'Club thrown, slammed or snapped' },
+  equipment: { label: 'Equipment abuse', one: 'equipment abuse', icon: '💢', desc: 'Club, ball or bag mistreated' },
 };
 
 // Trip organiser — the only player who can wipe the shared database.
