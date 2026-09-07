@@ -554,5 +554,13 @@
 {"id":553,"tbl":"bit_events","op":"UPDATE","data":{"grp":1,"hole":18,"kind":"cuckoo","counts":{"p2":2,"p3":1,"p7":1,"p8":1},"last_pid":"p2","round_id":"d1","updated_at":"2026-09-07T15:32:20.255+00:00"},"at":"2026-09-07T15:31:51.443412+00:00"},
 {"id":554,"tbl":"bit_events","op":"UPDATE","data":{"grp":1,"hole":18,"kind":"cuckoo","counts":{"p2":3,"p3":1,"p7":1,"p8":1},"last_pid":"p2","round_id":"d1","updated_at":"2026-09-07T15:32:30.309+00:00"},"at":"2026-09-07T15:32:01.506106+00:00"},
 {"id":555,"tbl":"bit_events","op":"INSERT","data":{"grp":1,"hole":18,"kind":"camel","counts":{"p2":1},"last_pid":"p2","round_id":"d1","updated_at":"2026-09-07T15:32:45.385+00:00"},"at":"2026-09-07T15:32:16.791738+00:00"},
-{"id":556,"tbl":"pair_draws","op":"INSERT","data":{"pairs":[["p1","p5"],["p7","p2"],["p8","p4"],["p6","p3"]],"revealed":true,"round_id":"d1","updated_at":"2026-09-07T15:50:15.137+00:00"},"at":"2026-09-07T15:50:15.271646+00:00"}
+{"id":556,"tbl":"pair_draws","op":"INSERT","data":{"pairs":[["p1","p5"],["p7","p2"],["p8","p4"],["p6","p3"]],"revealed":true,"round_id":"d1","updated_at":"2026-09-07T15:50:15.137+00:00"},"at":"2026-09-07T15:50:15.271646+00:00"},
+{"id":557,"tbl":"hole_scores","op":"INSERT","data":{"hole":1,"gross":1,"round_id":"policy-check","player_id":"none","updated_at":"2026-09-07T19:46:32.927353+00:00"},"at":"2026-09-07T19:46:32.927353+00:00"},
+{"id":559,"tbl":"hole_scores","op":"DELETE","data":{"hole":1,"gross":1,"round_id":"policy-check","player_id":"none","updated_at":"2026-09-07T19:46:32.927353+00:00"},"at":"2026-09-07T19:47:42.201575+00:00"},
+{"id":560,"tbl":"bit_events","op":"INSERT","data":{"grp":0,"hole":14,"kind":"equipment","counts":{"p5":1},"last_pid":"p5","round_id":"d1","updated_at":"2026-09-07T19:58:27.628+00:00"},"at":"2026-09-07T19:58:27.041709+00:00"},
+{"id":561,"tbl":"bit_events","op":"INSERT","data":{"grp":0,"hole":17,"kind":"equipment","counts":{"p4":1},"last_pid":"p4","round_id":"d1","updated_at":"2026-09-07T19:58:51.766+00:00"},"at":"2026-09-07T19:58:50.894795+00:00"},
+{"id":562,"tbl":"bit_events","op":"UPDATE","data":{"grp":0,"hole":17,"kind":"equipment","counts":{"p4":1,"p6":1},"last_pid":"p6","round_id":"d1","updated_at":"2026-09-07T19:58:52.649+00:00"},"at":"2026-09-07T19:58:51.756467+00:00"},
+{"id":563,"tbl":"stakes","op":"UPDATE","data":{"id":1,"stakes":{"fish":50,"camel":50,"cuckoo":10,"lostball":50,"equipment":1,"threeputt":50},"updated_at":"2026-09-07T19:59:15.168+00:00"},"at":"2026-09-07T19:59:14.351589+00:00"},
+{"id":564,"tbl":"stakes","op":"UPDATE","data":{"id":1,"stakes":{"fish":50,"camel":50,"cuckoo":10,"lostball":50,"equipment":10,"threeputt":50},"updated_at":"2026-09-07T19:59:15.549+00:00"},"at":"2026-09-07T19:59:14.647664+00:00"},
+{"id":565,"tbl":"stakes","op":"UPDATE","data":{"id":1,"stakes":{"fish":50,"camel":50,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-07T19:59:15.707+00:00"},"at":"2026-09-07T19:59:14.799217+00:00"}
 ]

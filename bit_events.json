@@ -21,6 +21,8 @@
 {"round_id":"d1","grp":0,"kind":"cuckoo","hole":16,"counts":{"p1":2,"p4":1},"last_pid":"p1","updated_at":"2026-09-07T14:57:37.989+00:00"},
 {"round_id":"d1","grp":0,"kind":"cuckoo","hole":17,"counts":{"p4":1},"last_pid":"p4","updated_at":"2026-09-07T15:11:50.016+00:00"},
 {"round_id":"d1","grp":0,"kind":"cuckoo","hole":18,"counts":{"p1":1,"p4":1},"last_pid":"p1","updated_at":"2026-09-07T15:28:24.987+00:00"},
+{"round_id":"d1","grp":0,"kind":"equipment","hole":14,"counts":{"p5":1},"last_pid":"p5","updated_at":"2026-09-07T19:58:27.628+00:00"},
+{"round_id":"d1","grp":0,"kind":"equipment","hole":17,"counts":{"p4":1,"p6":1},"last_pid":"p6","updated_at":"2026-09-07T19:58:52.649+00:00"},
 {"round_id":"d1","grp":0,"kind":"fish","hole":2,"counts":{"p1":1},"last_pid":"p1","updated_at":"2026-09-07T11:53:34.876+00:00"},
 {"round_id":"d1","grp":0,"kind":"fish","hole":4,"counts":{"p4":1},"last_pid":"p4","updated_at":"2026-09-07T12:24:01.629+00:00"},
 {"round_id":"d1","grp":0,"kind":"fish","hole":8,"counts":{"p1":1},"last_pid":"p1","updated_at":"2026-09-07T15:12:51.81+00:00"},
