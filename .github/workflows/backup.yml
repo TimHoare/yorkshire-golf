@@ -4,7 +4,7 @@ name: Back up the database
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '7,22,37,52 * * * *'   # off the :00/:15 rush, which GitHub drops under load
   workflow_dispatch:
 
 permissions:
