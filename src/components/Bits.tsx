@@ -1,4 +1,4 @@
-// Side bets: cuckoos (trees), camels (bunkers), fish (water), three-putts, lost balls.
+// Side bets: cuckoos (trees), camels (bunkers), fish (water), three-putts, lost balls, equipment abuse.
 // Logged hole by hole per tee group — a count per player plus who had the
 // last one, so the round ends with a total of each and a payer: the player
 // holding the last one puts total × stake into the group bet.
@@ -15,7 +15,7 @@ export const Chevron = () => (
   <svg className="bit-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 9l6 6 6-6" /></svg>
 );
 
-// Per-hole editor shown on each scoring slide: four collapsible rows, one per
+// Per-hole editor shown on each scoring slide: collapsible rows, one per
 // kind. Tap a row to open per-player − / + steppers; + marks that player as
 // having the last one, so entering them in the order they happened just works.
 export function HoleBitsPanel({ rid, group, holeIdx, players, readOnly }: {
@@ -135,7 +135,7 @@ export function BetsSection({ r }: { r: Round }) {
   if (!any) return null;
   return (
     <>
-      <div className="section-title"><h2>Side bets</h2><span className="eyebrow">cuckoos · camels · fish · three-putts · lost balls</span></div>
+      <div className="section-title"><h2>Side bets</h2><span className="eyebrow">cuckoos · camels · fish · three-putts · lost balls · equipment abuse</span></div>
       {titles.map((title, t) => <GroupBet key={t} r={r} group={t} title={title} />)}
     </>
   );

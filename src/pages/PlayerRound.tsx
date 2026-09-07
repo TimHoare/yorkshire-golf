@@ -1,6 +1,6 @@
 // One player's card for one round: their gross and points hole by hole, with
 // the bonus ball and any side bets (cuckoos, camels, fish, three-putts, lost
-// balls) marked on the holes they happened. On scramble day it's the team's
+// balls, equipment abuse) marked on the holes they happened. On scramble day it's the team's
 // card, with the player's own bits from the flight log.
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';

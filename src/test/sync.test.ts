@@ -129,7 +129,7 @@ describe('sync engine', () => {
     setGross('d3', { team: 1 }, 0, 4);
     setHoleBits('d1', 0, 'cuckoo', 2, { counts: { p1: 2 }, last: 'p1' });
     setBonusBall('p1', { used: { d1: 4 }, lost: null });
-    setStakes({ cuckoo: 20, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
+    setStakes({ cuckoo: 20, camel: 10, fish: 10, threeputt: 10, lostball: 10, equipment: 10 });
     setTeeChoice('d2', 'white');
     setGroupDraw('d1', [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']]);
     setPairDraw('d1', { pairs: [['p1', 'p2']], revealed: false });

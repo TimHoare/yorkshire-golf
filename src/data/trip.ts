@@ -82,7 +82,7 @@ export const RULES = {
   scrambleAllowance: [35, 15], // % of course handicaps, lowest first (2-man teams)
 };
 
-// Side-bet menagerie: labels for the four things logged hole by hole.
+// Side-bet menagerie: labels for the things logged hole by hole.
 // Amounts (pence each) live in app settings and sync between phones.
 // max = the most one player can log on one hole: you can find three bunkers
 // on a hole, but you either three-putted it or you didn't.
@@ -92,6 +92,7 @@ export const BITS: Record<BitKind, { label: string; one: string; icon: string; d
   fish:      { label: 'Fish',        one: 'fish',       icon: '🐟', desc: 'In the water' },
   threeputt: { label: 'Three-putts', one: 'three-putt', icon: '⛳', desc: '3 or more putts', max: 1 },
   lostball:  { label: 'Lost balls',  one: 'lost ball',  icon: '🔍', desc: 'Lost a ball' },
+  equipment: { label: 'Equipment abuse', one: 'equipment abuse', icon: '💢', desc: 'Club thrown, slammed or snapped' },
 };
 
 // Trip organiser — the only player who can wipe the shared database.

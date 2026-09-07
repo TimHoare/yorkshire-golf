@@ -39,7 +39,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="course-edit">
           <h3>Side bets</h3>
-          <p className="help">Pence per offence — Cuckoo (tree), Camel (bunker), Fish (water), Three-putt. Whoever has the last one of each at the end of the round pays the total into the group bet.</p>
+          <p className="help">Pence per offence — Cuckoo (tree), Camel (bunker), Fish (water), Three-putt, Lost ball, Equipment abuse. Whoever has the last one of each at the end of the round pays the total into the group bet.</p>
           <div className="stakes">
             {BIT_KINDS.map((k) => (
               <label key={k}>

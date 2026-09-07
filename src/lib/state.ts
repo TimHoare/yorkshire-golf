@@ -2,8 +2,9 @@
 export type HoleScores = (number | null)[];
 export interface PairDraw { pairs: string[][]; revealed: boolean }
 
-// Side bets: cuckoo = hit a tree, camel = bunker, fish = water, threeputt = 3+ putts, lostball = lost a ball.
-export const BIT_KINDS = ['cuckoo', 'camel', 'fish', 'threeputt', 'lostball'] as const;
+// Side bets: cuckoo = hit a tree, camel = bunker, fish = water, threeputt = 3+ putts,
+// lostball = lost a ball, equipment = equipment abuse (club thrown, slammed or snapped).
+export const BIT_KINDS = ['cuckoo', 'camel', 'fish', 'threeputt', 'lostball', 'equipment'] as const;
 export type BitKind = (typeof BIT_KINDS)[number];
 // One hole's log for one kind: how many each player had, and who had the last one.
 export interface HoleBits { counts: Record<string, number>; last: string | null }
@@ -24,7 +25,7 @@ export interface TripState {
   scramble: Record<string, Record<number, HoleScores>>;  // scramble[rid][team] = 18 team gross
   groups: Record<string, string[][]>;                    // groups[rid] = player ids per group, overriding the placeholder draw
   bits: Record<string, Record<number, BitSheet>>;        // bits[rid][group][kind] = 18 hole logs
-  stakes: Stakes;                                        // pence per cuckoo/camel/fish/three-putt
+  stakes: Stakes;                                        // pence per cuckoo/camel/fish/three-putt/lost ball/equipment abuse
   bonus: Record<string, BonusBall>;                      // bonus[pid] = bonus-ball record
   teeChoice: Record<string, string>;                     // teeChoice[rid] = alt tee key, absent = the round's default tees
 }
@@ -38,7 +39,7 @@ export const ME_KEY = 'yorkshire-golf-2026-me';
 export const OUTBOX_KEY = STORE_KEY + '-outbox';
 export const ROUTE_KEY = 'yorkshire-golf-2026-route';
 
-export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
+export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10, equipment: 10 });
 export function defaultState(): TripState {
   return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes(), bonus: {}, teeChoice: {} };
 }

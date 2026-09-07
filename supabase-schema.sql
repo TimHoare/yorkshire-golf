@@ -44,12 +44,12 @@ create table if not exists group_draws (
   updated_at timestamptz not null default now()
 );
 
--- Side bets: one row per round, tee group, kind (cuckoo/camel/fish/threeputt)
+-- Side bets: one row per round, tee group, kind (cuckoo/camel/fish/threeputt/lostball/equipment)
 -- and hole. counts = { player_id: n }; last_pid = who had the last one there.
 create table if not exists bit_events (
   round_id   text not null,
   grp        smallint not null,
-  kind       text not null check (kind in ('cuckoo','camel','fish','threeputt','lostball')),
+  kind       text not null check (kind in ('cuckoo','camel','fish','threeputt','lostball','equipment')),
   hole       smallint not null check (hole between 1 and 18),
   counts     jsonb not null default '{}',
   last_pid   text,
@@ -57,9 +57,9 @@ create table if not exists bit_events (
   primary key (round_id, grp, kind, hole)
 );
 
--- Databases created before lost balls existed only allow the original four kinds.
+-- Databases created before lost balls / equipment abuse existed only allow the earlier kinds.
 alter table bit_events drop constraint if exists bit_events_kind_check;
-alter table bit_events add constraint bit_events_kind_check check (kind in ('cuckoo','camel','fish','threeputt','lostball'));
+alter table bit_events add constraint bit_events_kind_check check (kind in ('cuckoo','camel','fish','threeputt','lostball','equipment'));
 
 -- Bonus balls: one row per player for the whole trip. used = { round_id: hole
 -- index 0–17 } where the 2× was played each round; lost_round = the round the

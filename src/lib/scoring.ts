@@ -261,7 +261,7 @@ export function firstUnfinishedHole(S: TripState, rid: string, group: number) {
   return 18;
 }
 
-// ---------- Side bets (cuckoos · camels · fish · three-putts · lost balls) ----------
+// ---------- Side bets (cuckoos · camels · fish · three-putts · lost balls · equipment abuse) ----------
 export const blankBits = (): (HoleBits | null)[] => Array(18).fill(null);
 export const bitsOf = (S: TripState, rid: string, group: number, kind: BitKind): (HoleBits | null)[] =>
   S.bits[rid]?.[group]?.[kind] || blankBits();
