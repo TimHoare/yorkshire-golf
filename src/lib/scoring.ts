@@ -86,7 +86,7 @@ export const bonusGoneBy = (S: TripState, rid: string, pid: string): boolean => 
 };
 
 // Index entering each round: −0.5 per point over 32 for every completed stableford round before it.
-// Uses raw points — the bonus-ball doubling counts for the competition, not the handicap.
+// Uses competition points, so a bonus ball's doubled hole moves the handicap too.
 export function indexHistory(S: TripState, pid: string) {
   const p = PL(pid);
   const out: { round: Round; before: number; after: number; applied: boolean }[] = [];
@@ -95,7 +95,7 @@ export function indexHistory(S: TripState, pid: string) {
     const before = idx;
     let after = idx, applied = false;
     if (r.format === 'stableford') {
-      const t = tally(r.id, holesOf(S, r.id, pid), playingHandicap(S, idx, r.id));
+      const t = tally(r.id, holesOf(S, r.id, pid), playingHandicap(S, idx, r.id), bonusHoleFor(S, r.id, pid));
       if (t.complete) { after = idx - 0.5 * (t.pts - RULES.par); applied = true; }
     }
     out.push({ round: r, before, after, applied });

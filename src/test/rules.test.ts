@@ -21,32 +21,35 @@ const bogeys = (n: number) => Array(n).fill(1);
 describe('index drift', () => {
   it('moves −0.5 per point over 32 once a stableford round is complete', () => {
     const S = defaultState();
-    S.scores.d1 = { p1: netParFor(S, 'd1', 'p1') }; // 36 points
+    S.scores.d1 = { p1: netParFor(S, 'd1', 'p1') }; // 36 points, 38 with the 18th doubled by default
     const [d1, d2] = indexHistory(S, 'p1');
     expect(d1.before).toBe(14.0);
     expect(d1.applied).toBe(true);
-    expect(d1.after).toBe(12.0);
-    expect(d2.before).toBe(12.0);
+    expect(d1.after).toBe(11.0);
+    expect(d2.before).toBe(11.0);
     expect(d2.applied).toBe(false); // nothing entered yet
-    expect(currentIndex(S, 'p1')).toBe(12.0);
+    expect(currentIndex(S, 'p1')).toBe(11.0);
     // the next round is played off the drifted index, not the starting one
-    expect(phFor(S, 'p1', 'd2')).toBe(playingHandicap(S, 12.0, 'd2'));
+    expect(phFor(S, 'p1', 'd2')).toBe(playingHandicap(S, 11.0, 'd2'));
     expect(phFor(S, 'p1', 'd2')).not.toBe(playingHandicap(S, 14.0, 'd2'));
   });
   it('goes up after a poor round; a partial round does not count', () => {
     const S = defaultState();
-    S.scores.d1 = { p1: netParFor(S, 'd1', 'p1', bogeys(8)) }; // 28 points
-    expect(indexHistory(S, 'p1')[0].after).toBe(16.0);
+    S.scores.d1 = { p1: netParFor(S, 'd1', 'p1', bogeys(8)) }; // 28 points, 30 with the 18th doubled
+    expect(indexHistory(S, 'p1')[0].after).toBe(15.0);
     S.scores.d1.p1[17] = null;
     expect(indexHistory(S, 'p1')[0].applied).toBe(false);
     expect(indexHistory(S, 'p1')[0].after).toBe(14.0);
   });
-  it('ignores the bonus-ball doubling and the scramble', () => {
+  it('counts the bonus-ball doubling but ignores the scramble', () => {
     const S = defaultState();
     S.scores.d1 = { p1: netParFor(S, 'd1', 'p1') };
     S.bonus.p1 = { used: { d1: 0 }, lost: null };
     expect(playerTally(S, 'd1', 'p1').pts).toBe(38); // doubled for the competition…
-    expect(indexHistory(S, 'p1')[0].after).toBe(12.0); // …not for the handicap
+    expect(indexHistory(S, 'p1')[0].after).toBe(11.0); // …and the handicap moves on the 38
+    S.bonus.p1 = { used: { d1: 0 }, lost: 'd1' }; // lost on its hole: the 2× is void, back to 36
+    expect(indexHistory(S, 'p1')[0].after).toBe(12.0);
+    S.bonus.p1 = { used: { d1: 0 }, lost: null };
     S.scramble.d3 = { 0: Array(18).fill(4), 1: Array(18).fill(4), 2: Array(18).fill(4), 3: Array(18).fill(4) };
     const d3 = indexHistory(S, 'p1')[2];
     expect(d3.round.id).toBe('d3');
