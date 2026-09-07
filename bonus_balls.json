@@ -1,6 +1,10 @@
 [
+{"player_id":"p1","used":{"d1":13},"lost_round":null,"updated_at":"2026-09-07T14:30:00.806+00:00"},
 {"player_id":"p2","used":{"d1":5},"lost_round":null,"updated_at":"2026-09-07T12:54:28.05+00:00"},
 {"player_id":"p3","used":{"d1":5},"lost_round":null,"updated_at":"2026-09-07T12:54:28.493+00:00"},
 {"player_id":"p4","used":{"d1":5},"lost_round":null,"updated_at":"2026-09-07T12:51:54.461+00:00"},
-{"player_id":"p6","used":{"d1":5},"lost_round":null,"updated_at":"2026-09-07T12:51:49.464+00:00"}
+{"player_id":"p5","used":{"d1":8},"lost_round":null,"updated_at":"2026-09-07T13:25:30.967+00:00"},
+{"player_id":"p6","used":{"d1":5},"lost_round":null,"updated_at":"2026-09-07T12:51:49.464+00:00"},
+{"player_id":"p7","used":{"d1":8},"lost_round":null,"updated_at":"2026-09-07T13:28:53.912+00:00"},
+{"player_id":"p8","used":{"d1":8},"lost_round":null,"updated_at":"2026-09-07T13:28:54.479+00:00"}
 ]
