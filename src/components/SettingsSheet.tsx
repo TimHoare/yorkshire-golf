@@ -20,13 +20,9 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
     : 'Scores live on this phone only.';
 
   const share = () => copy(location.origin + location.pathname, 'App link copied — anyone who opens it joins the live scores');
-  const doReset = async () => {
-    const msg = hasSync
-      ? 'Clear every score, pair draw and scramble result for EVERYONE — this wipes the shared database, not just this phone. Sure?'
-      : 'Clear every score, pair draw and scramble result on this phone?';
-    if (!confirm(msg)) return;
-    try { await resetAll(); } catch { toast("Cleared here, but the shared database didn't respond — try again with signal"); }
-    onClose(); toast('Reset');
+  const doReset = () => {
+    if (!confirm('Clear every score, pair draw and scramble result on this phone?')) return;
+    resetAll(); onClose(); toast('Reset');
   };
 
   return (
@@ -88,7 +84,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="course-edit">
           <div className="btn-row">
-            {me === ORGANISER && <button className="btn danger sm" onClick={doReset}>Clear all scores</button>}
+            {!hasSync && me === ORGANISER && <button className="btn danger sm" onClick={doReset}>Clear all scores</button>}
             <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}>Done</button>
           </div>
         </div>

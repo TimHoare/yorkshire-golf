@@ -87,8 +87,13 @@ create table if not exists stakes (
 );
 
 -- Access model: the app URL is the secret. Anyone with the link can read and
--- write scores (it's a mates' trip, not a bank). RLS is on with open policies
--- so the anon key can't touch anything except these tables.
+-- write scores (it's a mates' trip, not a bank). RLS is on, so the anon key can't
+-- touch anything except these tables — and it can't DELETE scores at all. The
+-- app never deletes from the score tables; only clearing a pair draw, group draw
+-- or tee choice removes a row. So a phone (or anyone with the key) can't wipe
+-- the week, however hard it tries. To start fresh between trips, run this in
+-- the SQL editor (the history table below keeps a copy of everything anyway):
+--   truncate hole_scores, team_scores, pair_draws, group_draws, bit_events, bonus_balls, tee_choices, stakes;
 alter table hole_scores enable row level security;
 alter table team_scores enable row level security;
 alter table pair_draws  enable row level security;
@@ -98,22 +103,94 @@ alter table stakes      enable row level security;
 alter table bonus_balls enable row level security;
 alter table tee_choices enable row level security;
 
+-- Older databases had one "open access" policy per table that also allowed delete.
 drop policy if exists "open access" on hole_scores;
-create policy "open access" on hole_scores for all using (true) with check (true);
 drop policy if exists "open access" on team_scores;
-create policy "open access" on team_scores for all using (true) with check (true);
 drop policy if exists "open access" on pair_draws;
-create policy "open access" on pair_draws for all using (true) with check (true);
 drop policy if exists "open access" on group_draws;
-create policy "open access" on group_draws for all using (true) with check (true);
 drop policy if exists "open access" on bit_events;
-create policy "open access" on bit_events for all using (true) with check (true);
 drop policy if exists "open access" on stakes;
-create policy "open access" on stakes for all using (true) with check (true);
 drop policy if exists "open access" on bonus_balls;
-create policy "open access" on bonus_balls for all using (true) with check (true);
 drop policy if exists "open access" on tee_choices;
-create policy "open access" on tee_choices for all using (true) with check (true);
+
+drop policy if exists "read"   on hole_scores; create policy "read"   on hole_scores for select using (true);
+drop policy if exists "add"    on hole_scores; create policy "add"    on hole_scores for insert with check (true);
+drop policy if exists "change" on hole_scores; create policy "change" on hole_scores for update using (true) with check (true);
+drop policy if exists "read"   on team_scores; create policy "read"   on team_scores for select using (true);
+drop policy if exists "add"    on team_scores; create policy "add"    on team_scores for insert with check (true);
+drop policy if exists "change" on team_scores; create policy "change" on team_scores for update using (true) with check (true);
+drop policy if exists "read"   on bit_events;  create policy "read"   on bit_events  for select using (true);
+drop policy if exists "add"    on bit_events;  create policy "add"    on bit_events  for insert with check (true);
+drop policy if exists "change" on bit_events;  create policy "change" on bit_events  for update using (true) with check (true);
+drop policy if exists "read"   on stakes;      create policy "read"   on stakes      for select using (true);
+drop policy if exists "add"    on stakes;      create policy "add"    on stakes      for insert with check (true);
+drop policy if exists "change" on stakes;      create policy "change" on stakes      for update using (true) with check (true);
+drop policy if exists "read"   on bonus_balls; create policy "read"   on bonus_balls for select using (true);
+drop policy if exists "add"    on bonus_balls; create policy "add"    on bonus_balls for insert with check (true);
+drop policy if exists "change" on bonus_balls; create policy "change" on bonus_balls for update using (true) with check (true);
+-- Draws and tee choices are cleared by deleting the row, so these three keep delete.
+drop policy if exists "read"   on pair_draws;  create policy "read"   on pair_draws  for select using (true);
+drop policy if exists "add"    on pair_draws;  create policy "add"    on pair_draws  for insert with check (true);
+drop policy if exists "change" on pair_draws;  create policy "change" on pair_draws  for update using (true) with check (true);
+drop policy if exists "remove" on pair_draws;  create policy "remove" on pair_draws  for delete using (true);
+drop policy if exists "read"   on group_draws; create policy "read"   on group_draws for select using (true);
+drop policy if exists "add"    on group_draws; create policy "add"    on group_draws for insert with check (true);
+drop policy if exists "change" on group_draws; create policy "change" on group_draws for update using (true) with check (true);
+drop policy if exists "remove" on group_draws; create policy "remove" on group_draws for delete using (true);
+drop policy if exists "read"   on tee_choices; create policy "read"   on tee_choices for select using (true);
+drop policy if exists "add"    on tee_choices; create policy "add"    on tee_choices for insert with check (true);
+drop policy if exists "change" on tee_choices; create policy "change" on tee_choices for update using (true) with check (true);
+drop policy if exists "remove" on tee_choices; create policy "remove" on tee_choices for delete using (true);
+
+-- History: every insert, update and delete on every table above is copied here,
+-- so nothing is ever truly lost and "who changed hole 7 and when" has an answer.
+-- The app can read it but never write to it; the trigger runs as the table owner.
+-- (Backups of all tables also land in the repo's `backups` branch every 15 min —
+-- see README.md → Backups and recovery.)
+create table if not exists history (
+  id   bigint generated always as identity primary key,
+  tbl  text not null,
+  op   text not null,          -- INSERT / UPDATE / DELETE
+  data jsonb not null,         -- the row after the change (the row removed, for DELETE)
+  at   timestamptz not null default now()
+);
+create index if not exists history_tbl_at on history (tbl, at);
+alter table history enable row level security;
+drop policy if exists "read" on history; create policy "read" on history for select using (true);
+
+create or replace function log_history() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'DELETE' then
+    insert into history (tbl, op, data) values (tg_table_name, tg_op, to_jsonb(old));
+    return old;
+  end if;
+  insert into history (tbl, op, data) values (tg_table_name, tg_op, to_jsonb(new));
+  return new;
+end $$;
+
+drop trigger if exists history on hole_scores; create trigger history after insert or update or delete on hole_scores for each row execute function log_history();
+drop trigger if exists history on team_scores; create trigger history after insert or update or delete on team_scores for each row execute function log_history();
+drop trigger if exists history on pair_draws;  create trigger history after insert or update or delete on pair_draws  for each row execute function log_history();
+drop trigger if exists history on group_draws; create trigger history after insert or update or delete on group_draws for each row execute function log_history();
+drop trigger if exists history on bit_events;  create trigger history after insert or update or delete on bit_events  for each row execute function log_history();
+drop trigger if exists history on stakes;      create trigger history after insert or update or delete on stakes      for each row execute function log_history();
+drop trigger if exists history on bonus_balls; create trigger history after insert or update or delete on bonus_balls for each row execute function log_history();
+drop trigger if exists history on tee_choices; create trigger history after insert or update or delete on tee_choices for each row execute function log_history();
+
+-- Recovery from history: put hole_scores back as they stood at a moment. Change
+-- the timestamp, run in the SQL editor; phones pick the rows up live. The same
+-- shape works for the other tables (swap the key columns and fields).
+--   insert into hole_scores (round_id, player_id, hole, gross, updated_at)
+--   select data->>'round_id', data->>'player_id', (data->>'hole')::smallint, (data->>'gross')::smallint, now()
+--   from (
+--     select distinct on (data->>'round_id', data->>'player_id', data->>'hole') op, data
+--     from history
+--     where tbl = 'hole_scores' and at <= '2026-09-09 15:00+01'
+--     order by data->>'round_id', data->>'player_id', data->>'hole', at desc, id desc
+--   ) last
+--   where op <> 'DELETE'
+--   on conflict (round_id, player_id, hole) do update set gross = excluded.gross, updated_at = excluded.updated_at;
 
 -- Realtime: broadcast row changes to connected phones.
 do $$

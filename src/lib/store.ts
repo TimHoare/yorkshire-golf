@@ -144,19 +144,12 @@ export function importState(json: string) {
 }
 export const exportState = () => JSON.stringify(S, null, 2);
 
-export async function resetAll() {
+// This phone only. The shared database can't be wiped from the app: its policies
+// don't allow deleting scores (see supabase-schema.sql), so a stray tap can't
+// take the week out for everyone. With sync on, a reload just hydrates it back.
+export function resetAll() {
   S = defaultState();
   outbox = []; saveOutbox(); save(); emit();
-  if (sb) {
-    await Promise.all([
-      sb.from('hole_scores').delete().neq('round_id', ''),
-      sb.from('team_scores').delete().neq('round_id', ''),
-      sb.from('pair_draws').delete().neq('round_id', ''),
-      sb.from('group_draws').delete().neq('round_id', ''),
-      sb.from('bit_events').delete().neq('round_id', ''),
-      sb.from('bonus_balls').delete().neq('player_id', ''),
-    ]);
-  }
 }
 
 // ---------- Outbox ----------

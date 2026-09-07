@@ -27,6 +27,21 @@ npm run build    # type-check + production build to dist/
 
 Already configured for the trip's Supabase project in `src/config.ts` (public URL + publishable key — safe to commit; access control is the RLS policies). To point at a fresh project: run `supabase-schema.sql` in the Supabase SQL editor, then put the new Project URL and publishable key in `src/config.ts`. Empty values = single-phone localStorage mode.
 
+## Backups and recovery
+
+Three layers, so a wiped or mangled database is an inconvenience rather than a disaster:
+
+- **The app can't delete scores.** The policies in `supabase-schema.sql` grant read, insert and update on the score tables but not delete (only pair draws, group draws and tee choices can be cleared). The in-app "Clear all scores" only exists in single-phone mode. To start a fresh trip, `truncate` the tables in the SQL editor.
+- **A `history` table** records every insert, update and delete on every table, written by a trigger the app can't bypass. The comment at the bottom of `supabase-schema.sql` has the SQL to rebuild a table as it stood at any moment.
+- **A backup every 15 minutes.** The `Back up the database` action dumps every table as JSON into the `backups` branch, one commit per change. Restore the latest with:
+
+```
+git fetch origin backups && git worktree add /tmp/yg-backups backups
+node scripts/restore.mjs /tmp/yg-backups
+```
+
+Check out an older commit of `backups` first to go back further. The scripts use the publishable key from `src/config.ts`, so they run from any machine with the repo.
+
 ## Deploy
 
 Push to `main`. The `Deploy to GitHub Pages` action runs tests, builds, and publishes `dist/`. First-time repo setup: Settings → Pages → Source: **GitHub Actions**.

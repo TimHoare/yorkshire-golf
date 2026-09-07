@@ -1,0 +1,38 @@
+# Copies every database table into the `backups` branch every 15 minutes, as
+# JSON, committing only when something changed. Restore with scripts/restore.mjs.
+name: Back up the database
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backup
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: backups
+          path: backups
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/backup.mjs backups
+      - name: Commit if anything changed
+        if: always()   # a table that failed to dump shouldn't cost us the rest
+        working-directory: backups
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && { echo "No changes"; exit 0; }
+          git commit -m "Backup $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
