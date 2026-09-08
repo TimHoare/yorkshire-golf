@@ -1,9 +1,10 @@
-import { BITS, ORGANISER, ROUNDS, pName } from '../data/trip';
+import { BITS, ORGANISER, R, ROUNDS, pName } from '../data/trip';
 import { hasSync, setMe, setStakes, setTeeChoice, resetAll } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { RULES } from '../data/trip';
-import { BIT_KINDS } from '../lib/state';
+import { BIT_KINDS, stakesFor } from '../lib/state';
 import { toast } from '../lib/toast';
+import { useState } from 'react';
 
 async function copy(text: string, msg: string) {
   try { await navigator.clipboard.writeText(text); toast(msg); }
@@ -12,6 +13,10 @@ async function copy(text: string, msg: string) {
 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { S, me, syncStatus } = useStore();
+  // Which day's stakes are on show: '' = the defaults every day falls back to.
+  const [stakeDay, setStakeDay] = useState('');
+  const dayStakes = stakeDay ? stakesFor(S, stakeDay) : S.stakes;
+  const ownStakes = !!stakeDay && !!S.roundStakes[stakeDay];
 
   const syncLine = hasSync
     ? (syncStatus === 'live'
@@ -39,26 +44,42 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="course-edit">
           <h3>Side bets</h3>
-          <p className="help">Pence per offence — Cuckoo (tree), Camel (bunker), Fish (water), Three-putt, Lost ball, Equipment abuse. Whoever has the last one of each at the end of the round pays the total into the group bet.</p>
+          <p className="help">Pence per offence — Cuckoo (tree), Camel (bunker), Fish (water), Three-putt, Lost ball, Equipment abuse. Whoever has the last one of each at the end of the round pays the total into the group bet. Every day uses the defaults unless it's given its own.</p>
+          <div className="stakes stake-day">
+            <label>
+              <span>Stakes for</span>
+              <select value={stakeDay} onChange={(e) => setStakeDay(e.target.value)}>
+                <option value="">Default (every day)</option>
+                {ROUNDS.map((r) => <option key={r.id} value={r.id}>{r.dow} · {r.short}{S.roundStakes[r.id] ? ' (own)' : ''}</option>)}
+              </select>
+            </label>
+          </div>
           <div className="stakes">
             {BIT_KINDS.map((k) => (
               <label key={k}>
                 <span><span aria-hidden>{BITS[k].icon}</span> {BITS[k].label}</span>
                 <span className="stake-in">
                   <input
-                    type="number" inputMode="numeric" min={0} max={1000} value={S.stakes[k]}
+                    type="number" inputMode="numeric" min={0} max={1000} value={dayStakes[k]}
                     // Tapping in selects the whole value, so typing replaces it.
                     onFocus={(e) => e.target.select()}
                     onClick={(e) => e.currentTarget.select()}
                     onChange={(e) => {
                       const n = Math.round(parseFloat(e.target.value));
-                      setStakes({ ...S.stakes, [k]: Number.isNaN(n) ? 0 : Math.min(1000, Math.max(0, n)) });
+                      setStakes({ ...dayStakes, [k]: Number.isNaN(n) ? 0 : Math.min(1000, Math.max(0, n)) }, stakeDay || undefined);
                     }}
                   />p
                 </span>
               </label>
             ))}
           </div>
+          {stakeDay && (
+            <p className="help">
+              {ownStakes
+                ? <>{R(stakeDay)!.short} has its own stakes. <button className="linklike" onClick={() => setStakes(null, stakeDay)}>Use the defaults</button></>
+                : <>{R(stakeDay)!.short} uses the defaults — change a number to give it its own.</>}
+            </p>
+          )}
         </div>
         <div className="course-edit">
           <h3>Tees</h3>

@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { BITS, PL, R, RULES, first, gname } from '../data/trip';
-import { BIT_KINDS } from '../lib/state';
+import { BIT_KINDS, stakesFor } from '../lib/state';
 import {
   bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor,
   indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
@@ -62,7 +62,7 @@ export function PlayerRoundPage() {
     const by = members.map((who) => ({ who, n: Array.from({ length: 18 }, (_, i) => bitsOn(i, who).find((x) => x.k === k)?.n || 0).reduce((a, b) => a + b, 0) }));
     const grpT = bitGroup < 0 ? null : groupBitTally(S, r.id, bitGroup, k);
     const last = grpT && grpT.total > 0 && grpT.last && members.includes(grpT.last) ? grpT.last : null;
-    return { k, by, n: by.reduce((a, x) => a + x.n, 0), last, owes: grpT ? grpT.total * S.stakes[k] : 0 };
+    return { k, by, n: by.reduce((a, x) => a + x.n, 0), last, owes: grpT ? grpT.total * stakesFor(S, r.id)[k] : 0 };
   });
 
   // Result lines: place and week points once the round's decided.

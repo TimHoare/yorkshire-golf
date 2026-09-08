@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultState, migrate } from '../lib/state';
+import { defaultState, migrate, stakesFor } from '../lib/state';
 import {
   blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
   holePoints, pairPointsFor, pairTotals, playerBitTotal, playerTally, roundPoints, scrambleResults, shotsOn,
@@ -169,6 +169,7 @@ describe('side bets', () => {
       v: 3, scores: {}, pairs: {}, scramble: {}, groups: {},
       bits: { d1: { 0: { cuckoo: [{ counts: { p1: 1, p2: 0 }, last: 'p1' }], junk: [1, 2] } } },
       stakes: { cuckoo: 25, fish: -5, nonsense: 99 },
+      roundStakes: { d2: { camel: 50 }, d3: {}, d4: 'junk' },
     });
     const arr = S.bits.d1[0].cuckoo!;
     expect(arr).toHaveLength(18);
@@ -176,10 +177,15 @@ describe('side bets', () => {
     expect(arr[5]).toBeNull();
     expect((S.bits.d1[0] as Record<string, unknown>).junk).toBeUndefined();
     expect(S.stakes).toEqual({ cuckoo: 25, camel: 10, fish: 10, threeputt: 10, lostball: 10, equipment: 10 });
+    // a day's own stakes fill their gaps from the defaults; empty/junk days fall back entirely
+    expect(S.roundStakes).toEqual({ d2: { cuckoo: 25, camel: 50, fish: 10, threeputt: 10, lostball: 10, equipment: 10 } });
+    expect(stakesFor(S, 'd2').camel).toBe(50);
+    expect(stakesFor(S, 'd3')).toBe(S.stakes);
     // states written before side bets existed come up with defaults
     const old = migrate({ v: 3, scores: {}, pairs: {}, scramble: {}, groups: {} });
     expect(old.bits).toEqual({});
     expect(old.stakes.threeputt).toBe(10);
+    expect(old.roundStakes).toEqual({});
   });
   it('money formatting', () => {
     expect(fmtMoney(10)).toBe('10p');

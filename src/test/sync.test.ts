@@ -160,13 +160,40 @@ describe('sync engine', () => {
     expect(stored().pairs.d1).toBeUndefined();
   });
 
+  it("a day's own stakes go to row 1+n; back to the defaults is an empty row", async () => {
+    const m = mockSupabase({ hole_scores: [], team_scores: [], pair_draws: [], stakes: [{ id: 1, stakes: { cuckoo: 20 } }] });
+    m.start();
+    await tick();
+    m.upserts.length = 0;
+
+    setStakes({ ...getSnapshot().S.stakes, camel: 50 }, 'd2');
+    await tick();
+    expect(m.upserts).toEqual([{ table: 'stakes', row: expect.objectContaining({ id: 3, stakes: expect.objectContaining({ cuckoo: 20, camel: 50 }) }) }]);
+    expect(stored().roundStakes.d2).toMatchObject({ cuckoo: 20, camel: 50 });
+    expect(stored().stakes.camel).toBe(10);
+
+    setStakes(null, 'd2');
+    await tick();
+    expect(m.upserts[1]).toEqual({ table: 'stakes', row: expect.objectContaining({ id: 3, stakes: {} }) });
+    expect(stored().roundStakes.d2).toBeUndefined();
+
+    // another phone's edits arrive by row id
+    m.handler('stakes')({ eventType: 'UPDATE', new: { id: 6, stakes: { fish: 75 } }, old: null });
+    expect(stored().roundStakes.d5).toMatchObject({ cuckoo: 20, fish: 75 });
+    m.handler('stakes')({ eventType: 'UPDATE', new: { id: 6, stakes: {} }, old: null });
+    expect(stored().roundStakes.d5).toBeUndefined();
+    m.handler('stakes')({ eventType: 'UPDATE', new: { id: 1, stakes: { cuckoo: 30 } }, old: null });
+    expect(stored().stakes.cuckoo).toBe(30);
+  });
+
   it('hydrates the newer tables too', async () => {
     const m = mockSupabase({
       hole_scores: [], pair_draws: [],
       team_scores: [{ round_id: 'd3', team: 0, hole: 5, gross: 3 }],
       group_draws: [{ round_id: 'd1', groups: [['p1'], ['p2']] }],
       bit_events: [{ round_id: 'd1', grp: 1, kind: 'fish', hole: 9, counts: { p5: 1 }, last_pid: 'p5' }],
-      stakes: [{ id: 1, stakes: { cuckoo: 50 } }],
+      // the day row comes first here: the defaults must still be applied before it
+      stakes: [{ id: 4, stakes: { camel: 40 } }, { id: 1, stakes: { cuckoo: 50 } }],
       bonus_balls: [{ player_id: 'p2', used: { d1: 7 }, lost_round: 'd1' }],
       tee_choices: [{ round_id: 'd2', tee: 'white' }],
     });
@@ -177,6 +204,7 @@ describe('sync engine', () => {
     expect(S.groups.d1).toEqual([['p1'], ['p2']]);
     expect(S.bits.d1['1'].fish[8]).toEqual({ counts: { p5: 1 }, last: 'p5' });
     expect(S.stakes).toMatchObject({ cuckoo: 50, camel: 10 });
+    expect(S.roundStakes).toEqual({ d3: { cuckoo: 50, camel: 40, fish: 10, threeputt: 10, lostball: 10, equipment: 10 } });
     expect(S.bonus.p2).toEqual({ used: { d1: 7 }, lost: 'd1' });
     expect(S.teeChoice.d2).toBe('white');
     expect(getSnapshot().syncStatus).toBe('live');

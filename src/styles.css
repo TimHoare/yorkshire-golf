@@ -554,6 +554,9 @@ p { margin: 0; }
 .stakes input:focus { border-color: var(--pine); outline: none; }
 .stakes select { border: 1px solid var(--line-2); border-radius: 6px; padding: 4px 6px; font-size: 13px; font-weight: 700; background: var(--card); max-width: 60%; }
 .stakes select:focus { border-color: var(--pine); outline: none; }
+.stake-day { grid-template-columns: 1fr; margin-bottom: 4px; }
+.stake-day select { max-width: none; flex: 1; }
+.course-edit .help + .help, .stakes + .help { margin-top: 8px; }
 
 /* ---------- Round leaderboard ---------- */
 .rlb { display: grid; gap: 0; }

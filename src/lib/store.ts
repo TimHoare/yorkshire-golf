@@ -5,9 +5,9 @@
 // With no Supabase keys configured everything runs single-phone.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { CONFIG } from '../config';
-import { BITS, PLAYERS, R } from '../data/trip';
+import { BITS, PLAYERS, R, ROUNDS } from '../data/trip';
 import {
-  defaultState, loadState, persistState, migrate, cleanBonusBall, cleanHoleBits, cleanStakes,
+  defaultState, loadState, persistState, migrate, cleanBonusBall, cleanHoleBits, cleanStakes, cleanRoundStakes,
   BIT_KINDS, ME_KEY, OUTBOX_KEY,
   type TripState, type PairDraw, type BitKind, type BonusBall, type HoleBits, type Stakes,
 } from './state';
@@ -118,10 +118,31 @@ export function setBonusBall(pid: string, bb: BonusBall) {
   save(); emit();
 }
 
-export function setStakes(stakes: Stakes) {
-  S.stakes = cleanStakes(stakes);
-  pushOp('stake', ['all'], S.stakes);
+// The default stakes (rid absent), or one day's own — null puts that day back
+// on the defaults. Shared: they price everyone's group bets on every phone.
+export function setStakes(stakes: Stakes | null, rid?: string) {
+  if (!rid) {
+    S.stakes = cleanStakes(stakes);
+    pushOp('stake', ['all'], S.stakes);
+  } else {
+    const v = stakes === null ? null : cleanStakes(stakes, S.stakes);
+    if (v) S.roundStakes[rid] = v; else delete S.roundStakes[rid];
+    // The stakes table can't be deleted from, so "back to defaults" is an empty row.
+    pushOp('stake', [rid], v ?? {});
+  }
   save(); emit();
+}
+
+// The stakes table is one row per scope: id 1 holds the defaults, id 1+n
+// holds round n's own stakes ({} = none, the defaults apply).
+const stakeRowId = (rid: string) => (rid === 'all' ? 1 : (R(rid)?.n ?? -2) + 1);
+const stakeRowRid = (id: number) => (id === 1 ? 'all' : ROUNDS.find((r) => r.n + 1 === id)?.id ?? null);
+function applyStakesRow(rid: string | null, v: unknown) {
+  if (rid === 'all') S.stakes = cleanStakes(v);
+  else if (rid) {
+    const st = cleanRoundStakes(v, S.stakes);
+    if (st) S.roundStakes[rid] = st; else delete S.roundStakes[rid];
+  }
 }
 
 // Which tees a round is played off — null reverts to the round's default.
@@ -182,7 +203,7 @@ export async function flushOutbox() {
         const hb = op.v as HoleBits | null;
         ({ error } = await sb.from('bit_events').upsert({ round_id: op.k[0], grp: op.k[1], kind: op.k[2], hole: op.k[3], counts: hb?.counts ?? {}, last_pid: hb?.last ?? null, updated_at: now }));
       } else if (op.t === 'stake') {
-        ({ error } = await sb.from('stakes').upsert({ id: 1, stakes: op.v, updated_at: now }));
+        ({ error } = await sb.from('stakes').upsert({ id: stakeRowId(String(op.k[0])), stakes: op.v, updated_at: now }));
       } else if (op.t === 'bonus') {
         const bb = op.v as BonusBall;
         ({ error } = await sb.from('bonus_balls').upsert({ player_id: op.k[0], used: bb.used, lost_round: bb.lost, updated_at: now }));
@@ -252,7 +273,7 @@ function rowKey(table: string, row: Row): string | null {
     case 'hole_scores': return `hole|${row.round_id}|${row.player_id}|${row.hole}`;
     case 'team_scores': return `team|${row.round_id}|${row.team}|${row.hole}`;
     case 'bit_events': return `bits|${row.round_id}|${row.grp}|${row.kind}|${row.hole}`;
-    case 'stakes': return 'stake|all';
+    case 'stakes': return `stake|${stakeRowRid(Number(row.id)) ?? '?'}`;
     case 'bonus_balls': return `bonus|${row.player_id}`;
     case 'tee_choices': return `tee|${row.round_id}`;
     case 'group_draws': return `group|${row.round_id}`;
@@ -261,7 +282,7 @@ function rowKey(table: string, row: Row): string | null {
   }
 }
 
-interface Row { round_id: string; player_id?: string; team?: number; hole?: number; gross?: number | null; pairs?: string[][]; revealed?: boolean; groups?: string[][]; grp?: number; kind?: string; counts?: Record<string, number>; last_pid?: string | null; stakes?: unknown; used?: unknown; lost_round?: string | null; tee?: string }
+interface Row { round_id: string; id?: number; player_id?: string; team?: number; hole?: number; gross?: number | null; pairs?: string[][]; revealed?: boolean; groups?: string[][]; grp?: number; kind?: string; counts?: Record<string, number>; last_pid?: string | null; stakes?: unknown; used?: unknown; lost_round?: string | null; tee?: string }
 function onRowChange(table: string, type: string, row: Row) {
   // While an edit to this key is queued or in flight, the local value is
   // newer than anything the server can tell us — the echo of our own earlier
@@ -275,7 +296,7 @@ function onRowChange(table: string, type: string, row: Row) {
   else if (table === 'hole_scores') applyHole(row.round_id, row.player_id!, row.hole!, type === 'DELETE' ? null : row.gross ?? null);
   else if (table === 'team_scores') applyTeamHole(row.round_id, Number(row.team), row.hole!, type === 'DELETE' ? null : row.gross ?? null);
   else if (table === 'bit_events') applyBits(row.round_id, Number(row.grp), row.kind!, row.hole!, type === 'DELETE' ? null : cleanHoleBits({ counts: row.counts, last: row.last_pid }));
-  else if (table === 'stakes') { if (type !== 'DELETE') S.stakes = cleanStakes(row.stakes); }
+  else if (table === 'stakes') { if (type !== 'DELETE') applyStakesRow(stakeRowRid(Number(row.id)), row.stakes); }
   else if (table === 'pair_draws') {
     if (type === 'DELETE') delete S.pairs[row.round_id];
     else S.pairs[row.round_id] = { pairs: row.pairs!, revealed: !!row.revealed };
@@ -296,7 +317,7 @@ function applyOp(op: Op) {
   if (op.t === 'hole') applyHole(String(k0), String(k1), Number(k2), op.v as number | null);
   else if (op.t === 'team') applyTeamHole(String(k0), Number(k1), Number(k2), op.v as number | null);
   else if (op.t === 'bits') applyBits(String(k0), Number(k1), String(k2), Number(k3), cleanHoleBits(op.v as HoleBits | null));
-  else if (op.t === 'stake') S.stakes = cleanStakes(op.v);
+  else if (op.t === 'stake') applyStakesRow(String(k0), op.v);
   else if (op.t === 'bonus') applyBonus(String(k0), cleanBonusBall(op.v));
   else if (op.t === 'tee') { if (op.v === null) delete S.teeChoice[String(k0)]; else S.teeChoice[String(k0)] = op.v as string; }
   else if (op.t === 'group') { if (op.v === null) delete S.groups[String(k0)]; else S.groups[String(k0)] = op.v as string[][]; }
@@ -333,7 +354,8 @@ async function hydrateFromServer(client: SupabaseClient) {
   for (const r of pd.data as Row[]) S.pairs[r.round_id] = { pairs: r.pairs!, revealed: !!r.revealed };
   for (const r of gdRows) S.groups[r.round_id] = r.groups!;
   for (const r of beRows) applyBits(r.round_id, Number(r.grp), r.kind!, r.hole!, cleanHoleBits({ counts: r.counts, last: r.last_pid }));
-  for (const r of skRows) S.stakes = cleanStakes(r.stakes);
+  // Defaults (id 1) first, so a day's row fills any gaps from them.
+  for (const r of [...skRows].sort((a, b) => Number(a.id) - Number(b.id))) applyStakesRow(stakeRowRid(Number(r.id)), r.stakes);
   for (const r of bbRows) applyBonus(r.player_id!, cleanBonusBall({ used: r.used, lost: r.lost_round }));
   for (const r of tcRows) if (R(r.round_id) && typeof r.tee === 'string') S.teeChoice[r.round_id] = r.tee;
   // Edits made while offline are still queued: keep them on screen until they land.

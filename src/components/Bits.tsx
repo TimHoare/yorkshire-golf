@@ -4,7 +4,7 @@
 // holding the last one puts total × stake into the group bet.
 import { useState } from 'react';
 import { BITS, PL, first, gname, type Round } from '../data/trip';
-import { BIT_KINDS, type BitKind } from '../lib/state';
+import { BIT_KINDS, stakesFor, type BitKind } from '../lib/state';
 import { bitsOf, fmtMoney, flightName, flightsFor, groupBitTallies, groupsFor, holeBitTotal } from '../lib/scoring';
 import { setHoleBits } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -91,13 +91,14 @@ export function HoleBitsPanel({ rid, group, holeIdx, players, readOnly }: {
 export function GroupBet({ r, group, title }: { r: Round; group: number; title?: string }) {
   const { S } = useStore();
   const rows = groupBitTallies(S, r.id, group).filter((x) => x.total > 0);
+  const stakes = stakesFor(S, r.id);
   if (!rows.length) return null;
 
   const owed = new Map<string, number>();
   rows.forEach((x) => {
-    if (x.last) owed.set(x.last, (owed.get(x.last) || 0) + x.total * S.stakes[x.kind]);
+    if (x.last) owed.set(x.last, (owed.get(x.last) || 0) + x.total * stakes[x.kind]);
   });
-  const pot = rows.reduce((a, x) => a + x.total * S.stakes[x.kind], 0);
+  const pot = rows.reduce((a, x) => a + x.total * stakes[x.kind], 0);
 
   return (
     <div className="bet-card card">
@@ -107,9 +108,9 @@ export function GroupBet({ r, group, title }: { r: Round; group: number; title?:
       {rows.map((x) => (
         <div className="bet-row" key={x.kind}>
           <span className="bit-ic" aria-hidden>{BITS[x.kind].icon}</span>
-          <span className="bet-what"><b>{x.total}</b> {x.total === 1 ? BITS[x.kind].one : BITS[x.kind].label.toLowerCase()} <small>@ {fmtMoney(S.stakes[x.kind])}</small></span>
+          <span className="bet-what"><b>{x.total}</b> {x.total === 1 ? BITS[x.kind].one : BITS[x.kind].label.toLowerCase()} <small>@ {fmtMoney(stakes[x.kind])}</small></span>
           <span className="bet-last">{x.last ? <>Last: <b>{first(x.last)}</b></> : '—'}</span>
-          <b className="bet-amt">{fmtMoney(x.total * S.stakes[x.kind])}</b>
+          <b className="bet-amt">{fmtMoney(x.total * stakes[x.kind])}</b>
         </div>
       ))}
       <div className="bet-foot">

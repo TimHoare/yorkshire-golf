@@ -25,7 +25,8 @@ export interface TripState {
   scramble: Record<string, Record<number, HoleScores>>;  // scramble[rid][team] = 18 team gross
   groups: Record<string, string[][]>;                    // groups[rid] = player ids per group, overriding the placeholder draw
   bits: Record<string, Record<number, BitSheet>>;        // bits[rid][group][kind] = 18 hole logs
-  stakes: Stakes;                                        // pence per cuckoo/camel/fish/three-putt/lost ball/equipment abuse
+  stakes: Stakes;                                        // default pence per cuckoo/camel/fish/three-putt/lost ball/equipment abuse
+  roundStakes: Record<string, Stakes>;                   // roundStakes[rid] = that day's own stakes, absent = the defaults
   bonus: Record<string, BonusBall>;                      // bonus[pid] = bonus-ball record
   teeChoice: Record<string, string>;                     // teeChoice[rid] = alt tee key, absent = the round's default tees
 }
@@ -41,7 +42,7 @@ export const ROUTE_KEY = 'yorkshire-golf-2026-route';
 
 export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10, equipment: 10 });
 export function defaultState(): TripState {
-  return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes(), bonus: {}, teeChoice: {} };
+  return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes(), roundStakes: {}, bonus: {}, teeChoice: {} };
 }
 // Normalise a hole array to exactly 18 entries of number-or-null.
 const pad18 = (a: unknown): HoleScores =>
@@ -86,8 +87,10 @@ const cleanBits = (b: unknown): TripState['bits'] => {
   return out;
 };
 
-export const cleanStakes = (s: unknown): Stakes => {
-  const d = defaultStakes();
+// A full set of stakes: valid amounts kept, anything missing filled from base
+// (the built-in defaults unless told otherwise).
+export const cleanStakes = (s: unknown, base: Stakes = defaultStakes()): Stakes => {
+  const d = { ...base };
   if (s && typeof s === 'object')
     for (const k of BIT_KINDS) {
       const v = (s as Record<string, unknown>)[k];
@@ -95,6 +98,14 @@ export const cleanStakes = (s: unknown): Stakes => {
     }
   return d;
 };
+// One day's own stakes, or null when it has none ({} / junk means "use the defaults").
+export const cleanRoundStakes = (s: unknown, base: Stakes): Stakes | null => {
+  if (!s || typeof s !== 'object') return null;
+  const has = BIT_KINDS.some((k) => typeof (s as Record<string, unknown>)[k] === 'number');
+  return has ? cleanStakes(s, base) : null;
+};
+// The stakes in play on a round: its own if set, else the defaults.
+export const stakesFor = (S: TripState, rid: string): Stakes => S.roundStakes[rid] ?? S.stakes;
 
 export const cleanBonusBall = (v: unknown): BonusBall => {
   const o = (v && typeof v === 'object' ? v : {}) as { used?: unknown; lost?: unknown };
@@ -106,6 +117,15 @@ export const cleanBonusBall = (v: unknown): BonusBall => {
 };
 const cleanBonus = (b: unknown): TripState['bonus'] =>
   Object.fromEntries(Object.entries((b as Record<string, unknown>) || {}).map(([pid, v]) => [pid, cleanBonusBall(v)]));
+
+const cleanRoundStakesMap = (m: unknown, base: Stakes): Record<string, Stakes> => {
+  const out: Record<string, Stakes> = {};
+  for (const [rid, v] of Object.entries((m as Record<string, unknown>) || {})) {
+    const st = cleanRoundStakes(v, base);
+    if (st) out[rid] = st;
+  }
+  return out;
+};
 
 const cleanGroups = (g: unknown): Record<string, string[][]> =>
   Object.fromEntries(Object.entries((g as Record<string, unknown>) || {}).filter(([, v]) =>
@@ -123,6 +143,7 @@ export function migrate(s: unknown): TripState {
     groups: cleanGroups(o.groups),
     bits: cleanBits(o.bits),
     stakes: cleanStakes(o.stakes),
+    roundStakes: cleanRoundStakesMap(o.roundStakes, cleanStakes(o.stakes)),
     bonus: cleanBonus(o.bonus),
     teeChoice: Object.fromEntries(Object.entries(o.teeChoice || {}).filter(([, v]) => typeof v === 'string')) as Record<string, string>,
   };

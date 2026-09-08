@@ -79,7 +79,10 @@ create table if not exists tee_choices (
   updated_at timestamptz not null default now()
 );
 
--- Side-bet stakes (pence each), one shared row edited from app settings.
+-- Side-bet stakes (pence each), edited from app settings. One row per scope:
+-- id 1 = the defaults every day falls back to; id 1+n = round n's own stakes
+-- (2 = Mon … 6 = Fri). A round row of {} means "back on the defaults" — the
+-- app can't delete from this table.
 create table if not exists stakes (
   id         smallint primary key,
   stakes     jsonb not null,
