@@ -3,10 +3,10 @@
 // in the URL (replace, not push) so refresh restores it and history stays clean.
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { R, PL, RULES, first, gname, type Hole, type Round } from '../data/trip';
+import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
   bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
-  phFor, relPar, shotsOn, teamDrives, teamHoles, teamTally, driveTally, fmt1, signed,
+  phFor, relPar, shotsOn, teamDrives, teamHoles, teamTally, driveTally, signed,
 } from '../lib/scoring';
 import { setBonusBall, setDrive, setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -92,10 +92,9 @@ function DrivePick({ S, rid, t, holeIdx, readOnly }: { S: TripState; rid: string
     </div>
   );
 }
-// "Adam needs 3" / "Not enough holes left: …" / "7 each — done"
-const driveNote = (dt: ReturnType<typeof driveTally>) => dt.done
-  ? `${RULES.scrambleDrives} each — done`
-  : (dt.short ? 'Not enough holes left: ' : '') + dt.by.filter((x) => x.need > 0).map((x) => `${first(x.pid)} needs ${x.need}`).join(' · ');
+// "Adam needs 3" / "Short: Adam needs 3" — nothing once both have their quota.
+const driveNote = (dt: ReturnType<typeof driveTally>) => dt.done ? ''
+  : (dt.short ? 'Short: ' : '') + dt.by.filter((x) => x.need > 0).map((x) => `${first(x.pid)} needs ${x.need}`).join(' · ');
 
 // Bonus balls, one per player for the trip: it must be played on one hole a
 // round for double points (the 18th if never called); mark it lost and it's
@@ -225,12 +224,12 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               const tt = teamTally(S, r.id, t);
               const tr = tt.rows[i];
               const dt = driveTally(S, r.id, t);
-              const drive = teamDrives(S, r.id, t)[i];
+              const note = driveNote(dt);
+              // One line under the name: the faces say who, the ring says whose drive.
               return row(
                 <DrivePick S={S} rid={r.id} t={t} holeIdx={i} readOnly={readOnly} />,
                 gname(grp, t),
-                <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}Team HCP {fmt1(tt.hcp)} · {tt.strokes} gross thru {tt.played}
-                  <br /><span className={`drive-note${dt.short ? ' warn' : ''}`}>{drive ? <><b>Drive · {first(drive)}</b> · </> : null}{driveNote(dt)}</span></>,
+                <>{relBit(tr.gross)}{tt.strokes} thru {tt.played}{note && <> · <span className={`drive-note${dt.short ? ' warn' : ''}`}>{note}</span></>}</>,
                 { team: t }, tr.gross, tt.played ? signed(tt.netToPar!) : '–', 'net',
               );
             })

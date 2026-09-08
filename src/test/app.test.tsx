@@ -267,7 +267,7 @@ describe('app flow', () => {
     fireEvent.click(tim);
     let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.drives.d3['0'][0]).toBe('p1');
-    expect(teamA.querySelector('.drive-note')!.textContent).toBe('Drive · Tim · Tim needs 6 · Adam needs 7');
+    expect(teamA.querySelector('.drive-note')!.textContent).toBe('Tim needs 6 · Adam needs 7');
     expect(tim.className).toBe('on');
     expect(tim.querySelector('em')!.textContent).toBe('1');
     // tapping the other face moves the drive; tapping the chosen one again clears it
