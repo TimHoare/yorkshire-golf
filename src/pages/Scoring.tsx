@@ -6,7 +6,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
   bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
-  phFor, relPar, shotsOn, teamDrives, teamHoles, teamTally, driveTally, signed,
+  phFor, relPar, shotsOn, teamDrives, teamHoles, teamTally, driveTally, signed, toParStr,
 } from '../lib/scoring';
 import { setBonusBall, setDrive, setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -229,7 +229,7 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               return row(
                 <DrivePick S={S} rid={r.id} t={t} holeIdx={i} readOnly={readOnly} />,
                 gname(grp, t),
-                <>{relBit(tr.gross)}{tt.strokes} thru {tt.played}{note && <> · <span className={`drive-note${dt.short ? ' warn' : ''}`}>{note}</span></>}</>,
+                <>{relBit(tr.gross)}{tt.played ? `${toParStr(tt.toPar)} thru ${tt.played}` : 'Not started'}{note && <> · <span className={`drive-note${dt.short ? ' warn' : ''}`}>{note}</span></>}</>,
                 { team: t }, tr.gross, tt.played ? signed(tt.netToPar!) : '–', 'net',
               );
             })

@@ -3,7 +3,7 @@ import { defaultState, migrate, stakesFor } from '../lib/state';
 import {
   blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, driveTally, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
   holePoints, pairPointsFor, pairTotals, playerBetPaid, playerBitCount, playerBitTotal, playerTally, roundPoints, scrambleResults, shotsOn,
-  stablefordResults, standings, tally,
+  stablefordResults, standings, tally, toParStr,
 } from '../lib/scoring';
 
 const filled = (n: number) => Array(18).fill(n);
@@ -296,6 +296,14 @@ describe('bonus balls', () => {
     S.scramble.d3 = { 0: filled(5), 1: filled(5), 2: filled(5), 3: filled(5) };
     const st = standings(S);
     for (const row of st) expect(row.bonusKept).toBe(row.pid === 'p1' ? 0 : 1);
+  });
+});
+
+describe('to-par labels', () => {
+  it('E for level, signed otherwise', () => {
+    expect(toParStr(0)).toBe('E');
+    expect(toParStr(3)).toBe('+3');
+    expect(toParStr(-2)).toBe('−2');
   });
 });
 

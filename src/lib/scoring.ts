@@ -372,5 +372,7 @@ export function relPar(diff: number): [string, ParBand] {
 }
 
 export const fmt1 = (n: number) => (Math.round(n * 10) / 10).toFixed(1);
+// Whole strokes against par the way a leaderboard writes them: E, +2, −1.
+export const toParStr = (n: number) => (n === 0 ? 'E' : n > 0 ? `+${n}` : `−${-n}`);
 export const signed = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '±') + fmt1(Math.abs(n));
 export const trim = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
