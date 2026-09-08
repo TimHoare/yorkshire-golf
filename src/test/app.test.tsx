@@ -251,7 +251,7 @@ describe('app flow', () => {
     expect(saved.scores.d1.p6[1]).toBeNull();
   });
 
-  it('a three-putt can be logged once per player per hole; cuckoos can stack', () => {
+  it('side bets stack: a four-putt is two three-putts, two trees are two cuckoos', () => {
     setMe('p6'); // Rob, group 2 of d1
     setGroupDraw('d1', [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']]);
     const { container } = mount('/round/d1/score/1');
@@ -261,13 +261,11 @@ describe('app flow', () => {
     fireEvent.click(plus);
     let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.bits.d1[1].threeputt[0].counts.p6).toBe(1);
-    // capped: the + is disabled and a second tap changes nothing
-    const capped = within(slide1).getByLabelText('Rob already has the three-putt') as HTMLButtonElement;
-    expect(capped.disabled).toBe(true);
-    fireEvent.click(capped);
+    // the four-putt: a second tap makes it two
+    expect(plus.disabled).toBe(false);
+    fireEvent.click(plus);
     saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
-    expect(saved.bits.d1[1].threeputt[0].counts.p6).toBe(1);
-    // cuckoos have no cap
+    expect(saved.bits.d1[1].threeputt[0].counts.p6).toBe(2);
     fireEvent.click(within(slide1).getByText('Cuckoos'));
     fireEvent.click(within(slide1).getByLabelText('One cuckoo more for Rob'));
     fireEvent.click(within(slide1).getByLabelText('One cuckoo more for Rob'));

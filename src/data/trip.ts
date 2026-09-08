@@ -84,13 +84,13 @@ export const RULES = {
 
 // Side-bet menagerie: labels for the things logged hole by hole.
 // Amounts (pence each) live in app settings — defaults plus any day's own — and sync between phones.
-// max = the most one player can log on one hole: you can find three bunkers
-// on a hole, but you either three-putted it or you didn't.
-export const BITS: Record<BitKind, { label: string; one: string; icon: string; desc: string; max?: number }> = {
+// Everything stacks: three bunkers on a hole is three camels, and a four-putt
+// is two three-putts (one per putt from the third on).
+export const BITS: Record<BitKind, { label: string; one: string; icon: string; desc: string }> = {
   cuckoo:    { label: 'Cuckoos',     one: 'cuckoo',     icon: '🐦', desc: 'Hit a tree' },
   camel:     { label: 'Camels',      one: 'camel',      icon: '🐫', desc: 'In a bunker' },
   fish:      { label: 'Fish',        one: 'fish',       icon: '🐟', desc: 'In the water' },
-  threeputt: { label: 'Three-putts', one: 'three-putt', icon: '⛳', desc: '3 or more putts', max: 1 },
+  threeputt: { label: 'Three-putts', one: 'three-putt', icon: '⛳', desc: '3 putts; a 4-putt is two' },
   lostball:  { label: 'Lost balls',  one: 'lost ball',  icon: '🔍', desc: 'Lost a ball' },
   equipment: { label: 'Equipment abuse', one: 'equipment abuse', icon: '💢', desc: 'Club, ball or bag mistreated' },
 };
