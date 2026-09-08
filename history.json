@@ -572,5 +572,10 @@
 {"id":572,"tbl":"bit_events","op":"INSERT","data":{"grp":1,"hole":12,"kind":"equipment","counts":{"p3":1},"last_pid":"p3","round_id":"d1","updated_at":"2026-09-07T22:35:40.854+00:00"},"at":"2026-09-07T22:35:11.931699+00:00"},
 {"id":573,"tbl":"bit_events","op":"UPDATE","data":{"grp":1,"hole":12,"kind":"equipment","counts":{"p3":2},"last_pid":"p3","round_id":"d1","updated_at":"2026-09-07T22:35:41.016+00:00"},"at":"2026-09-07T22:35:12.081123+00:00"},
 {"id":574,"tbl":"bit_events","op":"UPDATE","data":{"grp":1,"hole":14,"kind":"equipment","counts":{},"last_pid":null,"round_id":"d1","updated_at":"2026-09-07T22:35:47.076+00:00"},"at":"2026-09-07T22:35:18.19088+00:00"},
-{"id":575,"tbl":"bit_events","op":"UPDATE","data":{"grp":1,"hole":14,"kind":"equipment","counts":{"p7":1},"last_pid":"p7","round_id":"d1","updated_at":"2026-09-07T22:35:47.475+00:00"},"at":"2026-09-07T22:35:18.532872+00:00"}
+{"id":575,"tbl":"bit_events","op":"UPDATE","data":{"grp":1,"hole":14,"kind":"equipment","counts":{"p7":1},"last_pid":"p7","round_id":"d1","updated_at":"2026-09-07T22:35:47.475+00:00"},"at":"2026-09-07T22:35:18.532872+00:00"},
+{"id":576,"tbl":"stakes","op":"INSERT","data":{"id":3,"stakes":{"fish":50,"camel":1,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-08T09:23:39.008+00:00"},"at":"2026-09-08T09:23:38.064895+00:00"},
+{"id":577,"tbl":"stakes","op":"UPDATE","data":{"id":3,"stakes":{"fish":50,"camel":10,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-08T09:23:39.333+00:00"},"at":"2026-09-08T09:23:38.185804+00:00"},
+{"id":578,"tbl":"stakes","op":"UPDATE","data":{"id":3,"stakes":{"fish":50,"camel":100,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-08T09:23:39.479+00:00"},"at":"2026-09-08T09:23:38.322054+00:00"},
+{"id":579,"tbl":"stakes","op":"UPDATE","data":{"id":3,"stakes":{"fish":50,"camel":5,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-08T09:23:56.29+00:00"},"at":"2026-09-08T09:23:55.18302+00:00"},
+{"id":580,"tbl":"stakes","op":"UPDATE","data":{"id":3,"stakes":{"fish":50,"camel":50,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-08T09:23:56.566+00:00"},"at":"2026-09-08T09:23:55.415832+00:00"}
 ]
