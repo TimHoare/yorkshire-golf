@@ -272,6 +272,16 @@ p { margin: 0; }
 .rounds-table tr:last-child td { border-bottom: 0; }
 .rounds-table .pt { display: block; color: var(--brass); font-size: 10.5px; font-weight: 600; line-height: 1.2; min-height: 13px; }
 .rounds-table .win { color: var(--brass); font-weight: 700; }
+/* Side-bets page: one table per kind, plus the money */
+.bets-card { padding-top: 10px; }
+.bets-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
+.bets-head h3 { font-size: 16px; color: var(--pine); }
+.bets-table td:first-child, .bets-table th:first-child { width: 21%; }
+.bets-table.money { font-size: 12px; }
+.bets-table.money td.tot b { font-size: 13px; }
+.bets-table td.z { color: var(--ink-3); }
+.bets-table tr.me td { background: var(--brass-soft); }
+.bets-table tr.sum td { font-weight: 700; color: var(--ink-2); border-top: 1px solid var(--line-2); }
 .table-wrap { overflow-x: auto; }
 .card.table-wrap { padding: 4px 16px; }
 
@@ -350,7 +360,7 @@ p { margin: 0; }
 .itin-group b { color: var(--ink); font-weight: 700; }
 .itin-group i { font-style: normal; font-weight: 600; color: var(--ink); }
 .rules-note { margin-top: 18px; line-height: 1.5; }
-.tabs { grid-template-columns: repeat(3, 1fr); }
+.tabs { grid-template-columns: repeat(4, 1fr); }
 
 /* ---------- Round page ---------- */
 .back { display: inline-flex; align-items: center; gap: 2px; border: 0; background: transparent; padding: 8px 8px 8px 0; margin: 4px 0 0; font-weight: 700; font-size: 14px; color: var(--pine); }

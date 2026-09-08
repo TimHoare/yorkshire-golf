@@ -2,7 +2,7 @@
 // standings. Pure functions over the trip data and a TripState — no globals,
 // no DOM, fully unit-testable.
 import { ROUNDS, PLAYERS, RULES, R, PL, gname, type Group, type Round, type TeeSet } from '../data/trip';
-import { BIT_KINDS, type BitKind, type HoleBits, type TripState, type HoleScores } from './state';
+import { BIT_KINDS, stakesFor, type BitKind, type HoleBits, type TripState, type HoleScores } from './state';
 
 // The groups actually playing a round: the placeholder draw from trip.ts,
 // with players replaced by the stored draw when one has been made.
@@ -284,13 +284,28 @@ export function groupBitTally(S: TripState, rid: string, group: number, kind: Bi
 export const groupBitTallies = (S: TripState, rid: string, group: number): BitTally[] =>
   BIT_KINDS.map((k) => groupBitTally(S, rid, group, k));
 
-// One player's count of a kind across every round of the week.
-export function playerBitTotal(S: TripState, pid: string, kind: BitKind): number {
+// One player's count of a kind in one round, whichever group logged it.
+export function playerBitCount(S: TripState, rid: string, pid: string, kind: BitKind): number {
   let n = 0;
-  for (const byGroup of Object.values(S.bits))
-    for (const sheet of Object.values(byGroup))
-      for (const hb of sheet[kind] || []) n += hb?.counts[pid] || 0;
+  for (const sheet of Object.values(S.bits[rid] || {}))
+    for (const hb of sheet[kind] || []) n += hb?.counts[pid] || 0;
   return n;
+}
+// One player's count of a kind across every round of the week.
+export const playerBitTotal = (S: TripState, pid: string, kind: BitKind): number =>
+  Object.keys(S.bits).reduce((a, rid) => a + playerBitCount(S, rid, pid, kind), 0);
+
+// What one player puts into the group bets in one round (pence): for each kind
+// they held the last of in their group, the group's total at that day's stake.
+export function playerBetPaid(S: TripState, rid: string, pid: string): number {
+  const stakes = stakesFor(S, rid);
+  let p = 0;
+  for (const g of Object.keys(S.bits[rid] || {}))
+    for (const k of BIT_KINDS) {
+      const t = groupBitTally(S, rid, Number(g), k);
+      if (t.total > 0 && t.last === pid) p += t.total * stakes[k];
+    }
+  return p;
 }
 
 export const fmtMoney = (pence: number) =>

@@ -62,6 +62,7 @@ export function Tabs() {
       {tab('/trip', 'Trip', <svg viewBox="0 0 24 24"><path d="M4 5h16v15H4z M4 9h16 M8 3v4 M16 3v4" /></svg>)}
       {tab('/players', 'Players', <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><circle cx="17" cy="9" r="2.8" /><path d="M15.5 14.5a5 5 0 0 1 6 5" /></svg>)}
       {tab('/standings', 'Standings', <svg viewBox="0 0 24 24"><path d="M3 20h18 M6 20v-7h4v7 M14 20V4h4v16" /></svg>)}
+      {tab('/bets', 'Side bets', <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M9.5 16h5 M9.5 12.5h4 M14 8.6a2.2 2.2 0 0 0-3.6 1.7V16" /></svg>)}
     </nav>
   );
 }

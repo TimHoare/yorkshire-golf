@@ -93,6 +93,38 @@ describe('app flow', () => {
     expect(screen.getAllByText(/Had the last one/)).toHaveLength(2);
   });
 
+  it('side-bets page: a table per kind, counts per day, biggest offender first, plus what was paid in', () => {
+    setMe('p6');
+    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+      v: 3, pairs: {}, scramble: {}, scores: {},
+      stakes: { cuckoo: 10, camel: 25, fish: 10, threeputt: 10, lostball: 10, equipment: 10 },
+      roundStakes: { d2: { cuckoo: 40, camel: 25, fish: 10, threeputt: 10, lostball: 10, equipment: 10 } },
+      bits: {
+        d1: { 1: { cuckoo: [null, null, { counts: { p6: 2, p5: 1 }, last: 'p6' }], camel: [{ counts: { p6: 1 }, last: 'p6' }] } },
+        d2: { 0: { cuckoo: [{ counts: { p5: 1 }, last: 'p5' }] } },
+      },
+    }));
+    reloadFromStorage();
+    const { container } = mount('/bets');
+    expect(screen.getByText('Side bets', { selector: 'h2' })).toBeTruthy();
+    const tables = [...container.querySelectorAll('table.bets-table')];
+    expect(tables).toHaveLength(7);   // paid in + six kinds
+    const rowText = (t: Element) => [...t.querySelectorAll('tbody tr')].map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent));
+    // paid in: Rob held the last cuckoo (3 × 10p) and camel (1 × 25p) at Elsham; Liam K the only cuckoo at Ganton at 40p
+    const paid = rowText(tables[0]);
+    expect(paid[0]).toEqual(['Rob', '55p', '·', '·', '·', '·', '55p']);
+    expect(paid[1]).toEqual(['Liam K', '·', '40p', '·', '·', '·', '40p']);
+    expect(paid[paid.length - 1]).toEqual(['All', '55p', '40p', '·', '·', '·', '95p']);
+    // cuckoos: Rob 2 on Monday, Liam K 1 each day → 2 each across the week, tie kept in player order
+    const cuckoos = rowText(tables[1]);
+    expect(cuckoos[0]).toEqual(['Liam K', '1', '1', '·', '·', '·', '2']);
+    expect(cuckoos[1]).toEqual(['Rob', '2', '·', '·', '·', '·', '2']);
+    expect(cuckoos[cuckoos.length - 1]).toEqual(['All', '3', '1', '·', '·', '·', '4']);
+    expect(tables[1].querySelector('tr.me td')!.textContent).toBe('Rob');
+    // the bottom tab is there and lit
+    expect(container.querySelector('a.tab[href="/bets"]')!.getAttribute('aria-current')).toBe('page');
+  });
+
   it('a finished round shows week points as individual + pair on the leaderboard, card and profile', () => {
     setMe('p1');
     const par = [4,4,4,5,5,3,4,4,3, 5,4,3,4,3,4,4,4,4];

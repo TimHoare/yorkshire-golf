@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultState, migrate, stakesFor } from '../lib/state';
 import {
   blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
-  holePoints, pairPointsFor, pairTotals, playerBitTotal, playerTally, roundPoints, scrambleResults, shotsOn,
+  holePoints, pairPointsFor, pairTotals, playerBetPaid, playerBitCount, playerBitTotal, playerTally, roundPoints, scrambleResults, shotsOn,
   stablefordResults, standings, tally,
 } from '../lib/scoring';
 
@@ -163,6 +163,23 @@ describe('side bets', () => {
     expect(playerBitTotal(S, 'p1', 'camel')).toBe(3);
     expect(playerBitTotal(S, 'p4', 'camel')).toBe(3);
     expect(playerBitTotal(S, 'p1', 'fish')).toBe(0);
+  });
+  it("per-day counts and what each player paid in, at that day's stakes", () => {
+    const S = defaultState();
+    S.stakes.camel = 20;
+    S.roundStakes.d2 = { ...S.stakes, camel: 50, fish: 30 };
+    S.bits.d1 = { 0: { camel: [{ counts: { p1: 2 }, last: 'p1' }, null, { counts: { p2: 1 }, last: 'p2' }, ...Array(15).fill(null)] } };
+    S.bits.d2 = { 1: { camel: [{ counts: { p1: 1, p4: 3 }, last: 'p4' }, ...Array(17).fill(null)], fish: [null, { counts: { p1: 1 }, last: 'p1' }, ...Array(16).fill(null)] } };
+    expect(playerBitCount(S, 'd1', 'p1', 'camel')).toBe(2);
+    expect(playerBitCount(S, 'd2', 'p1', 'camel')).toBe(1);
+    expect(playerBitCount(S, 'd2', 'p4', 'camel')).toBe(3);
+    expect(playerBitCount(S, 'd3', 'p1', 'camel')).toBe(0);
+    expect(playerBitTotal(S, 'p1', 'camel')).toBe(3);
+    // d1: p2 had the last camel of 3 at 20p; d2: p4 the last of 4 camels at 50p, p1 the only fish at 30p
+    expect(playerBetPaid(S, 'd1', 'p1')).toBe(0);
+    expect(playerBetPaid(S, 'd1', 'p2')).toBe(60);
+    expect(playerBetPaid(S, 'd2', 'p4')).toBe(200);
+    expect(playerBetPaid(S, 'd2', 'p1')).toBe(30);
   });
   it('migrate keeps bits and stakes, pads holes, drops junk', () => {
     const S = migrate({

@@ -44,6 +44,7 @@ export function backLabel(path: string): string {
   if (p[0] === 'trip') return 'Trip';
   if (p[0] === 'players') return 'Players';
   if (p[0] === 'standings') return 'Standings';
+  if (p[0] === 'bets') return 'Side bets';
   if (p[0] === 'player' && PL(p[1])) return p[2] === 'round' && R(p[3]) ? `${teamOrFirst(p[1], p[3])} · ${R(p[3])!.short}` : first(p[1]);
   if (p[0] === 'round' && R(p[1])) return p[2] === 'score' ? `${R(p[1])!.short} scores` : R(p[1])!.short;
   return 'Back';
