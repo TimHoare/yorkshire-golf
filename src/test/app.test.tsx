@@ -93,7 +93,7 @@ describe('app flow', () => {
     expect(screen.getAllByText(/Had the last one/)).toHaveLength(2);
   });
 
-  it('side-bets page: a table per kind, counts per day, biggest offender first, plus what was paid in', () => {
+  it('side-bets page: one grid per day — kinds across, players down, paid in last — and a week view', () => {
     setMe('p6');
     localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
       v: 3, pairs: {}, scramble: {}, scores: {},
@@ -107,20 +107,24 @@ describe('app flow', () => {
     reloadFromStorage();
     const { container } = mount('/bets');
     expect(screen.getByText('Side bets', { selector: 'h2' })).toBeTruthy();
-    const tables = [...container.querySelectorAll('table.bets-table')];
-    expect(tables).toHaveLength(7);   // paid in + six kinds
-    const rowText = (t: Element) => [...t.querySelectorAll('tbody tr')].map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent));
-    // paid in: Rob held the last cuckoo (3 × 10p) and camel (1 × 25p) at Elsham; Liam K the only cuckoo at Ganton at 40p
-    const paid = rowText(tables[0]);
-    expect(paid[0]).toEqual(['Rob', '55p', '·', '·', '·', '·', '55p']);
-    expect(paid[1]).toEqual(['Liam K', '·', '40p', '·', '·', '·', '40p']);
-    expect(paid[paid.length - 1]).toEqual(['All', '55p', '40p', '·', '·', '·', '95p']);
-    // cuckoos: Rob 2 on Monday, Liam K 1 each day → 2 each across the week, tie kept in player order
-    const cuckoos = rowText(tables[1]);
-    expect(cuckoos[0]).toEqual(['Liam K', '1', '1', '·', '·', '·', '2']);
-    expect(cuckoos[1]).toEqual(['Rob', '2', '·', '·', '·', '·', '2']);
-    expect(cuckoos[cuckoos.length - 1]).toEqual(['All', '3', '1', '·', '·', '·', '4']);
-    expect(tables[1].querySelector('tr.me td')!.textContent).toBe('Rob');
+    const rowText = () => [...container.querySelectorAll('table.bets-table tbody tr')].map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent));
+    // opens on the latest day with anything logged: Tuesday, where Liam K's lone cuckoo cost 40p
+    expect(screen.getByRole('tab', { name: 'Tue' }).getAttribute('aria-selected')).toBe('true');
+    expect(rowText()[0]).toEqual(['Liam K', '1', '·', '·', '·', '·', '·', '40p']);
+    // Monday: Rob 2 cuckoos + 1 camel, paid the lot (3 × 10p + 1 × 25p); Liam K one cuckoo, paid nothing
+    fireEvent.click(screen.getByRole('tab', { name: 'Mon' }));
+    const mon = rowText();
+    expect(mon[0]).toEqual(['Rob', '2', '1', '·', '·', '·', '·', '55p']);
+    expect(mon[1]).toEqual(['Liam K', '1', '·', '·', '·', '·', '·', '·']);
+    expect(mon[mon.length - 1]).toEqual(['All', '3', '1', '·', '·', '·', '·', '55p']);
+    expect(container.querySelector('tr.me td')!.textContent).toBe('Rob');
+    expect(screen.getByText(/camels 25p/)).toBeTruthy();   // that day's stakes in the key
+    // the week: totals across both days
+    fireEvent.click(screen.getByRole('tab', { name: 'Week' }));
+    const wk = rowText();
+    expect(wk[0]).toEqual(['Rob', '2', '1', '·', '·', '·', '·', '55p']);
+    expect(wk[1]).toEqual(['Liam K', '2', '·', '·', '·', '·', '·', '40p']);
+    expect(wk[wk.length - 1]).toEqual(['All', '4', '1', '·', '·', '·', '·', '95p']);
     // the bottom tab is there and lit
     expect(container.querySelector('a.tab[href="/bets"]')!.getAttribute('aria-current')).toBe('page');
   });

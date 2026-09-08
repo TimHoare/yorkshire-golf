@@ -272,16 +272,23 @@ p { margin: 0; }
 .rounds-table tr:last-child td { border-bottom: 0; }
 .rounds-table .pt { display: block; color: var(--brass); font-size: 10.5px; font-weight: 600; line-height: 1.2; min-height: 13px; }
 .rounds-table .win { color: var(--brass); font-weight: 700; }
-/* Side-bets page: one table per kind, plus the money */
-.bets-card { padding-top: 10px; }
-.bets-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
-.bets-head h3 { font-size: 16px; color: var(--pine); }
-.bets-table td:first-child, .bets-table th:first-child { width: 21%; }
-.bets-table.money { font-size: 12px; }
-.bets-table.money td.tot b { font-size: 13px; }
+/* Side-bets page: one grid per day — players down, kinds across, money last */
+.bets-seg { display: flex; margin: 0 0 12px; }
+.bets-seg button { flex: 1; padding: 6px 4px; }
+.bets-card { padding-top: 2px; }
+.bets-table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+.bets-table th, .bets-table td { padding: 8px 1px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bets-table th { font-size: 15px; padding-top: 10px; padding-bottom: 6px; }
+.bets-table th:first-child, .bets-table th.paid { font-size: 10px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; vertical-align: bottom; }
+.bets-table th .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.bets-table td:first-child, .bets-table th:first-child { text-align: left; font-weight: 700; padding-left: 0; width: 24%; overflow: hidden; text-overflow: ellipsis; }
+.bets-table td.paid, .bets-table th.paid { width: 17%; text-align: right; padding-right: 0; font-weight: 700; color: var(--pine); font-size: 13px; }
+.bets-table td a { display: block; margin: -8px -1px; padding: 8px 1px; text-decoration: none; color: inherit; }
 .bets-table td.z { color: var(--ink-3); }
 .bets-table tr.me td { background: var(--brass-soft); }
-.bets-table tr.sum td { font-weight: 700; color: var(--ink-2); border-top: 1px solid var(--line-2); }
+.bets-table tr.sum td { font-weight: 700; color: var(--ink-2); border-top: 1px solid var(--line-2); border-bottom: 0; }
+.bets-key { margin-top: 8px; }
+.bets-key .lg { display: inline-block; margin-right: 10px; }
 .table-wrap { overflow-x: auto; }
 .card.table-wrap { padding: 4px 16px; }
 
