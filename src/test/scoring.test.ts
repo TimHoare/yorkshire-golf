@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultState, migrate, stakesFor } from '../lib/state';
 import {
-  blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
+  blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, driveTally, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
   holePoints, pairPointsFor, pairTotals, playerBetPaid, playerBitCount, playerBitTotal, playerTally, roundPoints, scrambleResults, shotsOn,
   stablefordResults, standings, tally,
 } from '../lib/scoring';
@@ -119,6 +119,32 @@ describe('results', () => {
     S.scramble.d3[1] = [4, ...Array(17).fill(null)];
     expect(firstUnfinishedHole(S, 'd3', 0)).toBe(2);
   });
+  it('scramble drives: seven each, counted per member, short once the holes left cannot cover it', () => {
+    const S = defaultState();
+    // Team A = p1 & p3. Nothing played: both owe 7, 18 holes to come.
+    let dt = driveTally(S, 'd3', 0);
+    expect(dt.by).toEqual([{ pid: 'p1', used: 0, need: 7 }, { pid: 'p3', used: 0, need: 7 }]);
+    expect(dt).toMatchObject({ left: 18, owed: 14, short: false, done: false });
+    // 12 holes in, all off p1's drive: p3 still owes 7 with only 6 to play
+    S.scramble.d3 = { 0: [...Array(12).fill(4), ...Array(6).fill(null)] };
+    S.drives.d3 = { 0: [...Array(12).fill('p1'), ...Array(6).fill(null)] };
+    dt = driveTally(S, 'd3', 0);
+    expect(dt.by).toEqual([{ pid: 'p1', used: 12, need: 0 }, { pid: 'p3', used: 0, need: 7 }]);
+    expect(dt).toMatchObject({ marked: 12, unmarked: 0, left: 6, owed: 7, short: true, done: false });
+    // a scored hole with no drive marked still counts as one that could be p3's
+    S.drives.d3[0][11] = null;
+    dt = driveTally(S, 'd3', 0);
+    expect(dt).toMatchObject({ unmarked: 1, left: 6, owed: 7, short: false });
+    // 7 and 7 with four to spare
+    S.scramble.d3 = { 0: filled(4) };
+    S.drives.d3 = { 0: [...Array(7).fill('p1'), ...Array(7).fill('p3'), 'p1', 'p3', null, null] };
+    dt = driveTally(S, 'd3', 0);
+    expect(dt.by.map((x) => x.used)).toEqual([8, 8]);
+    expect(dt).toMatchObject({ owed: 0, short: false, done: true, unmarked: 2 });
+    // a stray id that isn't on the team counts for nobody
+    S.drives.d3 = { 0: [...Array(18).fill('p8')] };
+    expect(driveTally(S, 'd3', 0).by.map((x) => x.used)).toEqual([0, 0]);
+  });
   it('scramble awards 6/4/2/0 per player by team place, lowest net first', () => {
     const S = defaultState();
     // d3 teams: A p1/p3 · B p5/p7 · C p2/p4 · D p6/p8 — a stroke a hole apart,
@@ -201,6 +227,11 @@ describe('side bets', () => {
     expect(stakesFor(S, 'd3')).toBe(S.stakes);
     // states written before side bets existed come up with defaults
     const old = migrate({ v: 3, scores: {}, pairs: {}, scramble: {}, groups: {} });
+    expect(old.drives).toEqual({});
+    // drives pad to 18 entries; only non-empty strings survive
+    const d = migrate({ v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, drives: { d3: { 0: ['p1', 7, '', null, 'p3'] } } });
+    expect(d.drives.d3[0]).toHaveLength(18);
+    expect(d.drives.d3[0].slice(0, 5)).toEqual(['p1', null, null, null, 'p3']);
     expect(old.bits).toEqual({});
     expect(old.stakes.threeputt).toBe(10);
     expect(old.roundStakes).toEqual({});

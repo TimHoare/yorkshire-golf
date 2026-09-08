@@ -1,5 +1,6 @@
 // State shapes and localStorage persistence.
 export type HoleScores = (number | null)[];
+export type HoleDrives = (string | null)[];        // whose tee shot a scramble team took, per hole
 export interface PairDraw { pairs: string[][]; revealed: boolean }
 
 // Side bets: cuckoo = hit a tree, camel = bunker, fish = water, threeputt = 3+ putts,
@@ -23,6 +24,7 @@ export interface TripState {
   scores: Record<string, Record<string, HoleScores>>;    // scores[rid][pid] = 18 gross
   pairs: Record<string, PairDraw>;
   scramble: Record<string, Record<number, HoleScores>>;  // scramble[rid][team] = 18 team gross
+  drives: Record<string, Record<number, HoleDrives>>;    // drives[rid][team] = 18 player ids: whose drive the team used
   groups: Record<string, string[][]>;                    // groups[rid] = player ids per group, overriding the placeholder draw
   bits: Record<string, Record<number, BitSheet>>;        // bits[rid][group][kind] = 18 hole logs
   stakes: Stakes;                                        // default pence per cuckoo/camel/fish/three-putt/lost ball/equipment abuse
@@ -42,7 +44,7 @@ export const ROUTE_KEY = 'yorkshire-golf-2026-route';
 
 export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10, equipment: 10 });
 export function defaultState(): TripState {
-  return { v: 3, scores: {}, pairs: {}, scramble: {}, groups: {}, bits: {}, stakes: defaultStakes(), roundStakes: {}, bonus: {}, teeChoice: {} };
+  return { v: 3, scores: {}, pairs: {}, scramble: {}, drives: {}, groups: {}, bits: {}, stakes: defaultStakes(), roundStakes: {}, bonus: {}, teeChoice: {} };
 }
 // Normalise a hole array to exactly 18 entries of number-or-null.
 const pad18 = (a: unknown): HoleScores =>
@@ -52,6 +54,13 @@ const pad18 = (a: unknown): HoleScores =>
   });
 const padMap = <K extends string | number>(m: Record<K, unknown> | undefined): Record<K, HoleScores> =>
   Object.fromEntries(Object.entries(m || {}).map(([k, v]) => [k, pad18(v)])) as Record<K, HoleScores>;
+const pad18Drives = (a: unknown): HoleDrives =>
+  Array.from({ length: 18 }, (_, i) => {
+    const v = Array.isArray(a) ? a[i] : null;
+    return typeof v === 'string' && v ? v : null;
+  });
+const padDrives = (m: Record<string | number, unknown> | undefined): Record<number, HoleDrives> =>
+  Object.fromEntries(Object.entries(m || {}).map(([k, v]) => [k, pad18Drives(v)])) as Record<number, HoleDrives>;
 
 // A hole's side-bet log: positive integer counts only; empty holes collapse to null.
 export const cleanHoleBits = (v: unknown): HoleBits | null => {
@@ -139,6 +148,7 @@ export function migrate(s: unknown): TripState {
     v: 3,
     scores: Object.fromEntries(Object.entries(o.scores || {}).map(([rid, byP]) => [rid, padMap(byP)])),
     scramble: Object.fromEntries(Object.entries(o.scramble || {}).map(([rid, byT]) => [rid, padMap(byT)])),
+    drives: Object.fromEntries(Object.entries(o.drives || {}).map(([rid, byT]) => [rid, padDrives(byT)])),
     pairs: o.pairs || d.pairs,
     groups: cleanGroups(o.groups),
     bits: cleanBits(o.bits),

@@ -202,6 +202,8 @@ describe('app flow', () => {
     expect(screen.getByText(/Rob Ellis & Liam Cameron/)).toBeTruthy();
     expect(screen.getByText('Team net')).toBeTruthy();
     expect(screen.getByText('Team hcp')).toBeTruthy();
+    expect(screen.getByText('Drives · 7 each')).toBeTruthy();
+    expect(screen.getByText('Rob 0 · Liam C 0')).toBeTruthy();
     expect(screen.getByText('Rob · course hcp')).toBeTruthy();
     expect(screen.getByText('Liam C · course hcp')).toBeTruthy();
     expect(screen.queryByText('Bonus ball')).toBeNull();
@@ -250,6 +252,30 @@ describe('app flow', () => {
     fireEvent.click(within(robRow2).getByLabelText('Undo the X'));
     saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.scores.d1.p6[1]).toBeNull();
+  });
+
+  it('scramble scoring: each team row has a drive picker that counts tee shots per member', () => {
+    setMe('p1'); // Tim, Team A with Adam on scramble day
+    setGroupDraw('d3', [['p1', 'p3'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']]);
+    const { container } = mount('/round/d3/score/1');
+    const slide1 = container.querySelector('.slide[data-slide="1"]')!;
+    const teamA = [...slide1.querySelectorAll('.team-entry')].find((r) => within(r as HTMLElement).queryByText('Team A'))! as HTMLElement;
+    const picker = within(teamA).getByLabelText('Whose drive');
+    expect(within(teamA).getByText('Tim needs 7 · Adam needs 7')).toBeTruthy();
+    fireEvent.click(within(picker).getByText('Tim'));
+    let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    expect(saved.drives.d3['0'][0]).toBe('p1');
+    expect(within(teamA).getByText('Tim needs 6 · Adam needs 7')).toBeTruthy();
+    expect(within(picker).getByText('Tim').className).toBe('on');
+    // tapping the other name moves the drive; tapping the chosen one again clears it
+    fireEvent.click(within(picker).getByText('Adam'));
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    expect(saved.drives.d3['0'][0]).toBe('p3');
+    fireEvent.click(within(picker).getByText('Adam'));
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    expect(saved.drives.d3['0'][0]).toBeNull();
+    // no pickup on a team row: the − button is a plain stroke fewer
+    expect(within(teamA).getByLabelText('One stroke fewer')).toBeTruthy();
   });
 
   it('side bets stack: a four-putt is two three-putts, two trees are two cuckoos', () => {

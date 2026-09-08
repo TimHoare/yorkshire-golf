@@ -6,6 +6,7 @@ import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
   groupsFor, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim, fmt1, signed,
+  driveTally, driveLine,
   type Tally, type TeamTally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
@@ -196,12 +197,16 @@ export function ScrambleResult({ r }: { r: Round }) {
               <div className="big">{tt.complete ? <>{fmt1(tt.net!)}<small>net · {tt.strokes} gross</small></>
                 : tt.played ? <>{signed(tt.netToPar!)}<small>net thru {tt.played}</small></> : <>–<small>not started</small></>}</div>
               <div className="members">{grp.players.map((pid) => <div className="m" key={pid}>{pName(pid)}</div>)}</div>
+              {tt.played > 0 && (() => {
+                const dt = driveTally(S, r.id, t);
+                return <div className={`small drives${dt.short ? ' warn' : ' muted'}`}>Drives {driveLine(dt, first)}{dt.done ? ' ✓' : dt.short ? ' · short' : ''}</div>;
+              })()}
             </div>
           );
         })}
       </div>
       <p className="small muted" style={{ marginTop: 8 }}>
-        Team handicap is {RULES.scrambleAllowance[0]}% of the lower course handicap plus {RULES.scrambleAllowance[1]}% of the higher, to one decimal place, taken off the team's gross. Lowest net wins.
+        Team handicap is {RULES.scrambleAllowance[0]}% of the lower course handicap plus {RULES.scrambleAllowance[1]}% of the higher, to one decimal place, taken off the team's gross. Lowest net wins. Each member's tee shot has to be used on {RULES.scrambleDrives} holes.
         Week points {RULES.scramblePoints.join(' · ')} each for 1st–4th{res.decided && res.winner === null ? ' — top spot tied, so shared' : ' (ties share)'}.
       </p>
     </div>
@@ -352,13 +357,23 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
       })}
     </tr>
   );
-  // Scramble day: the gross less the team handicap, once all 18 are in.
+  // Scramble day: the gross less the team handicap, once all 18 are in, and
+  // the drives used per member so far.
   const netRow = scramble && (
     <tr className="sum" key="net">
       <td>Net</td><td /><td />
       {cols.map((c, k) => {
         const tt = c.tally as TeamTally;
         return <td key={k}>{tt.complete ? fmt1(tt.net!) : tt.played ? <small className="muted">{signed(tt.netToPar!)} thru {tt.played}</small> : '·'}</td>;
+      })}
+    </tr>
+  );
+  const driveRow = scramble && (
+    <tr className="sum drives" key="drives">
+      <td>Drives</td><td /><td />
+      {groups.map((_, t) => {
+        const dt = driveTally(S, r.id, t);
+        return <td key={t}><small className={dt.short ? 'warn' : 'muted'}>{dt.by.map((x) => x.used).join(' · ')}</small></td>;
       })}
     </tr>
   );
@@ -390,10 +405,12 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
             {sumRow('In', 9, 18)}
             {sumRow('Total', 0, 18)}
             {netRow}
+            {driveRow}
           </tbody>
         </table>
       </div>
       <GrossLegend />
+      {scramble && <p className="small muted" style={{ marginTop: 4 }}>Drives: tee shots used per member, in the order the names are listed · {RULES.scrambleDrives} each needed.</p>}
       {myPh !== null && myPh > 18 && (
         <p className="small muted si-legend">
           <span className="lg"><span className="si-pill s1">SI</span> one shot</span>

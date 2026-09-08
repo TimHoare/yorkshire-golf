@@ -3,12 +3,12 @@
 // in the URL (replace, not push) so refresh restores it and history stays clean.
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
+import { R, PL, RULES, first, gname, type Hole, type Round } from '../data/trip';
 import {
   bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
-  phFor, relPar, shotsOn, teamHoles, teamTally, fmt1, signed,
+  phFor, relPar, shotsOn, teamDrives, teamHoles, teamTally, driveTally, fmt1, signed,
 } from '../lib/scoring';
-import { setBonusBall, setGross } from '../lib/store';
+import { setBonusBall, setDrive, setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import type { BonusBall, TripState } from '../lib/state';
 import { Avatar, TeamAvatar } from '../components/Avatar';
@@ -64,6 +64,37 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
           />
         )}
       <button onClick={() => step(1)} aria-label="One stroke more">+</button>
+    </div>
+  );
+}
+
+// Scramble day: whose tee shot the team took on this hole. Each member's has
+// to be used RULES.scrambleDrives times, so the running count sits on the
+// buttons and the line underneath says who still owes how many.
+function DriveRow({ S, rid, t, holeIdx, readOnly }: { S: TripState; rid: string; t: number; holeIdx: number; readOnly: boolean }) {
+  const grp = groupsFor(S, rid)[t];
+  const dt = driveTally(S, rid, t);
+  const cur = teamDrives(S, rid, t)[holeIdx];
+  const owed = dt.by.filter((x) => x.need > 0);
+  const note = dt.done
+    ? `${RULES.scrambleDrives} each — done`
+    : (dt.short ? 'Not enough holes left: ' : '') + owed.map((x) => `${first(x.pid)} needs ${x.need}`).join(' · ');
+  return (
+    <div className="drive-row">
+      <span className="dl">Drive</span>
+      {readOnly
+        ? <b>{cur ? first(cur) : '–'}</b>
+        : (
+          <div className="seg sm" role="group" aria-label="Whose drive">
+            {grp.players.map((pid) => (
+              <button key={pid} className={cur === pid ? 'on' : ''} aria-pressed={cur === pid}
+                onClick={() => setDrive(rid, t, holeIdx, cur === pid ? null : pid)}>
+                {first(pid)}<small>{dt.by.find((x) => x.pid === pid)!.used}</small>
+              </button>
+            ))}
+          </div>
+        )}
+      <small className={dt.short ? 'warn' : ''}>{note}</small>
     </div>
   );
 }
@@ -195,11 +226,16 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               const grp = groupsFor(S, r.id)[t];
               const tt = teamTally(S, r.id, t);
               const tr = tt.rows[i];
-              return row(
-                <TeamAvatar players={grp.players} />,
-                gname(grp, t),
-                <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}Team HCP {fmt1(tt.hcp)} · {tt.strokes} gross thru {tt.played}</>,
-                { team: t }, tr.gross, tt.played ? signed(tt.netToPar!) : '–', 'net',
+              return (
+                <div className="team-entry" key={t}>
+                  {row(
+                    <TeamAvatar players={grp.players} />,
+                    gname(grp, t),
+                    <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}Team HCP {fmt1(tt.hcp)} · {tt.strokes} gross thru {tt.played}</>,
+                    { team: t }, tr.gross, tt.played ? signed(tt.netToPar!) : '–', 'net',
+                  )}
+                  <DriveRow S={S} rid={r.id} t={t} holeIdx={i} readOnly={readOnly} />
+                </div>
               );
             })
           : g.players.map((pid) => {

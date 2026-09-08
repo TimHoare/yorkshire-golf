@@ -23,6 +23,17 @@ create table if not exists team_scores (
   primary key (round_id, team, hole)
 );
 
+-- Scramble day: whose tee shot the team used on each hole (each member's
+-- drive has to be taken at least 7 times). player_id null = not marked.
+create table if not exists team_drives (
+  round_id   text not null,
+  team       smallint not null,
+  hole       smallint not null check (hole between 1 and 18),
+  player_id  text,
+  updated_at timestamptz not null default now(),
+  primary key (round_id, team, hole)
+);
+
 -- Databases created before pickups existed allow only 1–20; widen to 0–20.
 alter table hole_scores drop constraint if exists hole_scores_gross_check;
 alter table hole_scores add constraint hole_scores_gross_check check (gross between 0 and 20);
@@ -96,9 +107,10 @@ create table if not exists stakes (
 -- or tee choice removes a row. So a phone (or anyone with the key) can't wipe
 -- the week, however hard it tries. To start fresh between trips, run this in
 -- the SQL editor (the history table below keeps a copy of everything anyway):
---   truncate hole_scores, team_scores, pair_draws, group_draws, bit_events, bonus_balls, tee_choices, stakes;
+--   truncate hole_scores, team_scores, team_drives, pair_draws, group_draws, bit_events, bonus_balls, tee_choices, stakes;
 alter table hole_scores enable row level security;
 alter table team_scores enable row level security;
+alter table team_drives enable row level security;
 alter table pair_draws  enable row level security;
 alter table group_draws enable row level security;
 alter table bit_events  enable row level security;
@@ -122,6 +134,9 @@ drop policy if exists "change" on hole_scores; create policy "change" on hole_sc
 drop policy if exists "read"   on team_scores; create policy "read"   on team_scores for select using (true);
 drop policy if exists "add"    on team_scores; create policy "add"    on team_scores for insert with check (true);
 drop policy if exists "change" on team_scores; create policy "change" on team_scores for update using (true) with check (true);
+drop policy if exists "read"   on team_drives; create policy "read"   on team_drives for select using (true);
+drop policy if exists "add"    on team_drives; create policy "add"    on team_drives for insert with check (true);
+drop policy if exists "change" on team_drives; create policy "change" on team_drives for update using (true) with check (true);
 drop policy if exists "read"   on bit_events;  create policy "read"   on bit_events  for select using (true);
 drop policy if exists "add"    on bit_events;  create policy "add"    on bit_events  for insert with check (true);
 drop policy if exists "change" on bit_events;  create policy "change" on bit_events  for update using (true) with check (true);
@@ -174,6 +189,7 @@ end $$;
 
 drop trigger if exists history on hole_scores; create trigger history after insert or update or delete on hole_scores for each row execute function log_history();
 drop trigger if exists history on team_scores; create trigger history after insert or update or delete on team_scores for each row execute function log_history();
+drop trigger if exists history on team_drives; create trigger history after insert or update or delete on team_drives for each row execute function log_history();
 drop trigger if exists history on pair_draws;  create trigger history after insert or update or delete on pair_draws  for each row execute function log_history();
 drop trigger if exists history on group_draws; create trigger history after insert or update or delete on group_draws for each row execute function log_history();
 drop trigger if exists history on bit_events;  create trigger history after insert or update or delete on bit_events  for each row execute function log_history();
@@ -204,6 +220,11 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table team_scores;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table team_drives;
 exception when duplicate_object then null;
 end $$;
 do $$

@@ -11,11 +11,11 @@ import {
   BIT_KINDS, ME_KEY, OUTBOX_KEY,
   type TripState, type PairDraw, type BitKind, type BonusBall, type HoleBits, type Stakes,
 } from './state';
-import { blank18, blankBits } from './scoring';
+import { blank18, blankBits, blankDrives } from './scoring';
 
 export type SyncStatus = 'local' | 'connecting' | 'live' | 'offline';
 
-interface Op { t: 'hole' | 'team' | 'pair' | 'group' | 'bits' | 'stake' | 'bonus' | 'tee'; k: (string | number)[]; v: unknown; key: string }
+interface Op { t: 'hole' | 'team' | 'drive' | 'pair' | 'group' | 'bits' | 'stake' | 'bonus' | 'tee'; k: (string | number)[]; v: unknown; key: string }
 
 export interface Snapshot {
   S: TripState;
@@ -78,6 +78,17 @@ export function setGross(rid: string, target: { pid: string } | { team: number }
     S.scores[rid][target.pid] = arr;
     pushOp('hole', [rid, target.pid, holeIdx + 1], v);
   }
+  save(); emit();
+}
+
+// Whose tee shot a scramble team used on a hole — null clears it.
+export function setDrive(rid: string, t: number, holeIdx: number, pid: string | null) {
+  const v = pid && PLAYERS.some((p) => p.id === pid) ? pid : null;
+  S.drives[rid] = S.drives[rid] || {};
+  const arr = S.drives[rid][t] || blankDrives();
+  arr[holeIdx] = v;
+  S.drives[rid][t] = arr;
+  pushOp('drive', [rid, t, holeIdx + 1], v);
   save(); emit();
 }
 
@@ -196,6 +207,8 @@ export async function flushOutbox() {
         ({ error } = await sb.from('hole_scores').upsert({ round_id: op.k[0], player_id: op.k[1], hole: op.k[2], gross: op.v, updated_at: now }));
       } else if (op.t === 'team') {
         ({ error } = await sb.from('team_scores').upsert({ round_id: op.k[0], team: op.k[1], hole: op.k[2], gross: op.v, updated_at: now }));
+      } else if (op.t === 'drive') {
+        ({ error } = await sb.from('team_drives').upsert({ round_id: op.k[0], team: op.k[1], hole: op.k[2], player_id: op.v, updated_at: now }));
       } else if (op.t === 'bits') {
         const hb = op.v as HoleBits | null;
         ({ error } = await sb.from('bit_events').upsert({ round_id: op.k[0], grp: op.k[1], kind: op.k[2], hole: op.k[3], counts: hb?.counts ?? {}, last_pid: hb?.last ?? null, updated_at: now }));
@@ -249,6 +262,14 @@ function applyTeamHole(rid: string, t: number, hole: number, gross: number | nul
   S.scramble[rid][t] = arr;
 }
 
+function applyDrive(rid: string, t: number, hole: number, pid: string | null) {
+  if (!R(rid)) return;
+  S.drives[rid] = S.drives[rid] || {};
+  const arr = S.drives[rid][t] || blankDrives();
+  arr[hole - 1] = pid && PLAYERS.some((p) => p.id === pid) ? pid : null;
+  S.drives[rid][t] = arr;
+}
+
 function applyBits(rid: string, grp: number, kind: string, hole: number, hb: HoleBits | null) {
   if (!R(rid) || !BIT_KINDS.includes(kind as BitKind) || Number.isNaN(grp)) return;
   S.bits[rid] = S.bits[rid] || {};
@@ -269,6 +290,7 @@ function rowKey(table: string, row: Row): string | null {
   switch (table) {
     case 'hole_scores': return `hole|${row.round_id}|${row.player_id}|${row.hole}`;
     case 'team_scores': return `team|${row.round_id}|${row.team}|${row.hole}`;
+    case 'team_drives': return `drive|${row.round_id}|${row.team}|${row.hole}`;
     case 'bit_events': return `bits|${row.round_id}|${row.grp}|${row.kind}|${row.hole}`;
     case 'stakes': return `stake|${stakeRowRid(Number(row.id)) ?? '?'}`;
     case 'bonus_balls': return `bonus|${row.player_id}`;
@@ -292,6 +314,7 @@ function onRowChange(table: string, type: string, row: Row) {
   }
   else if (table === 'hole_scores') applyHole(row.round_id, row.player_id!, row.hole!, type === 'DELETE' ? null : row.gross ?? null);
   else if (table === 'team_scores') applyTeamHole(row.round_id, Number(row.team), row.hole!, type === 'DELETE' ? null : row.gross ?? null);
+  else if (table === 'team_drives') applyDrive(row.round_id, Number(row.team), row.hole!, type === 'DELETE' ? null : row.player_id ?? null);
   else if (table === 'bit_events') applyBits(row.round_id, Number(row.grp), row.kind!, row.hole!, type === 'DELETE' ? null : cleanHoleBits({ counts: row.counts, last: row.last_pid }));
   else if (table === 'stakes') { if (type !== 'DELETE') applyStakesRow(stakeRowRid(Number(row.id)), row.stakes); }
   else if (table === 'pair_draws') {
@@ -313,6 +336,7 @@ function applyOp(op: Op) {
   const [k0, k1, k2, k3] = op.k;
   if (op.t === 'hole') applyHole(String(k0), String(k1), Number(k2), op.v as number | null);
   else if (op.t === 'team') applyTeamHole(String(k0), Number(k1), Number(k2), op.v as number | null);
+  else if (op.t === 'drive') applyDrive(String(k0), Number(k1), Number(k2), op.v as string | null);
   else if (op.t === 'bits') applyBits(String(k0), Number(k1), String(k2), Number(k3), cleanHoleBits(op.v as HoleBits | null));
   else if (op.t === 'stake') applyStakesRow(String(k0), op.v);
   else if (op.t === 'bonus') applyBonus(String(k0), cleanBonusBall(op.v));
@@ -327,7 +351,7 @@ function applyOp(op: Op) {
 // while this phone wasn't listening — it must NOT be pushed back up, or a
 // phone that slept through a "clear the teams" would quietly restore them.
 async function hydrateFromServer(client: SupabaseClient) {
-  const [hs, ts, pd, gd, be, sk, bb, tc] = await Promise.all([
+  const [hs, ts, pd, gd, be, sk, bb, tc, td] = await Promise.all([
     client.from('hole_scores').select('*'),
     client.from('team_scores').select('*'),
     client.from('pair_draws').select('*'),
@@ -336,6 +360,7 @@ async function hydrateFromServer(client: SupabaseClient) {
     client.from('stakes').select('*'),
     client.from('bonus_balls').select('*'),
     client.from('tee_choices').select('*'),
+    client.from('team_drives').select('*'),
   ]);
   if (hs.error || ts.error || pd.error) throw hs.error || ts.error || pd.error;
   // group_draws, bit_events and stakes arrived later than the other tables — a
@@ -345,6 +370,7 @@ async function hydrateFromServer(client: SupabaseClient) {
   const skRows: Row[] = sk.error ? [] : (sk.data as Row[]);
   const bbRows: Row[] = bb.error ? [] : (bb.data as Row[]);
   const tcRows: Row[] = tc.error ? [] : (tc.data as Row[]);
+  const tdRows: Row[] = td.error ? [] : (td.data as Row[]);
   S = defaultState();
   for (const r of hs.data as Row[]) applyHole(r.round_id, r.player_id!, r.hole!, r.gross ?? null);
   for (const r of ts.data as Row[]) applyTeamHole(r.round_id, Number(r.team), r.hole!, r.gross ?? null);
@@ -355,6 +381,7 @@ async function hydrateFromServer(client: SupabaseClient) {
   for (const r of [...skRows].sort((a, b) => Number(a.id) - Number(b.id))) applyStakesRow(stakeRowRid(Number(r.id)), r.stakes);
   for (const r of bbRows) applyBonus(r.player_id!, cleanBonusBall({ used: r.used, lost: r.lost_round }));
   for (const r of tcRows) if (R(r.round_id) && typeof r.tee === 'string') S.teeChoice[r.round_id] = r.tee;
+  for (const r of tdRows) applyDrive(r.round_id, Number(r.team), r.hole!, r.player_id ?? null);
   // Edits made while offline are still queued: keep them on screen until they land.
   for (const op of outbox) applyOp(op);
   save(); emit();
@@ -377,6 +404,7 @@ export function initSync(create: typeof createClient = createClient) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'stakes' }, (p) => onRowChange('stakes', p.eventType, p.eventType === 'DELETE' ? p.old as Row : p.new as Row))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'bonus_balls' }, (p) => onRowChange('bonus_balls', p.eventType, (p.new as Row)?.player_id ? p.new as Row : p.old as Row))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tee_choices' }, (p) => onRowChange('tee_choices', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'team_drives' }, (p) => onRowChange('team_drives', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
     .subscribe((status: string) => {
       if (status === 'SUBSCRIBED') { setSyncStatus('live'); void flushOutbox(); }
       else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setSyncStatus('offline');

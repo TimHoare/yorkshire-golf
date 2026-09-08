@@ -11,6 +11,7 @@ export const headers = { apikey: key, Authorization: `Bearer ${key}`, 'Content-T
 export const TABLES = [
   { name: 'hole_scores', key: ['round_id', 'player_id', 'hole'] },
   { name: 'team_scores', key: ['round_id', 'team', 'hole'] },
+  { name: 'team_drives', key: ['round_id', 'team', 'hole'] },
   { name: 'pair_draws',  key: ['round_id'] },
   { name: 'group_draws', key: ['round_id'] },
   { name: 'bit_events',  key: ['round_id', 'grp', 'kind', 'hole'] },

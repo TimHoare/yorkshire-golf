@@ -401,6 +401,18 @@ p { margin: 0; }
 .score-row .hp { text-align: right; font-weight: 700; font-size: 17px; line-height: 1; color: var(--pine); }
 .score-row .hp small { display: block; font-family: var(--font); font-size: 9px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
 .score-row .hp.off { color: var(--ink-3); }
+/* Scramble day: the drive picker sits under the team's score row */
+.team-entry .score-row { border-bottom: 0; padding-bottom: 6px; }
+.drive-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 0 0 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--ink-2); }
+.drive-row .dl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+.drive-row b { color: var(--ink); }
+.drive-row small { font-size: 12px; }
+.drive-row small.warn, .course-facts .cf .s.warn, .team .drives.warn, .sc td small.warn { color: var(--up); font-weight: 700; }
+.seg.sm button { padding: 4px 10px; font-size: 12.5px; }
+.seg.sm button small { font-weight: 700; color: var(--ink-3); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.seg.sm button.on small { color: var(--pine); }
+.team .drives { margin-top: -4px; margin-bottom: 8px; }
+.player-sc .xb.drive { color: var(--pine); }
 /* Scramble team avatar: two faces on the diagonal in one avatar's footprint,
    a cream ring keeping them apart. Three sizes: rows, lists, page heads. */
 .team-av { position: relative; width: 48px; height: 48px; flex: none; display: block; }

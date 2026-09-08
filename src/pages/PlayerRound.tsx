@@ -9,7 +9,7 @@ import { BIT_KINDS, stakesFor } from '../lib/state';
 import {
   bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor,
   indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
-  teamTally, trim, signed, type Tally,
+  teamTally, teamDrives, driveTally, driveLine, trim, signed, type Tally,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar, TeamAvatar } from '../components/Avatar';
@@ -42,6 +42,8 @@ export function PlayerRoundPage() {
   const ch = courseHandicap(S, before, r.id);
   const ph = scramble ? null : phFor(S, pid, r.id);
   const team = scramble ? teamTally(S, r.id, Math.max(0, t)) : null;
+  const drives = scramble && drawn && t >= 0 ? driveTally(S, r.id, t) : null;
+  const driveOn = scramble && drawn && t >= 0 ? teamDrives(S, r.id, t) : null;
   const tally: Tally = team ?? playerTally(S, r.id, pid);
 
   // Bonus ball, individual rounds only: the hole it doubled, or where it went.
@@ -76,6 +78,7 @@ export function PlayerRoundPage() {
     const out: ReactNode[] = [];
     if (bonusHole === i) out.push(<span className="xb bonus" key="bb" title="Bonus ball · double points">🎱 2×</span>);
     if (lostHere === i) out.push(<span className="xb lost" key="bl" title="Bonus ball lost">🎱 ✕</span>);
+    if (driveOn?.[i]) out.push(<span className="xb drive" key="dr" title="Whose drive">🏌️ {first(driveOn[i]!)}</span>);
     for (const who of members)
       for (const { k, n } of bitsOn(i, who))
         out.push(<span className="xb" key={who + k} title={BITS[k].one}>{BITS[k].icon}{n > 1 ? `×${n}` : ''}{scramble && <small> {first(who)}</small>}</span>);
@@ -150,6 +153,11 @@ export function PlayerRoundPage() {
           {members.map((who) => (
             <div className="cf" key={who}><span className="l">{first(who)} · course hcp</span><b>{courseHandicap(S, indexBefore(S, who, r.id), r.id)}</b></div>
           ))}
+          {drives && (
+            <div className="cf"><span className="l">Drives · {RULES.scrambleDrives} each</span><b>{driveLine(drives, first)}</b>
+              <span className={`s${drives.short ? ' warn' : ''}`}>{drives.done ? 'Both quotas met' : drives.by.filter((x) => x.need > 0).map((x) => `${first(x.pid)} needs ${x.need}`).join(' · ')}{drives.unmarked ? ` · ${drives.unmarked} not marked` : ''}</span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="course-facts card">

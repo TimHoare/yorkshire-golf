@@ -80,6 +80,7 @@ export const RULES = {
   allowance: 100,
   par: 32,                     // stableford points pivot for index adjustment
   scrambleAllowance: [15, 35], // % of course handicaps, lowest first (2-man teams), to one decimal
+  scrambleDrives: 7,           // tee shots each team must take from each member
 };
 
 // Side-bet menagerie: labels for the things logged hole by hole.

@@ -2,7 +2,7 @@
 // standings. Pure functions over the trip data and a TripState — no globals,
 // no DOM, fully unit-testable.
 import { ROUNDS, PLAYERS, RULES, R, PL, gname, type Group, type Round, type TeeSet } from '../data/trip';
-import { BIT_KINDS, stakesFor, type BitKind, type HoleBits, type TripState, type HoleScores } from './state';
+import { BIT_KINDS, stakesFor, type BitKind, type HoleBits, type TripState, type HoleScores, type HoleDrives } from './state';
 
 // The groups actually playing a round: the placeholder draw from trip.ts,
 // with players replaced by the stored draw when one has been made.
@@ -16,6 +16,8 @@ export function groupsFor(S: TripState, rid: string): Group[] {
 export const blank18 = (): HoleScores => Array(18).fill(null);
 export const holesOf = (S: TripState, rid: string, pid: string): HoleScores => S.scores[rid]?.[pid] || blank18();
 export const teamHoles = (S: TripState, rid: string, t: number): HoleScores => S.scramble[rid]?.[t] || blank18();
+export const blankDrives = (): HoleDrives => Array(18).fill(null);
+export const teamDrives = (S: TripState, rid: string, t: number): HoleDrives => S.drives[rid]?.[t] || blankDrives();
 
 // The tees a round is actually being played off: the stored choice when it
 // names one of the round's alternative sets, else the default from trip data.
@@ -139,6 +141,35 @@ export function teamTally(S: TripState, rid: string, t: number): TeamTally {
     net: base.complete ? round1(base.strokes - hcp) : null,
   };
 }
+
+// Scramble drives: each member's tee shot has to be used on at least
+// RULES.scrambleDrives holes. Per member: drives used so far, and how many
+// more the team still has to take from them. unmarked = holes scored without
+// saying whose drive it was; left = holes not yet scored. A team is short
+// when the holes still to play (plus any unmarked ones) can't cover what's
+// owed; done when everyone has their quota.
+export interface DriveTally {
+  by: { pid: string; used: number; need: number }[];
+  marked: number; unmarked: number; left: number; owed: number; short: boolean; done: boolean;
+}
+export function driveTally(S: TripState, rid: string, t: number): DriveTally {
+  const g = groupsFor(S, rid)[t];
+  const drives = teamDrives(S, rid, t);
+  const holes = teamHoles(S, rid, t);
+  const by = g.players.map((pid) => {
+    const used = drives.filter((d) => d === pid).length;
+    return { pid, used, need: Math.max(0, RULES.scrambleDrives - used) };
+  });
+  const marked = drives.filter((d) => d !== null).length;
+  const played = holes.filter((h) => h !== null).length;
+  const unmarked = holes.filter((h, i) => h !== null && drives[i] === null).length;
+  const left = 18 - played;
+  const owed = by.reduce((a, x) => a + x.need, 0);
+  return { by, marked, unmarked, left, owed, short: owed > left + unmarked, done: owed === 0 };
+}
+// "Tim 4 · Adam 3" — the drive count per member, in team order.
+export const driveLine = (dt: DriveTally, name: (pid: string) => string) =>
+  dt.by.map((x) => `${name(x.pid)} ${x.used}`).join(' · ');
 
 // ---------- Results ----------
 // Award place points down a sorted list, splitting the table across ties:

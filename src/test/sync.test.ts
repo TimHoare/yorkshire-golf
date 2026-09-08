@@ -3,7 +3,7 @@
 // application, and the outbox when the network is down.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  flushOutbox, getSnapshot, initSync, reloadFromStorage, setBonusBall, setGross, setGroupDraw, setHoleBits,
+  flushOutbox, getSnapshot, initSync, reloadFromStorage, setBonusBall, setDrive, setGross, setGroupDraw, setHoleBits,
   setPairDraw, setStakes, setTeeChoice,
 } from '../lib/store';
 import { OUTBOX_KEY, STORE_KEY } from '../lib/state';
@@ -127,6 +127,7 @@ describe('sync engine', () => {
     m.upserts.length = 0;
 
     setGross('d3', { team: 1 }, 0, 4);
+    setDrive('d3', 1, 0, 'p5');
     setHoleBits('d1', 0, 'cuckoo', 2, { counts: { p1: 2 }, last: 'p1' });
     setBonusBall('p1', { used: { d1: 4 }, lost: null });
     setStakes({ cuckoo: 20, camel: 10, fish: 10, threeputt: 10, lostball: 10, equipment: 10 });
@@ -137,6 +138,7 @@ describe('sync engine', () => {
 
     const row = (table: string) => m.upserts.find((u) => u.table === table)?.row;
     expect(row('team_scores')).toMatchObject({ round_id: 'd3', team: 1, hole: 1, gross: 4 });
+    expect(row('team_drives')).toMatchObject({ round_id: 'd3', team: 1, hole: 1, player_id: 'p5' });
     expect(row('bit_events')).toMatchObject({ round_id: 'd1', grp: 0, kind: 'cuckoo', hole: 3, counts: { p1: 2 }, last_pid: 'p1' });
     expect(row('bonus_balls')).toMatchObject({ player_id: 'p1', used: { d1: 4 }, lost_round: null });
     expect(row('stakes')).toMatchObject({ id: 1, stakes: { cuckoo: 20, camel: 10 } });
@@ -196,11 +198,14 @@ describe('sync engine', () => {
       stakes: [{ id: 4, stakes: { camel: 40 } }, { id: 1, stakes: { cuckoo: 50 } }],
       bonus_balls: [{ player_id: 'p2', used: { d1: 7 }, lost_round: 'd1' }],
       tee_choices: [{ round_id: 'd2', tee: 'white' }],
+      team_drives: [{ round_id: 'd3', team: 0, hole: 5, player_id: 'p3' }, { round_id: 'd3', team: 0, hole: 6, player_id: null }],
     });
     m.start();
     await tick();
     const S = stored();
     expect(S.scramble.d3['0'][4]).toBe(3);
+    expect(S.drives.d3['0'][4]).toBe('p3');
+    expect(S.drives.d3['0'][5]).toBeNull();
     expect(S.groups.d1).toEqual([['p1'], ['p2']]);
     expect(S.bits.d1['1'].fish[8]).toEqual({ counts: { p5: 1 }, last: 'p5' });
     expect(S.stakes).toMatchObject({ cuckoo: 50, camel: 10 });
@@ -215,7 +220,7 @@ describe('sync engine', () => {
   it('a database without the newer tables still syncs scores rather than sitting offline', async () => {
     const m = mockSupabase(
       { hole_scores: [{ round_id: 'd1', player_id: 'p1', hole: 1, gross: 4 }], team_scores: [], pair_draws: [] },
-      ['group_draws', 'bit_events', 'stakes', 'bonus_balls', 'tee_choices'],
+      ['group_draws', 'bit_events', 'stakes', 'bonus_balls', 'tee_choices', 'team_drives'],
     );
     m.start();
     await tick();
@@ -241,6 +246,11 @@ describe('sync engine', () => {
     expect(stored().bonus.p3).toEqual({ used: { d2: 3 }, lost: null });
     m.handler('hole_scores')({ eventType: 'INSERT', new: { round_id: 'd9', player_id: 'p1', hole: 1, gross: 4 }, old: {} });
     expect(stored().scores.d9).toBeUndefined();
+    // another phone marks and then clears whose drive a team used
+    m.handler('team_drives')({ eventType: 'INSERT', new: { round_id: 'd3', team: 2, hole: 7, player_id: 'p2' }, old: {} });
+    expect(stored().drives.d3['2'][6]).toBe('p2');
+    m.handler('team_drives')({ eventType: 'UPDATE', new: { round_id: 'd3', team: 2, hole: 7, player_id: null }, old: {} });
+    expect(stored().drives.d3['2'][6]).toBeNull();
   });
 
   it('rapid taps: a newer edit queued while the first is in flight still gets sent, and echoes of the older value are ignored', async () => {
