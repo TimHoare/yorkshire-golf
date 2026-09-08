@@ -4,7 +4,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { BITS, PL, R, RULES, gname } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
-  courseHandicap, fmt1, groupsFor, indexHistory, pairPointsFor, playerBitTotal, playerTally, roundPlace,
+  bonusGoneBy, courseHandicap, fmt1, groupsFor, indexHistory, pairPointsFor, playerBitTotal, playerTally, roundPlace,
   roundPoints, roundStatus, scrambleResults, signed, standings, teamHandicap, trim,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
@@ -72,6 +72,8 @@ export function PlayerPage() {
             else line.push(<span key="t">Teams to be set</span>);
             if (tt.played > 0) line.push(<span key="s"> · <b>{tt.complete ? `${fmt1(tt.net!)} net` : `${signed(tt.netToPar!)} net`}</b>{tt.complete ? ` · ${tt.strokes} gross` : ` thru ${tt.played}`}</span>);
             if (mine) line.push(<b key="r"> · {mine.place}{['st', 'nd', 'rd'][mine.place - 1] || 'th'}{mine.tie ? '=' : ''} · {trim(mine.points)} week pts</b>);
+            const mull = S.bonus[pid]?.used[r.id];
+            if (mull !== undefined && !bonusGoneBy(S, r.id, pid)) line.push(<span key="m"> · 🎱 mulligan on {mull + 1}</span>);
           } else {
             const tl = playerTally(S, r.id, pid);
             line.push(<span key="h">CH {courseHandicap(S, before, r.id)}</span>);

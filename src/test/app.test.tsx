@@ -280,6 +280,19 @@ describe('app flow', () => {
     expect(saved.drives.d3['0'][0]).toBeNull();
     // no pickup on a team row: the − button is a plain stroke fewer
     expect(within(teamA).getByLabelText('One stroke fewer')).toBeTruthy();
+    // mulligans: the bonus ball, taken once, tracked per player of the flight
+    fireEvent.click(within(slide1 as HTMLElement).getByText('Mulligans'));
+    fireEvent.click(within(slide1 as HTMLElement).getByLabelText("Tim's mulligan"));
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    expect(saved.bonus.p1).toEqual({ used: { d3: 0 }, lost: null });
+    expect(within(slide1 as HTMLElement).getByText('Taken here: Tim')).toBeTruthy();
+    const slide2 = container.querySelector('.slide[data-slide="2"]') as HTMLElement;
+    fireEvent.click(within(slide2).getByText('Mulligans'));
+    expect(within(slide2).getByText('Taken on 1')).toBeTruthy();            // spent: no button on other holes
+    expect(within(slide2).queryByLabelText("Tim's mulligan")).toBeNull();
+    fireEvent.click(within(slide1 as HTMLElement).getByLabelText("Tim's mulligan")); // undo on the hole it was taken
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    expect(saved.bonus.p1.used).toEqual({});
   });
 
   it('side bets stack: a four-putt is two three-putts, two trees are two cuckoos', () => {

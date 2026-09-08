@@ -281,10 +281,15 @@ describe('bonus balls', () => {
     S.bonus.p1 = { used: { d1: 2 }, lost: 'd1' };
     S.scores.d2 = { p1: filled(4) };
     expect(bonusHoleFor(S, 'd2', 'p1')).toBeNull();
-    // the scramble plays as teams: no bonus ball there
+    // the scramble plays as teams: no 2× hole by default there…
     S.bonus.p2 = { used: {}, lost: null };
     S.scramble.d3 = { 0: filled(4) };
     expect(bonusHoleFor(S, 'd3', 'p2')).toBeNull();
+    // …and a mulligan taken there is tracked but leaves the index and later rounds alone
+    S.bonus.p2 = { used: { d3: 6 }, lost: null };
+    S.scores.d4 = { p2: filled(4) };
+    expect(bonusHoleFor(S, 'd3', 'p2')).toBe(6);
+    expect(bonusHoleFor(S, 'd4', 'p2')).toBe(17);
   });
   it('+1 for a kept ball, only once every round is in', () => {
     const S = defaultState();

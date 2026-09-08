@@ -79,6 +79,10 @@ export function PlayerRoundPage() {
     if (bonusHole === i) out.push(<span className="xb bonus" key="bb" title="Bonus ball · double points">🎱 2×</span>);
     if (lostHere === i) out.push(<span className="xb lost" key="bl" title="Bonus ball lost">🎱 ✕</span>);
     if (driveOn?.[i]) out.push(<span className="xb drive" key="dr" title="Whose drive">🏌️ {first(driveOn[i]!)}</span>);
+    if (scramble)
+      for (const who of members)
+        if (!bonusGoneBy(S, r.id, who) && S.bonus[who]?.used[r.id] === i)
+          out.push(<span className="xb bonus" key={who + 'm'} title="Mulligan taken">🎱 {first(who)}</span>);
     for (const who of members)
       for (const { k, n } of bitsOn(i, who))
         out.push(<span className="xb" key={who + k} title={BITS[k].one}>{BITS[k].icon}{n > 1 ? `×${n}` : ''}{scramble && <small> {first(who)}</small>}</span>);
@@ -216,9 +220,21 @@ export function PlayerRoundPage() {
         </p>
       )}
 
-      <div className="section-title"><h2>Extras</h2><span className="eyebrow">{[bitTitle, !scramble && 'bonus ball', 'side bets'].filter(Boolean).join(' · ')}</span></div>
+      <div className="section-title"><h2>Extras</h2><span className="eyebrow">{[bitTitle, scramble ? 'mulligans' : 'bonus ball', 'side bets'].filter(Boolean).join(' · ')}</span></div>
       <div className="card xlist">
-        {!scramble && (
+        {scramble ? (
+          <div className="xrow">
+            <span className="bit-ic" aria-hidden>🎱</span>
+            <span className="bit-l"><b>Mulligans</b><small>Bonus ball · one each, if still in hand</small></span>
+            <span className="bit-sum wrap">{members.map((who) => {
+              const bb = S.bonus[who];
+              const txt = bonusGoneBy(S, r.id, who) ? `lost at ${R(bb!.lost!)?.short ?? '?'}`
+                : bb?.used[r.id] !== undefined ? `taken on the ${ord(bb.used[r.id] + 1)}`
+                : status === 'done' ? 'not taken' : 'in hand';
+              return <span key={who}>{first(who)} {txt}</span>;
+            }).reduce<ReactNode[]>((a, x, k) => (k ? [...a, ' · ', x] : [x]), [])}</span>
+          </div>
+        ) : (
           <div className="xrow">
             <span className="bit-ic" aria-hidden>🎱</span>
             <span className="bit-l"><b>Bonus ball</b><small>2× one hole a round · +{RULES.bonusKeep} if kept all week</small></span>

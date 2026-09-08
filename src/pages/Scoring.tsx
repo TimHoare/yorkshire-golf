@@ -96,6 +96,60 @@ function DrivePick({ S, rid, t, holeIdx, readOnly }: { S: TripState; rid: string
 const driveNote = (dt: ReturnType<typeof driveTally>) => dt.done ? ''
   : (dt.short ? 'Short: ' : '') + dt.by.filter((x) => x.need > 0).map((x) => `${first(x.pid)} needs ${x.need}`).join(' · ');
 
+// Scramble day: the bonus ball is a mulligan — one per player, if they still
+// have it. Tracked only: used[rid] = the hole it was taken on. No effect on
+// the team score, and the ball isn't lost by using it.
+function MulliganPanel({ S, r, players, holeIdx, readOnly }: {
+  S: TripState; r: Round; players: string[]; holeIdx: number; readOnly: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const rec = (pid: string): BonusBall => S.bonus[pid] ?? { used: {}, lost: null };
+  const use = (pid: string, h: number | null) => {
+    const bb = rec(pid);
+    const used = { ...bb.used };
+    if (h === null) delete used[r.id]; else used[r.id] = h;
+    setBonusBall(pid, { ...bb, used });
+  };
+  const usedCount = players.filter((pid) => !bonusGoneBy(S, r.id, pid) && rec(pid).used[r.id] !== undefined).length;
+  const here = players.filter((pid) => !bonusGoneBy(S, r.id, pid) && rec(pid).used[r.id] === holeIdx).map(first);
+  return (
+    <div className="bits">
+      <div className={`bit${open ? ' open' : ''}`}>
+        <button className="bit-row" onClick={() => setOpen(!open)} aria-expanded={open}>
+          <span className="bit-ic" aria-hidden>🎱</span>
+          <span className="bit-l"><b>Mulligans</b><small>{here.length ? `Taken here: ${here.join(', ')}` : 'Bonus ball · one mulligan each, if you still have it'}</small></span>
+          <span className={`bit-n${usedCount ? '' : ' off'}`}>{usedCount}<small>/{players.length}</small></span>
+          <Chevron />
+        </button>
+        {open && (
+          <div className="bit-edit">
+            {players.map((pid) => {
+              const bb = rec(pid);
+              const gone = bonusGoneBy(S, r.id, pid);
+              const usedHole = gone ? undefined : bb.used[r.id];
+              const isHere = usedHole === holeIdx;
+              return (
+                <div className="bit-p" key={pid}>
+                  <Avatar p={PL(pid)} size="sm" />
+                  <span className="bit-pn">
+                    {first(pid)}
+                    {gone && <span className="chip">Lost at {R(bb.lost!)?.short}</span>}
+                    {!gone && usedHole !== undefined && !isHere && <span className="chip">Taken on {usedHole + 1}</span>}
+                  </span>
+                  {gone || readOnly || (usedHole !== undefined && !isHere) ? null : (
+                    <button className={`btn sm ${isHere ? 'heather' : 'ghost'}`} onClick={() => use(pid, isHere ? null : holeIdx)}
+                      aria-label={`${first(pid)}'s mulligan`} aria-pressed={isHere}>{isHere ? 'Taken' : 'Take'}</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Bonus balls, one per player for the trip: it must be played on one hole a
 // round for double points (the 18th if never called); mark it lost and it's
 // gone for good (+1 at the end if kept).
@@ -244,7 +298,9 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               );
             })}
       </div>
-      {!scramble && <BonusPanel S={S} r={r} players={g.players} holeIdx={i} readOnly={readOnly} />}
+      {scramble
+        ? <MulliganPanel S={S} r={r} players={flightsFor(S, r.id)[group].players} holeIdx={i} readOnly={readOnly} />
+        : <BonusPanel S={S} r={r} players={g.players} holeIdx={i} readOnly={readOnly} />}
       <HoleBitsPanel rid={r.id} group={group} holeIdx={i}
         players={scramble ? flightsFor(S, r.id)[group].players : g.players} readOnly={readOnly} />
     </section>
