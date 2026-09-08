@@ -1,10 +1,10 @@
 [
-{"player_id":"p1","used":{"d1":13},"lost_round":null,"updated_at":"2026-09-07T14:30:00.806+00:00"},
+{"player_id":"p1","used":{"d1":13,"d2":9},"lost_round":null,"updated_at":"2026-09-08T15:08:43.401+00:00"},
 {"player_id":"p2","used":{"d1":5,"d2":4},"lost_round":null,"updated_at":"2026-09-08T13:57:55.081+00:00"},
-{"player_id":"p3","used":{"d1":5},"lost_round":null,"updated_at":"2026-09-07T12:54:28.493+00:00"},
-{"player_id":"p4","used":{"d1":5},"lost_round":null,"updated_at":"2026-09-07T12:51:54.461+00:00"},
-{"player_id":"p5","used":{"d1":8},"lost_round":null,"updated_at":"2026-09-07T13:25:30.967+00:00"},
-{"player_id":"p6","used":{"d1":5},"lost_round":null,"updated_at":"2026-09-07T12:51:49.464+00:00"},
-{"player_id":"p7","used":{"d1":8},"lost_round":null,"updated_at":"2026-09-07T13:28:53.912+00:00"},
+{"player_id":"p3","used":{"d1":5,"d2":9},"lost_round":null,"updated_at":"2026-09-08T15:08:43.904+00:00"},
+{"player_id":"p4","used":{"d1":5,"d2":3},"lost_round":null,"updated_at":"2026-09-08T14:09:38.716+00:00"},
+{"player_id":"p5","used":{"d1":8,"d2":8},"lost_round":null,"updated_at":"2026-09-08T15:21:48.356+00:00"},
+{"player_id":"p6","used":{"d1":5,"d2":9},"lost_round":null,"updated_at":"2026-09-08T15:08:42.987+00:00"},
+{"player_id":"p7","used":{"d1":8,"d2":12},"lost_round":null,"updated_at":"2026-09-08T16:16:32.458+00:00"},
 {"player_id":"p8","used":{"d1":8},"lost_round":null,"updated_at":"2026-09-07T13:28:54.479+00:00"}
 ]
