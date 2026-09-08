@@ -119,9 +119,10 @@ describe('results', () => {
     S.scramble.d3[1] = [4, ...Array(17).fill(null)];
     expect(firstUnfinishedHole(S, 'd3', 0)).toBe(2);
   });
-  it('scramble awards 6/4/2/0 per player by team place', () => {
+  it('scramble awards 6/4/2/0 per player by team place, lowest net first', () => {
     const S = defaultState();
-    // d3 teams: A p1/p3 · B p5/p7 · C p2/p4 · D p6/p8 — a stroke a hole apart
+    // d3 teams: A p1/p3 · B p5/p7 · C p2/p4 · D p6/p8 — a stroke a hole apart,
+    // far more than any team handicap can make up
     S.scramble.d3 = { 0: filled(3), 1: filled(4), 2: filled(5), 3: filled(6) };
     const res = scrambleResults(S, 'd3');
     expect(res.decided).toBe(true);

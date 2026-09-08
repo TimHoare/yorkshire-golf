@@ -114,14 +114,31 @@ export const phFor = (S: TripState, pid: string, rid: string) =>
 export const playerTally = (S: TripState, rid: string, pid: string) =>
   tally(rid, holesOf(S, rid, pid), phFor(S, pid, rid), bonusHoleFor(S, rid, pid));
 
-// Scramble team playing handicap: 35/15 % of the members' course handicaps, lowest first.
+// Scramble team handicap: 15% of the lower course handicap plus 35% of the
+// higher, kept to one decimal place and taken off the team's gross score.
+export const round1 = (n: number) => Math.round(n * 10) / 10;
 export function teamHandicap(S: TripState, rid: string, t: number) {
   const g = groupsFor(S, rid)[t];
   const chs = g.players.map((pid) => courseHandicap(S, indexBefore(S, pid, rid), rid)).sort((a, b) => a - b);
-  return Math.round(chs.reduce((a, ch, i) => a + ch * (RULES.scrambleAllowance[i] ?? 0) / 100, 0));
+  return round1(chs.reduce((a, ch, i) => a + ch * (RULES.scrambleAllowance[i] ?? 0) / 100, 0));
 }
-export const teamTally = (S: TripState, rid: string, t: number) =>
-  tally(rid, teamHoles(S, rid, t), teamHandicap(S, rid, t));
+// The scramble is net stroke play, not stableford: no shots on the holes, no
+// points. toPar is the gross against par of the holes played; netToPar takes
+// the whole team handicap off that, so teams can be compared mid-round; net
+// is the final gross less the handicap, once all 18 are in.
+export interface TeamTally extends Tally { hcp: number; toPar: number; netToPar: number | null; net: number | null }
+export function teamTally(S: TripState, rid: string, t: number): TeamTally {
+  const hcp = teamHandicap(S, rid, t);
+  const base = tally(rid, teamHoles(S, rid, t), 0);
+  const rows = base.rows.map((x) => ({ ...x, shots: 0, pts: null }));
+  const parPlayed = rows.filter((x) => x.gross !== null).reduce((a, x) => a + x.par, 0);
+  const toPar = base.strokes - parPlayed;
+  return {
+    ...base, rows, pts: 0, hcp, toPar,
+    netToPar: base.played ? round1(toPar - hcp) : null,
+    net: base.complete ? round1(base.strokes - hcp) : null,
+  };
+}
 
 // ---------- Results ----------
 // Award place points down a sorted list, splitting the table across ties:
@@ -164,9 +181,10 @@ export function scrambleResults(S: TripState, rid: string) {
   const ts = groups.map((_, t) => teamTally(S, rid, t));
   const decided = ts.every((t) => t.complete);
   if (!decided) return { rows: out, decided, ts, winner: null as number | null };
-  const order: { t: number; pts: number; place?: number; points?: number; tied?: boolean }[] =
-    ts.map((tt, t) => ({ t, pts: tt.pts })).sort((a, b) => b.pts - a.pts);
-  award(order, RULES.scramblePoints, (a, b) => a.pts === b.pts);
+  // Lowest net score wins. Teams level on net share the points.
+  const order: { t: number; net: number; place?: number; points?: number; tied?: boolean }[] =
+    ts.map((tt, t) => ({ t, net: tt.net! })).sort((a, b) => a.net - b.net);
+  award(order, RULES.scramblePoints, (a, b) => a.net === b.net);
   for (const o of order)
     for (const pid of groups[o.t].players)
       out[pid] = { points: o.points!, place: o.place!, won: o.place === 1 && !o.tied, tie: !!o.tied };

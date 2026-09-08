@@ -200,7 +200,8 @@ describe('app flow', () => {
     expect(screen.getByText(/Cave Castle Golf Club/)).toBeTruthy();
     expect(container.querySelector('h1')!.textContent).toBe('Team D');          // the team's page, not Rob's
     expect(screen.getByText(/Rob Ellis & Liam Cameron/)).toBeTruthy();
-    expect(screen.getByText('Team pts')).toBeTruthy();
+    expect(screen.getByText('Team net')).toBeTruthy();
+    expect(screen.getByText('Team hcp')).toBeTruthy();
     expect(screen.getByText('Rob · course hcp')).toBeTruthy();
     expect(screen.getByText('Liam C · course hcp')).toBeTruthy();
     expect(screen.queryByText('Bonus ball')).toBeNull();

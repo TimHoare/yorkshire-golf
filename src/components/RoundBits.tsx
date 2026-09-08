@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
-  groupsFor, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
-  type Tally,
+  groupsFor, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim, fmt1, signed,
+  type Tally, type TeamTally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -193,14 +193,15 @@ export function ScrambleResult({ r }: { r: Round }) {
             <div className={`team${won ? ' won' : ''}`} key={t}>
               <TeamAvatar players={grp.players} />
               <h4>{grp.name || 'Team ' + (t + 1)} {won && <span className="chip gorse">Winners</span>}</h4>
-              <div className="big">{tt.pts}<small>pts thru {tt.played}</small></div>
+              <div className="big">{tt.complete ? <>{fmt1(tt.net!)}<small>net · {tt.strokes} gross</small></>
+                : tt.played ? <>{signed(tt.netToPar!)}<small>net thru {tt.played}</small></> : <>–<small>not started</small></>}</div>
               <div className="members">{grp.players.map((pid) => <div className="m" key={pid}>{pName(pid)}</div>)}</div>
             </div>
           );
         })}
       </div>
       <p className="small muted" style={{ marginTop: 8 }}>
-        Team handicap is {RULES.scrambleAllowance.join('/')}% of the two course handicaps, lowest first.
+        Team handicap is {RULES.scrambleAllowance[0]}% of the lower course handicap plus {RULES.scrambleAllowance[1]}% of the higher, to one decimal place, taken off the team's gross. Lowest net wins.
         Week points {RULES.scramblePoints.join(' · ')} each for 1st–4th{res.decided && res.winner === null ? ' — top spot tied, so shared' : ' (ties share)'}.
       </p>
     </div>
@@ -208,7 +209,7 @@ export function ScrambleResult({ r }: { r: Round }) {
 }
 
 // Live leaderboard for one round: every player across every group, ranked by
-// stableford points as scores land (teams on scramble day). Nothing to poll —
+// stableford points as scores land (teams by net score on scramble day). Nothing to poll —
 // it re-renders off the store, which realtime sync keeps current.
 export function Leaderboard({ r }: { r: Round }) {
   const { S, me } = useStore();
@@ -218,11 +219,11 @@ export function Leaderboard({ r }: { r: Round }) {
     ? groupsFor(S, r.id)
         .map((grp, t) => ({ key: String(t), t, grp, tally: teamTally(S, r.id, t) }))
         .filter((x) => x.tally.played > 0)
-        .sort((a, b) => b.tally.pts - a.tally.pts)
+        .sort((a, b) => a.tally.netToPar! - b.tally.netToPar!)
         .map((x, k, all) => {
-          const tiedUp = k > 0 && x.tally.pts === all[k - 1].tally.pts;
-          const tiedDown = k + 1 < all.length && x.tally.pts === all[k + 1].tally.pts;
-          const place = tiedUp ? all.findIndex((y) => y.tally.pts === x.tally.pts) + 1 : k + 1;
+          const tiedUp = k > 0 && x.tally.netToPar === all[k - 1].tally.netToPar;
+          const tiedDown = k + 1 < all.length && x.tally.netToPar === all[k + 1].tally.netToPar;
+          const place = tiedUp ? all.findIndex((y) => y.tally.netToPar === x.tally.netToPar) + 1 : k + 1;
           return { ...x, place, tied: tiedUp || tiedDown };
         })
     : [];
@@ -267,12 +268,14 @@ export function Leaderboard({ r }: { r: Round }) {
               <div className="rlb-who">
                 <b>{'pid' in x ? first(x.pid) : gname(x.grp, x.t)}</b>
                 <small>
-                  {'pid' in x ? `PH ${phFor(S, x.pid, r.id)}` : x.grp.players.map(first).join(' · ')}
-                  {t.complete ? ` · ${t.strokes}${t.pickups ? '+' : ''} strokes` : ` · thru ${t.played}`}
+                  {'pid' in x ? `PH ${phFor(S, x.pid, r.id)}` : `${x.grp.players.map(first).join(' · ')} · hcp ${fmt1(x.tally.hcp)}`}
+                  {t.complete ? ` · ${t.strokes}${t.pickups ? '+' : ''} ${'pid' in x ? 'strokes' : 'gross'}` : ` · thru ${t.played}`}
                 </small>
                 {wk !== null && <small className="wk">Week pts: {split}</small>}
               </div>
-              <span className="rlb-pts">{t.pts}<small>pts</small></span>
+              <span className="rlb-pts">{'pid' in x
+                ? <>{t.pts}<small>pts</small></>
+                : x.tally.complete ? <>{fmt1(x.tally.net!)}<small>net</small></> : <>{signed(x.tally.netToPar!)}<small>net</small></>}</span>
               <span className="rlb-wk">{wk !== null && <>{trim(wk)}<small>wk</small></>}</span>
               <svg className="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </Link>
@@ -335,7 +338,7 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
   const cell = (row: Tally['rows'][number], key: number) =>
     row.gross === null
       ? <td className="e" key={key}>·</td>
-      : <td key={key} className={`${row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}${row.bonus ? ' bb' : ''}`}><Gross gross={row.gross} par={row.par} bonus={row.bonus} /><sup>{row.pts}</sup></td>;
+      : <td key={key} className={`${row.pts === null ? '' : row.pts === 0 ? 'z' : row.pts >= 3 ? 'g' : ''}${row.bonus ? ' bb' : ''}`}><Gross gross={row.gross} par={row.par} bonus={row.bonus} />{row.pts !== null && <sup>{row.pts}</sup>}</td>;
 
   const sumRow = (label: string, from: number, to: number) => (
     <tr className="sum" key={label}>
@@ -345,21 +348,31 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
       {cols.map((c, k) => {
         const pl = c.tally.rows.slice(from, to).filter((x) => x.gross !== null);
         const plus = pl.some((x) => x.gross === 0) ? '+' : '';   // a pickup in there: strokes are a floor
-        return <td key={k}>{pl.length ? <>{pl.reduce((a, x) => a + (x.gross ?? 0), 0)}{plus}<sup>{pl.reduce((a, x) => a + (x.pts ?? 0), 0)}</sup></> : '·'}</td>;
+        return <td key={k}>{pl.length ? <>{pl.reduce((a, x) => a + (x.gross ?? 0), 0)}{plus}{!scramble && <sup>{pl.reduce((a, x) => a + (x.pts ?? 0), 0)}</sup>}</> : '·'}</td>;
+      })}
+    </tr>
+  );
+  // Scramble day: the gross less the team handicap, once all 18 are in.
+  const netRow = scramble && (
+    <tr className="sum" key="net">
+      <td>Net</td><td /><td />
+      {cols.map((c, k) => {
+        const tt = c.tally as TeamTally;
+        return <td key={k}>{tt.complete ? fmt1(tt.net!) : tt.played ? <small className="muted">{signed(tt.netToPar!)} thru {tt.played}</small> : '·'}</td>;
       })}
     </tr>
   );
 
   return (
     <>
-      <div className="section-title"><h2>Scorecard</h2><span className="eyebrow">{scramble ? 'team gross · points' : gname(g, group) + ' · gross · points'}</span></div>
+      <div className="section-title"><h2>Scorecard</h2><span className="eyebrow">{scramble ? 'team gross · net off the team hcp' : gname(g, group) + ' · gross · points'}</span></div>
       <div className="sc-wrap">
         <table className="sc">
           <thead>
             <tr>
               <th>Hole</th><th>Par</th><th>SI</th>
               {cols.map((c, k) => (
-                <th key={k}>{c.label}{!scramble && <span className="ph">PH {phFor(S, g.players[k], r.id)}</span>}</th>
+                <th key={k}>{c.label}<span className="ph">{scramble ? `hcp ${fmt1((c.tally as TeamTally).hcp)}` : `PH ${phFor(S, g.players[k], r.id)}`}</span></th>
               ))}
             </tr>
           </thead>
@@ -376,6 +389,7 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
             })}
             {sumRow('In', 9, 18)}
             {sumRow('Total', 0, 18)}
+            {netRow}
           </tbody>
         </table>
       </div>

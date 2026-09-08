@@ -79,7 +79,7 @@ export const RULES = {
   bonusKeep: 1,                            // still holding your bonus ball at the end of the trip
   allowance: 100,
   par: 32,                     // stableford points pivot for index adjustment
-  scrambleAllowance: [35, 15], // % of course handicaps, lowest first (2-man teams)
+  scrambleAllowance: [15, 35], // % of course handicaps, lowest first (2-man teams), to one decimal
 };
 
 // Side-bet menagerie: labels for the things logged hole by hole.

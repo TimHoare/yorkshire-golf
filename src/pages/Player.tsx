@@ -68,9 +68,9 @@ export function PlayerPage() {
             const res = scrambleResults(S, r.id);
             const mine = res.rows[pid];
             const tt = res.ts[t];
-            if (drawn) line.push(<span key="t">{gname(grp!, t)} · Team HCP {teamHandicap(S, r.id, t)}</span>);
+            if (drawn) line.push(<span key="t">{gname(grp!, t)} · Team HCP {fmt1(teamHandicap(S, r.id, t))}</span>);
             else line.push(<span key="t">Teams to be set</span>);
-            if (tt.played > 0) line.push(<span key="s"> · {tt.pts} pts{tt.complete ? '' : ` thru ${tt.played}`}</span>);
+            if (tt.played > 0) line.push(<span key="s"> · <b>{tt.complete ? `${fmt1(tt.net!)} net` : `${signed(tt.netToPar!)} net`}</b>{tt.complete ? ` · ${tt.strokes} gross` : ` thru ${tt.played}`}</span>);
             if (mine) line.push(<b key="r"> · {mine.place}{['st', 'nd', 'rd'][mine.place - 1] || 'th'}{mine.tie ? '=' : ''} · {trim(mine.points)} week pts</b>);
           } else {
             const tl = playerTally(S, r.id, pid);

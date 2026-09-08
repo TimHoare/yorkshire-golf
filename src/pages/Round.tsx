@@ -84,7 +84,7 @@ export function RoundPage() {
             <div className="tee">{grp.tee}</div>
             <div className="gbody">
               <div className="gname">
-                {gname(grp, t)}{scramble && drawn && <> <span className="chip gorse">team hcp {teamHandicap(S, r.id, t)}</span></>}
+                {gname(grp, t)}{scramble && drawn && <> <span className="chip gorse">team hcp {fmt1(teamHandicap(S, r.id, t))}</span></>}
               </div>
               {drawn ? (
                 <div className="gmembers">

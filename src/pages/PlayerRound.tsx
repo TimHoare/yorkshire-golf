@@ -9,7 +9,7 @@ import { BIT_KINDS, stakesFor } from '../lib/state';
 import {
   bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor,
   indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
-  teamTally, trim, type Tally,
+  teamTally, trim, signed, type Tally,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar, TeamAvatar } from '../components/Avatar';
@@ -41,7 +41,8 @@ export function PlayerRoundPage() {
   const { before, after, applied } = indexHistory(S, pid).find((h) => h.round.id === r.id)!;
   const ch = courseHandicap(S, before, r.id);
   const ph = scramble ? null : phFor(S, pid, r.id);
-  const tally: Tally = scramble ? teamTally(S, r.id, Math.max(0, t)) : playerTally(S, r.id, pid);
+  const team = scramble ? teamTally(S, r.id, Math.max(0, t)) : null;
+  const tally: Tally = team ?? playerTally(S, r.id, pid);
 
   // Bonus ball, individual rounds only: the hole it doubled, or where it went.
   const bb = S.bonus[pid];
@@ -90,11 +91,19 @@ export function PlayerRoundPage() {
         <td>{r.holes.slice(from, to).reduce((a, x) => a + x.par, 0)}</td>
         <td />
         <td>{pl.length ? <>{pl.reduce((a, x) => a + (x.gross ?? 0), 0)}{plus}</> : '·'}</td>
-        <td>{pl.length ? pl.reduce((a, x) => a + (x.pts ?? 0), 0) : '·'}</td>
+        {!scramble && <td>{pl.length ? pl.reduce((a, x) => a + (x.pts ?? 0), 0) : '·'}</td>}
         <td />
       </tr>
     );
   };
+  // Scramble day: the gross less the team handicap, once all 18 are in.
+  const netRow = team && (
+    <tr className="sum" key="net">
+      <td>Net</td><td /><td />
+      <td>{team.complete ? <b>{fmt1(team.net!)}</b> : team.played ? <small className="muted">{signed(team.netToPar!)} thru {team.played}</small> : '·'}</td>
+      <td />
+    </tr>
+  );
 
   return (
     <>
@@ -117,8 +126,10 @@ export function PlayerRoundPage() {
       </div>
 
       <div className="course-facts card">
-        <div className="cf"><span className="l">{scramble ? 'Team pts' : 'Points'}</span><b>{tally.played ? <>{tally.pts}{tally.complete ? '' : <small className="muted"> thru {tally.played}</small>}</> : '–'}</b></div>
-        <div className="cf"><span className="l">Strokes</span><b>{tally.complete ? `${tally.strokes}${tally.pickups ? '+' : ''}` : '–'}</b></div>
+        {scramble
+          ? <div className="cf"><span className="l">Team net</span><b>{tally.complete ? fmt1(team!.net!) : tally.played ? <>{signed(team!.netToPar!)}<small className="muted"> thru {tally.played}</small></> : '–'}</b></div>
+          : <div className="cf"><span className="l">Points</span><b>{tally.played ? <>{tally.pts}{tally.complete ? '' : <small className="muted"> thru {tally.played}</small>}</> : '–'}</b></div>}
+        <div className="cf"><span className="l">{scramble ? 'Gross' : 'Strokes'}</span><b>{tally.complete ? `${tally.strokes}${tally.pickups ? '+' : ''}` : '–'}</b></div>
         <div className="cf"><span className="l">Place</span><b>{
           scramble
             ? mine ? `${ord(mine.place)}${mine.tie ? '=' : ''}` : '–'
@@ -135,7 +146,7 @@ export function PlayerRoundPage() {
 
       {scramble ? (
         <div className="course-facts card">
-          <div className="cf"><span className="l">Team hcp</span><b>{drawn && t >= 0 ? teamHandicap(S, r.id, t) : '–'}</b></div>
+          <div className="cf"><span className="l">Team hcp</span><b>{drawn && t >= 0 ? fmt1(teamHandicap(S, r.id, t)) : '–'}</b></div>
           {members.map((who) => (
             <div className="cf" key={who}><span className="l">{first(who)} · course hcp</span><b>{courseHandicap(S, indexBefore(S, who, r.id), r.id)}</b></div>
           ))}
@@ -157,12 +168,12 @@ export function PlayerRoundPage() {
 
       <div className="section-title">
         <h2>Scorecard</h2>
-        <span className="eyebrow">{scramble ? `team gross · points` : `gross · points · shots off PH ${ph}`}</span>
+        <span className="eyebrow">{scramble ? `team gross · net off hcp ${drawn && t >= 0 ? fmt1(team!.hcp) : '–'}` : `gross · points · shots off PH ${ph}`}</span>
       </div>
       <div className="sc-wrap">
         <table className="sc player-sc">
           <thead>
-            <tr><th>Hole</th><th>Par</th><th>SI</th><th>{scramble ? 'Team' : 'Gross'}</th><th>Pts</th><th className="x">Extras</th></tr>
+            <tr><th>Hole</th><th>Par</th><th>SI</th><th>{scramble ? 'Team' : 'Gross'}</th>{!scramble && <th>Pts</th>}<th className="x">Extras</th></tr>
           </thead>
           <tbody>
             {r.holes.flatMap((h, i) => {
@@ -173,10 +184,10 @@ export function PlayerRoundPage() {
                   <td>{h.n}</td><td>{h.par}</td>
                   <td>{shots ? <span className={`si-pill s${Math.min(shots, 2)}`}>{h.si}</span> : h.si}</td>
                   {row.gross === null
-                    ? <><td className="e">·</td><td className="e">·</td></>
+                    ? <><td className="e">·</td>{!scramble && <td className="e">·</td>}</>
                     : <>
                         <td className={row.bonus ? 'bb' : ''}><Gross gross={row.gross} par={h.par} bonus={row.bonus} /></td>
-                        <td className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.pts}</td>
+                        {!scramble && <td className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.pts}</td>}
                       </>}
                   <td className="x">{extras(i)}</td>
                 </tr>
@@ -185,6 +196,7 @@ export function PlayerRoundPage() {
             })}
             {sumRow('In', 9, 18)}
             {sumRow('Total', 0, 18)}
+            {netRow}
           </tbody>
         </table>
       </div>

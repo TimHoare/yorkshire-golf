@@ -6,7 +6,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
   bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
-  phFor, relPar, shotsOn, teamHandicap, teamHoles, teamTally,
+  phFor, relPar, shotsOn, teamHoles, teamTally, fmt1, signed,
 } from '../lib/scoring';
 import { setBonusBall, setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
@@ -20,6 +20,9 @@ type Target = { pid: string } | { team: number };
 
 function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; target: Target; holeIdx: number; gross: number | null; par: number; readOnly: boolean }) {
   const pickup = gross === 0;
+  // A scramble team always holes out — net strokes need a score on every hole
+  // — so there's no pickup on a team row.
+  const canPickUp = 'pid' in target;
   // from empty: + records par, − a birdie; then ±1 per tap. Holding − marks a
   // pickup ✕ (typing 0 does too); once picked up, − clears and + restarts at par.
   const step = (d: number) => {
@@ -33,6 +36,7 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
   const held = useRef(false);
   const holdStart = () => {
     held.current = false;
+    if (!canPickUp) return;
     holdT.current = setTimeout(() => { held.current = true; setGross(rid, target, holeIdx, 0); }, 550);
   };
   const holdEnd = () => clearTimeout(holdT.current);
@@ -45,7 +49,7 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
         onPointerDown={holdStart} onPointerUp={holdEnd} onPointerLeave={holdEnd}
         onContextMenu={(e) => e.preventDefault()}
         onClick={() => { if (held.current) { held.current = false; return; } step(-1); }}
-        aria-label={pickup ? 'Undo the X' : 'One stroke fewer — hold for a pickup'}
+        aria-label={pickup ? 'Undo the X' : canPickUp ? 'One stroke fewer — hold for a pickup' : 'One stroke fewer'}
       >−</button>
       {pickup
         ? <span className="pu" aria-label="No score — picked up">✕</span>
@@ -55,7 +59,7 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
             placeholder={String(par)} value={gross ?? ''}
             onChange={(e) => {
               const n = parseFloat(e.target.value);
-              setGross(rid, target, holeIdx, Number.isNaN(n) ? null : n);
+              setGross(rid, target, holeIdx, Number.isNaN(n) || (n === 0 && !canPickUp) ? null : n);
             }}
           />
         )}
@@ -154,11 +158,11 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
   const scramble = r.format === 'scramble';
   const g = groupsFor(S, r.id)[group];
 
-  const row = (who: React.ReactNode, name: string, sub: React.ReactNode, target: Target, gross: number | null, pts: number | null) => (
+  const row = (who: React.ReactNode, name: string, sub: React.ReactNode, target: Target, gross: number | null, pts: React.ReactNode, unit = 'pts') => (
     <div className="score-row" key={name}>
       <div className="who">{who}<div style={{ minWidth: 0 }}><div className="n">{name}</div><div className="h">{sub}</div></div></div>
       <Stepper rid={r.id} target={target} holeIdx={i} gross={gross} par={h.par} readOnly={readOnly} />
-      <div className={`hp${gross === null ? ' off' : ''}`}>{gross === null ? '–' : pts}<small>pts</small></div>
+      <div className={`hp${gross === null ? ' off' : ''}`}>{gross === null ? '–' : pts}<small>{unit}</small></div>
     </div>
   );
 
@@ -194,8 +198,8 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               return row(
                 <TeamAvatar players={grp.players} />,
                 gname(grp, t),
-                <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}{shotsBit(tr.shots)}Team HCP {teamHandicap(S, r.id, t)}</>,
-                { team: t }, tr.gross, tr.pts,
+                <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}Team HCP {fmt1(tt.hcp)} · {tt.strokes} gross thru {tt.played}</>,
+                { team: t }, tr.gross, tt.played ? signed(tt.netToPar!) : '–', 'net',
               );
             })
           : g.players.map((pid) => {
