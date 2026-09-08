@@ -11,7 +11,7 @@ import {
 import { setBonusBall, setDrive, setGross } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import type { BonusBall, TripState } from '../lib/state';
-import { Avatar, TeamAvatar } from '../components/Avatar';
+import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { LiveScorecard } from '../components/RoundBits';
 import { Chevron, GroupBet, HoleBitsPanel } from '../components/Bits';
@@ -68,36 +68,34 @@ function Stepper({ rid, target, holeIdx, gross, par, readOnly }: { rid: string; 
   );
 }
 
-// Scramble day: whose tee shot the team took on this hole. Each member's has
-// to be used RULES.scrambleDrives times, so the running count sits on the
-// buttons and the line underneath says who still owes how many.
-function DriveRow({ S, rid, t, holeIdx, readOnly }: { S: TripState; rid: string; t: number; holeIdx: number; readOnly: boolean }) {
+// Scramble day: whose tee shot the team took on this hole. The two faces in
+// the team's row are the buttons — tap one to mark the drive (again to
+// clear), the chosen face gets a brass ring, the badge is that player's
+// running count. Each member's drive has to be used RULES.scrambleDrives
+// times; the line under the row says who still owes how many.
+function DrivePick({ S, rid, t, holeIdx, readOnly }: { S: TripState; rid: string; t: number; holeIdx: number; readOnly: boolean }) {
   const grp = groupsFor(S, rid)[t];
   const dt = driveTally(S, rid, t);
   const cur = teamDrives(S, rid, t)[holeIdx];
-  const owed = dt.by.filter((x) => x.need > 0);
-  const note = dt.done
-    ? `${RULES.scrambleDrives} each — done`
-    : (dt.short ? 'Not enough holes left: ' : '') + owed.map((x) => `${first(x.pid)} needs ${x.need}`).join(' · ');
   return (
-    <div className="drive-row">
-      <span className="dl">Drive</span>
-      {readOnly
-        ? <b>{cur ? first(cur) : '–'}</b>
-        : (
-          <div className="seg sm" role="group" aria-label="Whose drive">
-            {grp.players.map((pid) => (
-              <button key={pid} className={cur === pid ? 'on' : ''} aria-pressed={cur === pid}
-                onClick={() => setDrive(rid, t, holeIdx, cur === pid ? null : pid)}>
-                {first(pid)}<small>{dt.by.find((x) => x.pid === pid)!.used}</small>
-              </button>
-            ))}
-          </div>
-        )}
-      <small className={dt.short ? 'warn' : ''}>{note}</small>
+    <div className="av-pick" role="group" aria-label="Whose drive">
+      {grp.players.map((pid) => {
+        const on = cur === pid;
+        const face = <Avatar p={PL(pid)} badge={<em>{dt.by.find((x) => x.pid === pid)!.used}</em>} />;
+        return readOnly
+          ? <span key={pid} className={on ? 'on' : ''}>{face}</span>
+          : (
+            <button key={pid} type="button" className={on ? 'on' : ''} aria-pressed={on} aria-label={`${first(pid)}'s drive`}
+              onClick={() => setDrive(rid, t, holeIdx, on ? null : pid)}>{face}</button>
+          );
+      })}
     </div>
   );
 }
+// "Adam needs 3" / "Not enough holes left: …" / "7 each — done"
+const driveNote = (dt: ReturnType<typeof driveTally>) => dt.done
+  ? `${RULES.scrambleDrives} each — done`
+  : (dt.short ? 'Not enough holes left: ' : '') + dt.by.filter((x) => x.need > 0).map((x) => `${first(x.pid)} needs ${x.need}`).join(' · ');
 
 // Bonus balls, one per player for the trip: it must be played on one hole a
 // round for double points (the 18th if never called); mark it lost and it's
@@ -226,16 +224,14 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               const grp = groupsFor(S, r.id)[t];
               const tt = teamTally(S, r.id, t);
               const tr = tt.rows[i];
-              return (
-                <div className="team-entry" key={t}>
-                  {row(
-                    <TeamAvatar players={grp.players} />,
-                    gname(grp, t),
-                    <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}Team HCP {fmt1(tt.hcp)} · {tt.strokes} gross thru {tt.played}</>,
-                    { team: t }, tr.gross, tt.played ? signed(tt.netToPar!) : '–', 'net',
-                  )}
-                  <DriveRow S={S} rid={r.id} t={t} holeIdx={i} readOnly={readOnly} />
-                </div>
+              const dt = driveTally(S, r.id, t);
+              const drive = teamDrives(S, r.id, t)[i];
+              return row(
+                <DrivePick S={S} rid={r.id} t={t} holeIdx={i} readOnly={readOnly} />,
+                gname(grp, t),
+                <>{grp.players.map(first).join(' · ')}<br />{relBit(tr.gross)}Team HCP {fmt1(tt.hcp)} · {tt.strokes} gross thru {tt.played}
+                  <br /><span className={`drive-note${dt.short ? ' warn' : ''}`}>{drive ? <><b>Drive · {first(drive)}</b> · </> : null}{driveNote(dt)}</span></>,
+                { team: t }, tr.gross, tt.played ? signed(tt.netToPar!) : '–', 'net',
               );
             })
           : g.players.map((pid) => {

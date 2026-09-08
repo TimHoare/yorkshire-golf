@@ -259,19 +259,23 @@ describe('app flow', () => {
     setGroupDraw('d3', [['p1', 'p3'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']]);
     const { container } = mount('/round/d3/score/1');
     const slide1 = container.querySelector('.slide[data-slide="1"]')!;
-    const teamA = [...slide1.querySelectorAll('.team-entry')].find((r) => within(r as HTMLElement).queryByText('Team A'))! as HTMLElement;
+    const teamA = [...slide1.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Team A'))! as HTMLElement;
     const picker = within(teamA).getByLabelText('Whose drive');
+    const tim = within(picker).getByLabelText("Tim's drive"), adam = within(picker).getByLabelText("Adam's drive");
     expect(within(teamA).getByText('Tim needs 7 · Adam needs 7')).toBeTruthy();
-    fireEvent.click(within(picker).getByText('Tim'));
+    expect(tim.querySelector('em')!.textContent).toBe('0');
+    fireEvent.click(tim);
     let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.drives.d3['0'][0]).toBe('p1');
-    expect(within(teamA).getByText('Tim needs 6 · Adam needs 7')).toBeTruthy();
-    expect(within(picker).getByText('Tim').className).toBe('on');
-    // tapping the other name moves the drive; tapping the chosen one again clears it
-    fireEvent.click(within(picker).getByText('Adam'));
+    expect(teamA.querySelector('.drive-note')!.textContent).toBe('Drive · Tim · Tim needs 6 · Adam needs 7');
+    expect(tim.className).toBe('on');
+    expect(tim.querySelector('em')!.textContent).toBe('1');
+    // tapping the other face moves the drive; tapping the chosen one again clears it
+    fireEvent.click(adam);
     saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.drives.d3['0'][0]).toBe('p3');
-    fireEvent.click(within(picker).getByText('Adam'));
+    expect(tim.className).toBe('');
+    fireEvent.click(adam);
     saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.drives.d3['0'][0]).toBeNull();
     // no pickup on a team row: the − button is a plain stroke fewer
