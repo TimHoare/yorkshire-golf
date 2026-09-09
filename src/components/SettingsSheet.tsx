@@ -3,6 +3,7 @@ import { hasSync, setMe, setStakes, setTeeChoice, resetAll } from '../lib/store'
 import { useStore } from '../lib/useStore';
 import { RULES } from '../data/trip';
 import { BIT_KINDS, stakesFor } from '../lib/state';
+import { trim } from '../lib/scoring';
 import { toast } from '../lib/toast';
 import { useState } from 'react';
 
@@ -101,7 +102,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="course-edit">
           <h3>Rules in play</h3>
-          <p className="help">Week points {RULES.placePoints.join(' · ')} for 1st–8th, ties on the back 9/6/3 · pairs &amp; scramble add {RULES.pairPoints.join(' · ')} each (ties share) · scramble is net strokes off a team hcp of {RULES.scrambleAllowance[0]}% of the lower CH + {RULES.scrambleAllowance[1]}% of the higher, to one decimal, {RULES.scrambleDrives} drives each · bonus ball 2× one hole every round (the 18th if not called), a mulligan on scramble day, +{RULES.bonusKeep} if kept all trip · index ±0.5 per point from {RULES.par} · {RULES.allowance}% allowance. Change these in the code.</p>
+          <p className="help">Week points {RULES.placePoints.join(' · ')} for 1st–8th, ties on the back 9/6/3 · pairs &amp; scramble add {RULES.pairPoints.join(' · ')} each (ties share) · scramble is net strokes off a team hcp of {RULES.scrambleAllowance[0]}% of the lower CH + {RULES.scrambleAllowance[1]}% of the higher, to one decimal, {RULES.scrambleDrives} drives each · bonus ball 2× one hole every round (the 18th if not called), a mulligan on scramble day, +{RULES.bonusKeep} if kept all trip · index ±0.5 per point from {RULES.par}, and on scramble day {RULES.scrambleDrift.map((d) => (d > 0 ? '+' : '−') + trim(Math.abs(d))).join(' · ')} for 1st–4th · {RULES.allowance}% allowance. Change these in the code.</p>
         </div>
         <div className="course-edit">
           <div className="btn-row">

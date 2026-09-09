@@ -86,8 +86,8 @@ export function PlayerPage() {
                 line.push(<span key="p"> · {pl}{['st','nd','rd'][pl - 1] || 'th'} · <b>{trim(wp ?? 0)} week pts</b>{split}</span>);
               }
             }
-            if (applied) line.push(<span key="i" className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}> · Index {fmt1(before)} → {fmt1(after)}</span>);
           }
+          if (applied) line.push(<span key="i" className={`delta ${after < before ? 'down' : after > before ? 'up' : 'flat'}`}> · Index {fmt1(before)} → {fmt1(after)}</span>);
           return (
             <Link className="pweek-row" to={`/player/${pid}/round/${r.id}`} key={r.id}>
               <div className="itin-date">

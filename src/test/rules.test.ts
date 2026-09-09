@@ -5,7 +5,7 @@ import { R } from '../data/trip';
 import { defaultState, type TripState } from '../lib/state';
 import {
   courseHandicap, currentIndex, indexHistory, pairPointsFor, pairTotals, phFor, playerTally, playingHandicap,
-  roundStatus, scrambleResults, shotsOn, stablefordResults, standings, teamHandicap, teamTally,
+  indexBefore, roundStatus, scrambleResults, shotsOn, stablefordResults, standings, teamHandicap, teamTally,
 } from '../lib/scoring';
 
 const PIDS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'];
@@ -41,7 +41,7 @@ describe('index drift', () => {
     expect(indexHistory(S, 'p1')[0].applied).toBe(false);
     expect(indexHistory(S, 'p1')[0].after).toBe(14.0);
   });
-  it('counts the bonus-ball doubling but ignores the scramble', () => {
+  it('counts the bonus-ball doubling; the scramble moves it by team place once every team is in', () => {
     const S = defaultState();
     S.scores.d1 = { p1: netParFor(S, 'd1', 'p1') };
     S.bonus.p1 = { used: { d1: 0 }, lost: null };
@@ -50,11 +50,54 @@ describe('index drift', () => {
     S.bonus.p1 = { used: { d1: 0 }, lost: 'd1' }; // lost on its hole: the 2× is void, back to 36
     expect(indexHistory(S, 'p1')[0].after).toBe(12.0);
     S.bonus.p1 = { used: { d1: 0 }, lost: null };
-    S.scramble.d3 = { 0: Array(18).fill(4), 1: Array(18).fill(4), 2: Array(18).fill(4), 3: Array(18).fill(4) };
-    const d3 = indexHistory(S, 'p1')[2];
+    S.scramble.d3 = { 0: Array(18).fill(4), 1: Array(18).fill(4), 2: Array(18).fill(4) };
+    let d3 = indexHistory(S, 'p1')[2];
     expect(d3.round.id).toBe('d3');
-    expect(d3.applied).toBe(false);
+    expect(d3.applied).toBe(false);   // one team still out
     expect(d3.after).toBe(d3.before);
+    S.scramble.d3[3] = Array(18).fill(4);
+    d3 = indexHistory(S, 'p1')[2];
+    expect(d3.applied).toBe(true);
+    expect(d3.after).not.toBe(d3.before);
+  });
+  it('scramble day: 1st −1, 2nd −0.5, 3rd +0.5, 4th +1 for each member, off the index carried in', () => {
+    const S = defaultState();
+    // Teams as placeholders: A Tim & Adam, B Liam K & Harry, C Matthew & Josh, D Rob & Liam C.
+    // Handicaps 7.0 · 5.9 · 8.3 · 1.8 — level gross puts C 1st, A 2nd, B 3rd, D 4th.
+    S.scramble.d3 = { 0: Array(18).fill(4), 1: Array(18).fill(4), 2: Array(18).fill(4), 3: Array(18).fill(4) };
+    const res = scrambleResults(S, 'd3');
+    expect([res.rows.p2.place, res.rows.p1.place, res.rows.p5.place, res.rows.p6.place]).toEqual([1, 2, 3, 4]);
+    const at = (pid: string) => indexHistory(S, pid).find((h) => h.round.id === 'd3')!;
+    expect(at('p2')).toMatchObject({ before: 19.3, after: 18.3, applied: true }); // Matthew, 1st
+    expect(at('p4')).toMatchObject({ before: 17.2, after: 16.2, applied: true }); // Josh, 1st
+    expect(at('p1')).toMatchObject({ before: 14.0, after: 13.5, applied: true }); // Tim, 2nd
+    expect(at('p5')).toMatchObject({ before: 9.1, after: 9.6, applied: true });   // Liam K, 3rd
+    expect(at('p6')).toMatchObject({ before: 3.8, after: 4.8, applied: true });   // Rob, 4th
+    // it carries into Thursday, and Thursday's card is played off it
+    expect(indexBefore(S, 'p6', 'd4')).toBe(4.8);
+    expect(currentIndex(S, 'p2')).toBe(18.3);
+    // the team handicap is off the index carried in, not the one going out
+    expect(teamHandicap(S, 'd3', 3)).toBe(1.8);
+    // a poor Monday lifts Tim's index first; the scramble step comes off that
+    S.scores.d1 = { p1: netParFor(S, 'd1', 'p1', bogeys(8)) }; // 30 points → 15.0
+    expect(at('p1').before).toBe(15.0);
+    expect(at('p1').after).toBe(15.0 + [-1, -0.5, 0.5, 1][scrambleResults(S, 'd3').rows.p1.place - 1]);
+  });
+  it('scramble day: teams level on net take the shared place, so two tied 1st both come down a shot', () => {
+    const S = defaultState();
+    // Adam & Liam K and Josh & Liam C off the same team handicap, level gross
+    S.groups.d3 = [['p3', 'p5'], ['p4', 'p8'], ['p1', 'p2'], ['p6', 'p7']];
+    const gross = (over: number) => R('d3')!.holes.map((h, i) => h.par + (i < over ? 1 : 0));
+    S.scramble.d3 = { 0: gross(0), 1: gross(0), 2: gross(3), 3: gross(4) };
+    const res = scrambleResults(S, 'd3');
+    expect(res.rows.p3).toMatchObject({ place: 1, tie: true });
+    expect(res.rows.p8).toMatchObject({ place: 1, tie: true });
+    expect(res.rows.p1.place).toBe(3);
+    const at = (pid: string) => indexHistory(S, pid).find((h) => h.round.id === 'd3')!;
+    expect(at('p3').after).toBe(at('p3').before - 1);
+    expect(at('p8').after).toBe(at('p8').before - 1);
+    expect(at('p1').after).toBe(at('p1').before + 0.5);
+    expect(at('p7').after).toBe(at('p7').before + 1);
   });
 });
 

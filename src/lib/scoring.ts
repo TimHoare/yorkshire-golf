@@ -87,18 +87,26 @@ export const bonusGoneBy = (S: TripState, rid: string, pid: string): boolean => 
   return !!lost && roundIdx(lost) < roundIdx(rid);
 };
 
-// Index entering each round: −0.5 per point over 32 for every completed stableford round before it.
-// Uses competition points, so a bonus ball's doubled hole moves the handicap too.
-export function indexHistory(S: TripState, pid: string) {
+// Index entering each round: −0.5 per point over 32 for every completed
+// stableford round before it, and on scramble day a fixed step for where the
+// team finished (RULES.scrambleDrift, 1st–4th) once every team is in. Uses
+// competition points, so a bonus ball's doubled hole moves the handicap too.
+// `upto` stops the history before that round: the scramble result needs the
+// indexes carried into scramble day, which must not depend on its own outcome.
+export function indexHistory(S: TripState, pid: string, upto?: string) {
   const p = PL(pid);
   const out: { round: Round; before: number; after: number; applied: boolean }[] = [];
   let idx = p.start;
   for (const r of ROUNDS) {
+    if (r.id === upto) break;
     const before = idx;
     let after = idx, applied = false;
     if (r.format === 'stableford') {
       const t = tally(r.id, holesOf(S, r.id, pid), playingHandicap(S, idx, r.id), bonusHoleFor(S, r.id, pid));
       if (t.complete) { after = idx - 0.5 * (t.pts - RULES.par); applied = true; }
+    } else {
+      const res = scrambleResults(S, r.id).rows[pid];
+      if (res) { after = round1(idx + (RULES.scrambleDrift[res.place - 1] ?? 0)); applied = true; }
     }
     out.push({ round: r, before, after, applied });
     idx = after;
@@ -109,8 +117,11 @@ export const currentIndex = (S: TripState, pid: string) => {
   const h = indexHistory(S, pid);
   return h[h.length - 1].after;
 };
-export const indexBefore = (S: TripState, pid: string, rid: string) =>
-  indexHistory(S, pid).find((h) => h.round.id === rid)!.before;
+// The index carried into a round: the history up to, not including, it.
+export const indexBefore = (S: TripState, pid: string, rid: string) => {
+  const h = indexHistory(S, pid, rid);
+  return h.length ? h[h.length - 1].after : PL(pid).start;
+};
 export const phFor = (S: TripState, pid: string, rid: string) =>
   playingHandicap(S, indexBefore(S, pid, rid), rid);
 export const playerTally = (S: TripState, rid: string, pid: string) =>
