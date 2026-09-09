@@ -1461,5 +1461,9 @@
 {"id":1461,"tbl":"team_scores","op":"UPDATE","data":{"hole":18,"team":2,"gross":5,"round_id":"d3","updated_at":"2026-09-09T16:16:35.396+00:00"},"at":"2026-09-09T16:16:35.476778+00:00"},
 {"id":1462,"tbl":"bit_events","op":"INSERT","data":{"grp":1,"hole":18,"kind":"cuckoo","counts":{"p2":1},"last_pid":"p2","round_id":"d3","updated_at":"2026-09-09T16:16:39.442+00:00"},"at":"2026-09-09T16:16:39.527675+00:00"},
 {"id":1463,"tbl":"bit_events","op":"UPDATE","data":{"grp":1,"hole":18,"kind":"cuckoo","counts":{"p2":1,"p3":1},"last_pid":"p3","round_id":"d3","updated_at":"2026-09-09T16:16:40.308+00:00"},"at":"2026-09-09T16:16:40.401042+00:00"},
-{"id":1464,"tbl":"bit_events","op":"INSERT","data":{"grp":1,"hole":18,"kind":"camel","counts":{"p2":1},"last_pid":"p2","round_id":"d3","updated_at":"2026-09-09T16:16:51.463+00:00"},"at":"2026-09-09T16:16:51.544671+00:00"}
+{"id":1464,"tbl":"bit_events","op":"INSERT","data":{"grp":1,"hole":18,"kind":"camel","counts":{"p2":1},"last_pid":"p2","round_id":"d3","updated_at":"2026-09-09T16:16:51.463+00:00"},"at":"2026-09-09T16:16:51.544671+00:00"},
+{"id":1465,"tbl":"bit_events","op":"UPDATE","data":{"grp":0,"hole":18,"kind":"lostball","counts":{"p5":1},"last_pid":"p5","round_id":"d3","updated_at":"2026-09-09T16:39:40.467+00:00"},"at":"2026-09-09T16:39:39.082626+00:00"},
+{"id":1466,"tbl":"bit_events","op":"UPDATE","data":{"grp":0,"hole":18,"kind":"lostball","counts":{},"last_pid":null,"round_id":"d3","updated_at":"2026-09-09T16:39:43.952+00:00"},"at":"2026-09-09T16:39:42.36568+00:00"},
+{"id":1467,"tbl":"bit_events","op":"UPDATE","data":{"grp":0,"hole":18,"kind":"lostball","counts":{"p1":1},"last_pid":"p1","round_id":"d3","updated_at":"2026-09-09T16:40:48.249+00:00"},"at":"2026-09-09T16:40:46.90208+00:00"},
+{"id":1468,"tbl":"group_draws","op":"INSERT","data":{"groups":[["p6","p8","p2","p1"],["p3","p5","p4","p7"]],"round_id":"d4","updated_at":"2026-09-09T18:17:38.083+00:00"},"at":"2026-09-09T18:17:08.29632+00:00"}
 ]
