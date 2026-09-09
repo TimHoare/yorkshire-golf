@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultState, migrate, stakesFor } from '../lib/state';
 import {
-  blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, driveTally, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
+  blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, driveTally, firstUnfinishedHole, flightsFor, fmtMoney, groupBitOwed, groupBitTally,
   holePoints, pairPointsFor, pairTotals, playerBetPaid, playerBitCount, playerBitTotal, playerTally, roundPoints, scrambleResults, shotsOn,
   stablefordResults, standings, tally, toParStr,
 } from '../lib/scoring';
@@ -207,6 +207,24 @@ describe('side bets', () => {
     expect(playerBetPaid(S, 'd1', 'p2')).toBe(60);
     expect(playerBetPaid(S, 'd2', 'p4')).toBe(200);
     expect(playerBetPaid(S, 'd2', 'p1')).toBe(30);
+  });
+  it("scramble day: three-putts are the team's, counted once, and each member pays the stake per one", () => {
+    const S = defaultState();
+    S.stakes.threeputt = 20;
+    // flight 0 is Teams A (p1 & p3) and B (p5 & p7): A three-putt the 1st and 3rd (a four-putt), B the 2nd
+    S.bits.d3 = { 0: {
+      threeputt: [{ counts: { p1: 1, p3: 1 }, last: null }, { counts: { p5: 1, p7: 1 }, last: null }, { counts: { p1: 2, p3: 2 }, last: null }, ...Array(15).fill(null)],
+      cuckoo: [{ counts: { p1: 1 }, last: 'p1' }, ...Array(17).fill(null)],
+    } };
+    const t = groupBitTally(S, 'd3', 0, 'threeputt');
+    expect(t.total).toBe(4);            // team three-putts, not member counts
+    expect(t.last).toBeNull();          // nobody holds the last one
+    expect(groupBitOwed(S, 'd3', 0, 'threeputt')).toEqual({ p1: 60, p3: 60, p5: 20, p7: 20 });
+    expect(playerBitCount(S, 'd3', 'p3', 'threeputt')).toBe(3);
+    expect(playerBetPaid(S, 'd3', 'p1')).toBe(70);   // 3 three-putts at 20p plus the lone cuckoo at 10p
+    expect(playerBetPaid(S, 'd3', 'p7')).toBe(20);
+    // the other kinds still go last-one-pays on scramble day
+    expect(groupBitOwed(S, 'd3', 0, 'cuckoo')).toEqual({ p1: 10 });
   });
   it('migrate keeps bits and stakes, pads holes, drops junk', () => {
     const S = migrate({

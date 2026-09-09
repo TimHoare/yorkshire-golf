@@ -317,6 +317,39 @@ describe('app flow', () => {
     expect(saved.bits.d1[1].cuckoo[0].counts.p6).toBe(2);
   });
 
+  it('scramble scoring: three-putts are logged per team, to both members, with no last holder', () => {
+    setMe('p1'); // Tim, Team A with Adam; flight with Team B (Liam K & Harry)
+    setGroupDraw('d3', [['p1', 'p3'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']]);
+    const { container } = mount('/round/d3/score/1');
+    const slide1 = container.querySelector('.slide[data-slide="1"]')! as HTMLElement;
+    fireEvent.click(within(slide1).getByText('Three-putts'));
+    const plus = within(slide1).getByLabelText('One three-putt more for Tim & Adam');
+    expect(within(slide1).getByLabelText('One three-putt more for Liam K & Harry')).toBeTruthy();
+    expect(within(slide1).queryByLabelText('One three-putt more for Tim')).toBeNull();
+    fireEvent.click(plus);
+    fireEvent.click(plus);
+    let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    expect(saved.bits.d3[0].threeputt[0].counts).toEqual({ p1: 2, p3: 2 });
+    expect(within(slide1).queryByText('Last')).toBeNull();   // nobody holds the last one
+    // the bet card: two team three-putts, each member pays 10p a go
+    const card = container.querySelector('.bet-card')! as HTMLElement;
+    expect(card.textContent).toContain('2 three-putts');
+    expect(card.textContent).toContain('Tim & Adam 2');
+    expect(within(card).getByText('40p', { selector: '.bet-amt' })).toBeTruthy();
+    expect(card.textContent).toContain('Tim puts in 20p');
+    expect(card.textContent).toContain('Adam puts in 20p');
+    // cuckoos are still one player's, last one pays
+    fireEvent.click(within(slide1).getByText('Cuckoos'));
+    fireEvent.click(within(slide1).getByLabelText('One cuckoo more for Tim'));
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    expect(saved.bits.d3[0].cuckoo[0]).toEqual({ counts: { p1: 1 }, last: 'p1' });
+    // one fewer for the team takes it off both (opening Cuckoos shut the three-putt row)
+    fireEvent.click(within(slide1).getByText('Three-putts'));
+    fireEvent.click(within(slide1).getByLabelText('One three-putt fewer for Tim & Adam'));
+    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    expect(saved.bits.d3[0].threeputt[0].counts).toEqual({ p1: 1, p3: 1 });
+  });
+
   it("other groups' cards are read-only; watchers can't score at all", () => {
     setMe('p6'); // Rob, group 2 of d1
     setGroupDraw('d1', [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']]);

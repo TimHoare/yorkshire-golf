@@ -301,8 +301,7 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
       {scramble
         ? <MulliganPanel S={S} r={r} players={flightsFor(S, r.id)[group].players} holeIdx={i} readOnly={readOnly} />
         : <BonusPanel S={S} r={r} players={g.players} holeIdx={i} readOnly={readOnly} />}
-      <HoleBitsPanel rid={r.id} group={group} holeIdx={i}
-        players={scramble ? flightsFor(S, r.id)[group].players : g.players} readOnly={readOnly} />
+      <HoleBitsPanel rid={r.id} group={group} holeIdx={i} readOnly={readOnly} />
     </section>
   );
 }

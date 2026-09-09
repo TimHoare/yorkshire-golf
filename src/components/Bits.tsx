@@ -1,14 +1,16 @@
 // Side bets: cuckoos (trees), camels (bunkers), fish (water), three-putts, lost balls, equipment abuse.
 // Logged hole by hole per tee group — a count per player plus who had the
 // last one, so the round ends with a total of each and a payer: the player
-// holding the last one puts total × stake into the group bet.
+// holding the last one puts total × stake into the group bet. Three-putts on
+// scramble day are the team's: logged against both members, each pays the
+// stake per one.
 import { useState } from 'react';
 import { BITS, PL, first, gname, type Round } from '../data/trip';
 import { BIT_KINDS, stakesFor, type BitKind } from '../lib/state';
-import { bitsOf, fmtMoney, flightName, flightsFor, groupBitTallies, groupsFor, holeBitTotal } from '../lib/scoring';
+import { bitUnits, bitsOf, fmtMoney, flightName, flightsFor, groupBitOwed, groupBitTallies, groupsFor, holeBitTotal, playerBitCount, teamBit, unitBitCount } from '../lib/scoring';
 import { setHoleBits } from '../lib/store';
 import { useStore } from '../lib/useStore';
-import { Avatar } from './Avatar';
+import { Avatar, TeamAvatar } from './Avatar';
 
 // The disclosure arrow on a collapsible row: points down when shut, up when open.
 export const Chevron = () => (
@@ -18,19 +20,20 @@ export const Chevron = () => (
 // Per-hole editor shown on each scoring slide: collapsible rows, one per
 // kind. Tap a row to open per-player − / + steppers; + marks that player as
 // having the last one, so entering them in the order they happened just works.
-export function HoleBitsPanel({ rid, group, holeIdx, players, readOnly }: {
-  rid: string; group: number; holeIdx: number; players: string[]; readOnly: boolean;
+// A team kind gets one stepper per team, written to both members.
+export function HoleBitsPanel({ rid, group, holeIdx, readOnly }: {
+  rid: string; group: number; holeIdx: number; readOnly: boolean;
 }) {
   const { S } = useStore();
   const [open, setOpen] = useState<BitKind | null>(null);
 
-  const bump = (kind: BitKind, pid: string, d: number) => {
+  const bump = (kind: BitKind, unit: string[], d: number) => {
     const hb = bitsOf(S, rid, group, kind)[holeIdx] || { counts: {}, last: null };
-    const c = Math.max(0, (hb.counts[pid] || 0) + d);
-    if (c === (hb.counts[pid] || 0)) return;
+    const c = Math.max(0, unitBitCount(hb, unit) + d);
+    if (c === unitBitCount(hb, unit)) return;
     const counts = { ...hb.counts };
-    if (c) counts[pid] = c; else delete counts[pid];
-    let last = d > 0 ? pid : hb.last;
+    for (const pid of unit) if (c) counts[pid] = c; else delete counts[pid];
+    let last = teamBit(rid, kind) ? null : d > 0 ? unit[0] : hb.last;
     if (last && !counts[last]) last = Object.keys(counts)[0] ?? null;
     setHoleBits(rid, group, kind, holeIdx, { counts, last });
   };
@@ -43,34 +46,37 @@ export function HoleBitsPanel({ rid, group, holeIdx, players, readOnly }: {
       </div>
       {BIT_KINDS.map((kind) => {
         const hb = bitsOf(S, rid, group, kind)[holeIdx];
-        const total = holeBitTotal(hb);
+        const team = teamBit(rid, kind);
+        const units = bitUnits(S, rid, group, kind);
+        const total = team ? units.reduce((a, u) => a + unitBitCount(hb, u), 0) : holeBitTotal(hb);
         const isOpen = open === kind;
         return (
           <div className={`bit${isOpen ? ' open' : ''}`} key={kind}>
             <button className="bit-row" onClick={() => setOpen(isOpen ? null : kind)} aria-expanded={isOpen}>
               <span className="bit-ic" aria-hidden>{BITS[kind].icon}</span>
-              <span className="bit-l"><b>{BITS[kind].label}</b><small>{BITS[kind].desc}</small></span>
+              <span className="bit-l"><b>{BITS[kind].label}</b><small>{BITS[kind].desc}{team ? " · the team's, each member pays" : ''}</small></span>
               <span className={`bit-n${total ? '' : ' off'}`}>{total || '–'}</span>
               <Chevron />
             </button>
             {isOpen && (
               <div className="bit-edit">
-                {players.map((pid) => {
-                  const n = hb?.counts[pid] || 0;
+                {units.map((unit) => {
+                  const n = unitBitCount(hb, unit);
+                  const name = unit.map(first).join(' & ');
                   return (
-                    <div className="bit-p" key={pid}>
-                      <Avatar p={PL(pid)} size="sm" />
+                    <div className="bit-p" key={unit.join('+')}>
+                      {unit.length > 1 ? <TeamAvatar players={unit} size="sm" /> : <Avatar p={PL(unit[0])} size="sm" />}
                       <span className="bit-pn">
-                        {first(pid)}
-                        {hb?.last === pid && total > 0 && <span className="chip gorse">Last</span>}
+                        {name}
+                        {!team && hb?.last === unit[0] && total > 0 && <span className="chip gorse">Last</span>}
                       </span>
                       {readOnly
                         ? <span className={`bit-n${n ? '' : ' off'}`}>{n || '–'}</span>
                         : (
                           <span className="stepper sm">
-                            <button onClick={() => bump(kind, pid, -1)} aria-label={`One ${BITS[kind].one} fewer for ${first(pid)}`}>−</button>
+                            <button onClick={() => bump(kind, unit, -1)} aria-label={`One ${BITS[kind].one} fewer for ${name}`}>−</button>
                             <span className={`v${n ? '' : ' off'}`}>{n}</span>
-                            <button onClick={() => bump(kind, pid, 1)} aria-label={`One ${BITS[kind].one} more for ${first(pid)}`}>+</button>
+                            <button onClick={() => bump(kind, unit, 1)} aria-label={`One ${BITS[kind].one} more for ${name}`}>+</button>
                           </span>
                         )}
                     </div>
@@ -93,11 +99,17 @@ export function GroupBet({ r, group, title }: { r: Round; group: number; title?:
   const stakes = stakesFor(S, r.id);
   if (!rows.length) return null;
 
+  // Who puts in what, per kind and in all; a team kind's row lists each
+  // team's count, and both members pay for every one.
+  const owedFor = (kind: BitKind) => groupBitOwed(S, r.id, group, kind);
   const owed = new Map<string, number>();
-  rows.forEach((x) => {
-    if (x.last) owed.set(x.last, (owed.get(x.last) || 0) + x.total * stakes[x.kind]);
-  });
-  const pot = rows.reduce((a, x) => a + x.total * stakes[x.kind], 0);
+  rows.forEach((x) => Object.entries(owedFor(x.kind)).forEach(([pid, p]) => owed.set(pid, (owed.get(pid) || 0) + p)));
+  const amount = (kind: BitKind) => Object.values(owedFor(kind)).reduce((a, p) => a + p, 0);
+  const pot = rows.reduce((a, x) => a + amount(x.kind), 0);
+  const teamLine = (kind: BitKind) => bitUnits(S, r.id, group, kind)
+    .map((u) => ({ u, n: playerBitCount(S, r.id, u[0], kind) }))
+    .filter((x) => x.n > 0)
+    .map((x, k) => <span key={x.u.join('+')}>{k > 0 && ' · '}<b>{x.u.map(first).join(' & ')}</b> {x.n}</span>);
 
   return (
     <div className="bet-card card">
@@ -107,9 +119,9 @@ export function GroupBet({ r, group, title }: { r: Round; group: number; title?:
       {rows.map((x) => (
         <div className="bet-row" key={x.kind}>
           <span className="bit-ic" aria-hidden>{BITS[x.kind].icon}</span>
-          <span className="bet-what"><b>{x.total}</b> {x.total === 1 ? BITS[x.kind].one : BITS[x.kind].label.toLowerCase()} <small>@ {fmtMoney(stakes[x.kind])}</small></span>
-          <span className="bet-last">{x.last ? <>Last: <b>{first(x.last)}</b></> : '—'}</span>
-          <b className="bet-amt">{fmtMoney(x.total * stakes[x.kind])}</b>
+          <span className="bet-what"><b>{x.total}</b> {x.total === 1 ? BITS[x.kind].one : BITS[x.kind].label.toLowerCase()} <small>@ {fmtMoney(stakes[x.kind])}{teamBit(r.id, x.kind) ? ' each member' : ''}</small></span>
+          <span className="bet-last">{teamBit(r.id, x.kind) ? teamLine(x.kind) : x.last ? <>Last: <b>{first(x.last)}</b></> : '—'}</span>
+          <b className="bet-amt">{fmtMoney(amount(x.kind))}</b>
         </div>
       ))}
       <div className="bet-foot">

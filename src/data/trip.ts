@@ -86,7 +86,8 @@ export const RULES = {
 // Side-bet menagerie: labels for the things logged hole by hole.
 // Amounts (pence each) live in app settings — defaults plus any day's own — and sync between phones.
 // Everything stacks: three bunkers on a hole is three camels, and a four-putt
-// is two three-putts (one per putt from the third on).
+// is two three-putts (one per putt from the third on). On scramble day a
+// three-putt is the team's: logged against both members, each pays for it.
 export const BITS: Record<BitKind, { label: string; one: string; icon: string; desc: string }> = {
   cuckoo:    { label: 'Cuckoos',     one: 'cuckoo',     icon: '🐦', desc: 'Hit a tree' },
   camel:     { label: 'Camels',      one: 'camel',      icon: '🐫', desc: 'In a bunker' },

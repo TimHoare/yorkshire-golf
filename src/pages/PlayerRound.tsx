@@ -5,11 +5,11 @@
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { BITS, PL, R, RULES, first, gname } from '../data/trip';
-import { BIT_KINDS, stakesFor } from '../lib/state';
+import { BIT_KINDS } from '../lib/state';
 import {
-  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor,
-  indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
-  teamTally, teamDrives, driveTally, driveLine, trim, signed, type Tally,
+  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, driveLine, driveTally, flightName, flightsFor, fmt1, fmtMoney, groupBitOwed, groupBitTally,
+  groupsFor, indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, signed, stablefordResults, teamBit, teamDrives,
+  teamHandicap, teamTally, trim, type Tally,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar, TeamAvatar } from '../components/Avatar';
@@ -61,11 +61,15 @@ export function PlayerRoundPage() {
   const bitsOn = (i: number, who: string) => BIT_KINDS
     .map((k) => ({ k, n: bitGroup < 0 ? 0 : bitsOf(S, r.id, bitGroup, k)[i]?.counts[who] || 0 }))
     .filter((x) => x.n > 0);
+  // A team kind (three-putts on scramble day) is logged against both members:
+  // count it once, and each puts in the stake per one.
   const bitTotals = BIT_KINDS.map((k) => {
+    const team = teamBit(r.id, k);
     const by = members.map((who) => ({ who, n: Array.from({ length: 18 }, (_, i) => bitsOn(i, who).find((x) => x.k === k)?.n || 0).reduce((a, b) => a + b, 0) }));
     const grpT = bitGroup < 0 ? null : groupBitTally(S, r.id, bitGroup, k);
+    const owed = bitGroup < 0 ? {} : groupBitOwed(S, r.id, bitGroup, k);
     const last = grpT && grpT.total > 0 && grpT.last && members.includes(grpT.last) ? grpT.last : null;
-    return { k, by, n: by.reduce((a, x) => a + x.n, 0), last, owes: grpT ? grpT.total * stakesFor(S, r.id)[k] : 0 };
+    return { k, team, by, n: team ? by[0].n : by.reduce((a, x) => a + x.n, 0), last, owes: last ? owed[last] : team ? owed[members[0]] || 0 : 0 };
   });
 
   // Result lines: place and week points once the round's decided.
@@ -84,8 +88,11 @@ export function PlayerRoundPage() {
         if (!bonusGoneBy(S, r.id, who) && S.bonus[who]?.used[r.id] === i)
           out.push(<span className="xb bonus" key={who + 'm'} title="Mulligan taken">🎱 {first(who)}</span>);
     for (const who of members)
-      for (const { k, n } of bitsOn(i, who))
-        out.push(<span className="xb" key={who + k} title={BITS[k].one}>{BITS[k].icon}{n > 1 ? `×${n}` : ''}{scramble && <small> {first(who)}</small>}</span>);
+      for (const { k, n } of bitsOn(i, who)) {
+        const team = teamBit(r.id, k);
+        if (team && who !== members[0]) continue;   // the team's, shown once
+        out.push(<span className="xb" key={who + k} title={BITS[k].one}>{BITS[k].icon}{n > 1 ? `×${n}` : ''}{scramble && !team && <small> {first(who)}</small>}</span>);
+      }
     return out;
   };
 
@@ -241,11 +248,11 @@ export function PlayerRoundPage() {
             <span className="bit-sum wrap">{bonusText}</span>
           </div>
         )}
-        {bitTotals.map(({ k, by, n, last, owes }) => (
+        {bitTotals.map(({ k, team, by, n, last, owes }) => (
           <div className="xrow" key={k}>
             <span className="bit-ic" aria-hidden>{BITS[k].icon}</span>
-            <span className="bit-l"><b>{BITS[k].label}</b><small>{scramble ? by.map((x) => `${first(x.who)} ${x.n || '–'}`).join(' · ') : BITS[k].desc}</small></span>
-            <span className="bit-sum wrap">{last ? <>{scramble ? first(last) + ' had' : 'Had'} the last one · puts in <b>{fmtMoney(owes)}</b></> : ''}</span>
+            <span className="bit-l"><b>{BITS[k].label}</b><small>{team ? "The team's · each member pays" : scramble ? by.map((x) => `${first(x.who)} ${x.n || '–'}`).join(' · ') : BITS[k].desc}</small></span>
+            <span className="bit-sum wrap">{team ? n > 0 && <>Each puts in <b>{fmtMoney(owes)}</b></> : last ? <>{scramble ? first(last) + ' had' : 'Had'} the last one · puts in <b>{fmtMoney(owes)}</b></> : ''}</span>
             <span className={`bit-n${n ? '' : ' off'}`}>{n || '–'}</span>
           </div>
         ))}

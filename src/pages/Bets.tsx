@@ -75,7 +75,7 @@ export function BetsPage() {
         ))}
       </p>
       <p className="small muted">
-        Paid is what went into the group bets{r ? ' at the day’s stakes above' : ', each day at its own stakes'}: whoever has the last one of a kind in their group at the end of the round pays the group’s total. The counts are every offence, whoever paid.
+        Paid is what went into the group bets{r ? ' at the day’s stakes above' : ', each day at its own stakes'}: whoever has the last one of a kind in their group at the end of the round pays the group’s total. Three-putts on scramble day are the team’s: both members are counted, and each pays the stake per one. The counts are every offence, whoever paid.
       </p>
     </>
   );

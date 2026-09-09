@@ -44,7 +44,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="course-edit">
           <h3>Side bets</h3>
-          <p className="help">Pence per offence — Cuckoo (tree), Camel (bunker), Fish (water), Three-putt, Lost ball, Equipment abuse. Whoever has the last one of each at the end of the round pays the total into the group bet. Every day uses the defaults unless it's given its own.</p>
+          <p className="help">Pence per offence — Cuckoo (tree), Camel (bunker), Fish (water), Three-putt, Lost ball, Equipment abuse. Whoever has the last one of each at the end of the round pays the total into the group bet — except three-putts on scramble day, which are the team's: both members are logged, and each pays the stake per one. Every day uses the defaults unless it's given its own.</p>
           <div className="stakes stake-day">
             <label>
               <span>Stakes for</span>

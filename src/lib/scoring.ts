@@ -317,21 +317,55 @@ export const bitsOf = (S: TripState, rid: string, group: number, kind: BitKind):
 export const holeBitTotal = (hb: HoleBits | null): number =>
   hb ? Object.values(hb.counts).reduce((a, c) => a + c, 0) : 0;
 
+// Three-putts on scramble day are the team's — one ball on the green — so
+// they're logged against both members and each pays the stake per one, rather
+// than whoever had the last one paying the flight's total.
+export const teamBit = (rid: string, kind: BitKind) => R(rid)!.format === 'scramble' && kind === 'threeputt';
+// What a group's sheet for one kind is logged in: each player on their own,
+// or each team in the flight for a team kind.
+export function bitUnits(S: TripState, rid: string, group: number, kind: BitKind): string[][] {
+  const groups = groupsFor(S, rid);
+  if (!teamBit(rid, kind)) return groups[group]?.players.map((pid) => [pid]) ?? [];
+  return (flightsFor(S, rid)[group]?.teams ?? []).map((t) => groups[t].players);
+}
+// A unit's count on one hole: a team's is what its members were logged with.
+export const unitBitCount = (hb: HoleBits | null, unit: string[]) =>
+  hb ? Math.max(0, ...unit.map((pid) => hb.counts[pid] || 0)) : 0;
+
 // A group's running tally for one kind: total across the round, and who had
-// the last one — the marked player on the highest hole with any logged.
+// the last one — the marked player on the highest hole with any logged. A
+// team kind counts team three-putts, and nobody holds the last one.
 export interface BitTally { kind: BitKind; total: number; last: string | null }
 export function groupBitTally(S: TripState, rid: string, group: number, kind: BitKind): BitTally {
+  const team = teamBit(rid, kind);
+  const units = team ? bitUnits(S, rid, group, kind) : [];
   let total = 0, last: string | null = null;
   for (const hb of bitsOf(S, rid, group, kind)) {
-    const n = holeBitTotal(hb);
+    const n = team ? units.reduce((a, u) => a + unitBitCount(hb, u), 0) : holeBitTotal(hb);
     if (!n) continue;
     total += n;
-    last = hb!.last ?? Object.keys(hb!.counts)[0] ?? last;
+    if (!team) last = hb!.last ?? Object.keys(hb!.counts)[0] ?? last;
   }
   return { kind, total, last };
 }
 export const groupBitTallies = (S: TripState, rid: string, group: number): BitTally[] =>
   BIT_KINDS.map((k) => groupBitTally(S, rid, group, k));
+
+// What each player in a group puts into the pot for one kind (pence): the
+// last holder pays the group's total at the day's stake, or for a team kind
+// everyone pays the stake for each one they were logged with.
+export function groupBitOwed(S: TripState, rid: string, group: number, kind: BitKind): Record<string, number> {
+  const stake = stakesFor(S, rid)[kind];
+  const owed: Record<string, number> = {};
+  if (teamBit(rid, kind)) {
+    for (const hb of bitsOf(S, rid, group, kind))
+      for (const [pid, n] of Object.entries(hb?.counts ?? {})) if (n) owed[pid] = (owed[pid] || 0) + n * stake;
+  } else {
+    const t = groupBitTally(S, rid, group, kind);
+    if (t.total > 0 && t.last) owed[t.last] = t.total * stake;
+  }
+  return owed;
+}
 
 // One player's count of a kind in one round, whichever group logged it.
 export function playerBitCount(S: TripState, rid: string, pid: string, kind: BitKind): number {
@@ -344,16 +378,12 @@ export function playerBitCount(S: TripState, rid: string, pid: string, kind: Bit
 export const playerBitTotal = (S: TripState, pid: string, kind: BitKind): number =>
   Object.keys(S.bits).reduce((a, rid) => a + playerBitCount(S, rid, pid, kind), 0);
 
-// What one player puts into the group bets in one round (pence): for each kind
-// they held the last of in their group, the group's total at that day's stake.
+// What one player puts into the group bets in one round (pence), every kind
+// in every group that logged them.
 export function playerBetPaid(S: TripState, rid: string, pid: string): number {
-  const stakes = stakesFor(S, rid);
   let p = 0;
   for (const g of Object.keys(S.bits[rid] || {}))
-    for (const k of BIT_KINDS) {
-      const t = groupBitTally(S, rid, Number(g), k);
-      if (t.total > 0 && t.last === pid) p += t.total * stakes[k];
-    }
+    for (const k of BIT_KINDS) p += groupBitOwed(S, rid, Number(g), k)[pid] || 0;
   return p;
 }
 
