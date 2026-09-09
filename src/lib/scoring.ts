@@ -116,7 +116,7 @@ export const phFor = (S: TripState, pid: string, rid: string) =>
 export const playerTally = (S: TripState, rid: string, pid: string) =>
   tally(rid, holesOf(S, rid, pid), phFor(S, pid, rid), bonusHoleFor(S, rid, pid));
 
-// Scramble team handicap: 15% of the lower course handicap plus 35% of the
+// Scramble team handicap: 35% of the lower course handicap plus 15% of the
 // higher, kept to one decimal place and taken off the team's gross score.
 export const round1 = (n: number) => Math.round(n * 10) / 10;
 export function teamHandicap(S: TripState, rid: string, t: number) {

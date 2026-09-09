@@ -59,39 +59,39 @@ describe('index drift', () => {
 });
 
 describe('scramble team handicap', () => {
-  it('takes 15% of the lower course handicap and 35% of the higher, to one decimal, whichever order the team is listed', () => {
+  it('takes 35% of the lower course handicap and 15% of the higher, to one decimal, whichever order the team is listed', () => {
     const S = defaultState();
     // Team A at Cave Castle: Tim (14.0) and Adam (16.7)
     const lo = courseHandicap(S, 14.0, 'd3');
     const hi = courseHandicap(S, 16.7, 'd3');
     expect([lo, hi]).toEqual([13, 16]);
-    expect(teamHandicap(S, 'd3', 0)).toBe(Math.round((lo * 0.15 + hi * 0.35) * 10) / 10);
-    expect(teamHandicap(S, 'd3', 0)).toBe(7.6); // 1.95 + 5.6 = 7.55 → 7.6
+    expect(teamHandicap(S, 'd3', 0)).toBe(Math.round((lo * 0.35 + hi * 0.15) * 10) / 10);
+    expect(teamHandicap(S, 'd3', 0)).toBe(7); // 4.55 + 2.4 = 6.95 → 7.0
     S.groups.d3 = [['p3', 'p1'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']];
-    expect(teamHandicap(S, 'd3', 0)).toBe(7.6);
+    expect(teamHandicap(S, 'd3', 0)).toBe(7);
   });
   it('uses the index each player carries into the round', () => {
     const S = defaultState();
     S.scores.d1 = { p1: netParFor(S, 'd1', 'p1') }; // Tim drifts 14.0 → 11.0 (38 points with the 18th doubled)
     expect(currentIndex(S, 'p1')).toBe(11.0);
     expect(courseHandicap(S, 11.0, 'd3')).toBe(9);
-    expect(teamHandicap(S, 'd3', 0)).toBe(Math.round((9 * 0.15 + 16 * 0.35) * 10) / 10);
-    expect(teamHandicap(S, 'd3', 0)).toBe(7); // 1.35 + 5.6 = 6.95 → 7.0
+    expect(teamHandicap(S, 'd3', 0)).toBe(Math.round((9 * 0.35 + 16 * 0.15) * 10) / 10);
+    expect(teamHandicap(S, 'd3', 0)).toBe(5.6); // 3.15 + 2.4 = 5.55 → 5.6
   });
   it('comes off the gross to one decimal: the team net is what places the team', () => {
     const S = defaultState();
     S.scramble.d3 = { 0: Array(18).fill(4) }; // 72 gross
     const tt = teamTally(S, 'd3', 0);
-    expect(tt.hcp).toBe(7.6);
+    expect(tt.hcp).toBe(7);
     expect(tt.strokes).toBe(72);
-    expect(tt.net).toBe(64.4);
+    expect(tt.net).toBe(65);
     expect(tt.rows.every((x) => x.shots === 0 && x.pts === null)).toBe(true); // no stableford on scramble day
     // mid-round: gross to par so far, less the whole team handicap
     S.scramble.d3 = { 0: [5, 5, ...Array(16).fill(null)] };
     const part = teamTally(S, 'd3', 0);
     expect(part.net).toBeNull();
     expect(part.toPar).toBe(10 - R('d3')!.holes[0].par - R('d3')!.holes[1].par);
-    expect(part.netToPar).toBe(Math.round((part.toPar - 7.6) * 10) / 10);
+    expect(part.netToPar).toBe(Math.round((part.toPar - 7) * 10) / 10);
   });
 });
 
@@ -125,16 +125,16 @@ describe('ties', () => {
   it('scramble: two teams level on net at the top share 5 each and nobody wins outright', () => {
     const S = defaultState();
     // Two teams off the same handicap: Adam (16) & Liam K (7) and Josh (16) &
-    // Liam C (7), both 0.15×7 + 0.35×16 = 6.65 → 6.7.
+    // Liam C (7), both 0.35×7 + 0.15×16 = 4.85 → 4.9.
     S.groups.d3 = [['p3', 'p5'], ['p4', 'p8'], ['p1', 'p2'], ['p6', 'p7']];
-    expect(teamHandicap(S, 'd3', 0)).toBe(6.7);
-    expect(teamHandicap(S, 'd3', 1)).toBe(6.7);
-    expect(teamHandicap(S, 'd3', 2)).toBe(8.3); // Tim 13 & Matthew 18: 1.95 + 6.3 = 8.25 → 8.3
-    expect(teamHandicap(S, 'd3', 3)).toBe(8.4); // Rob 2 & Harry 23
+    expect(teamHandicap(S, 'd3', 0)).toBe(4.9);
+    expect(teamHandicap(S, 'd3', 1)).toBe(4.9);
+    expect(teamHandicap(S, 'd3', 2)).toBe(7.3); // Tim 13 & Matthew 18: 4.55 + 2.7 = 7.25 → 7.3
+    expect(teamHandicap(S, 'd3', 3)).toBe(4.2); // Rob 2 & Harry 23: 0.7 + 3.45 = 4.15 → 4.2
     const gross = (over: number) => R('d3')!.holes.map((h, i) => h.par + (i < over ? 1 : 0));
-    S.scramble.d3 = { 0: gross(0), 1: gross(0), 2: gross(2), 3: gross(4) };
+    S.scramble.d3 = { 0: gross(0), 1: gross(0), 2: gross(3), 3: gross(4) };
     const res = scrambleResults(S, 'd3');
-    expect(res.ts.map((t) => t.net)).toEqual([65.3, 65.3, 65.7, 67.6]); // 72 − 6.7 · 74 − 8.3 · 76 − 8.4
+    expect(res.ts.map((t) => t.net)).toEqual([67.1, 67.1, 67.7, 71.8]); // 72 − 4.9 · 75 − 7.3 · 76 − 4.2
     expect(res.decided).toBe(true);
     expect(res.winner).toBeNull();
     expect(res.rows.p3).toEqual({ points: 5, place: 1, won: false, tie: true }); // Team A
