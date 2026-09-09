@@ -322,11 +322,14 @@ export const holeBitTotal = (hb: HoleBits | null): number =>
 // than whoever had the last one paying the flight's total.
 export const teamBit = (rid: string, kind: BitKind) => R(rid)!.format === 'scramble' && kind === 'threeputt';
 // What a group's sheet for one kind is logged in: each player on their own,
-// or each team in the flight for a team kind.
+// or each team in the flight for a team kind. On scramble day `group` is a
+// flight index, so the players are the flight's four.
 export function bitUnits(S: TripState, rid: string, group: number, kind: BitKind): string[][] {
   const groups = groupsFor(S, rid);
-  if (!teamBit(rid, kind)) return groups[group]?.players.map((pid) => [pid]) ?? [];
-  return (flightsFor(S, rid)[group]?.teams ?? []).map((t) => groups[t].players);
+  if (R(rid)!.format !== 'scramble') return groups[group]?.players.map((pid) => [pid]) ?? [];
+  const f = flightsFor(S, rid)[group];
+  if (!f) return [];
+  return teamBit(rid, kind) ? f.teams.map((t) => groups[t].players) : f.players.map((pid) => [pid]);
 }
 // A unit's count on one hole: a team's is what its members were logged with.
 export const unitBitCount = (hb: HoleBits | null, unit: string[]) =>

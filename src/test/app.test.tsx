@@ -338,8 +338,9 @@ describe('app flow', () => {
     expect(within(card).getByText('40p', { selector: '.bet-amt' })).toBeTruthy();
     expect(card.textContent).toContain('Tim puts in 20p');
     expect(card.textContent).toContain('Adam puts in 20p');
-    // cuckoos are still one player's, last one pays
+    // cuckoos are still one player's, last one pays, and all four in the flight are there
     fireEvent.click(within(slide1).getByText('Cuckoos'));
+    for (const who of ['Tim', 'Adam', 'Liam K', 'Harry']) expect(within(slide1).getByLabelText(`One cuckoo more for ${who}`)).toBeTruthy();
     fireEvent.click(within(slide1).getByLabelText('One cuckoo more for Tim'));
     saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
     expect(saved.bits.d3[0].cuckoo[0]).toEqual({ counts: { p1: 1 }, last: 'p1' });
