@@ -1,4 +1,6 @@
 [
-{"round_id":"d3","team":0,"hole":1,"gross":null,"updated_at":"2026-09-08T22:38:44.168+00:00"},
-{"round_id":"d3","team":1,"hole":1,"gross":null,"updated_at":"2026-09-08T22:38:47.496+00:00"}
+{"round_id":"d3","team":0,"hole":1,"gross":4,"updated_at":"2026-09-09T11:45:41.093+00:00"},
+{"round_id":"d3","team":1,"hole":1,"gross":3,"updated_at":"2026-09-09T11:45:41.849+00:00"},
+{"round_id":"d3","team":2,"hole":1,"gross":4,"updated_at":"2026-09-09T11:56:07.837+00:00"},
+{"round_id":"d3","team":3,"hole":1,"gross":5,"updated_at":"2026-09-09T11:56:09.446+00:00"}
 ]

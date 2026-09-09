@@ -1,4 +1,5 @@
 [
 {"id":1,"stakes":{"fish":50,"camel":50,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-07T19:59:15.707+00:00"},
-{"id":3,"stakes":{"fish":50,"camel":50,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-08T09:23:56.566+00:00"}
+{"id":3,"stakes":{"fish":50,"camel":50,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":50},"updated_at":"2026-09-08T09:23:56.566+00:00"},
+{"id":4,"stakes":{"fish":50,"camel":50,"cuckoo":10,"lostball":50,"equipment":100,"threeputt":250},"updated_at":"2026-09-09T09:25:04.998+00:00"}
 ]
