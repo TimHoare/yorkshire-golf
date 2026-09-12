@@ -1,10 +1,15 @@
-# Copies every database table into the `backups` branch every 15 minutes, as
-# JSON, committing only when something changed. Restore with scripts/restore.mjs.
+# Copies every database table into the `backups` branch as JSON, committing
+# only when something changed. Restore with scripts/restore.mjs.
+#
+# Ran every 15 minutes during the week. The database is locked now (see the
+# end of supabase-schema.sql), so nothing can change and the schedule is off;
+# run it by hand from the Actions tab if you ever want a fresh dump. For the
+# next trip, put the schedule back:
+#   schedule:
+#     - cron: '7,22,37,52 * * * *'   # off the :00/:15 rush, which GitHub drops under load
 name: Back up the database
 
 on:
-  schedule:
-    - cron: '7,22,37,52 * * * *'   # off the :00/:15 rush, which GitHub drops under load
   workflow_dispatch:
 
 permissions:

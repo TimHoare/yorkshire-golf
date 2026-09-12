@@ -37,7 +37,7 @@ Three layers, so a wiped or mangled database is an inconvenience rather than a d
 
 - **The app can't delete scores.** The policies in `supabase-schema.sql` grant read, insert and update on the score tables but not delete (only pair draws, group draws and tee choices can be cleared). The in-app "Clear all scores" only exists in single-phone mode. To start a fresh trip, `truncate` the tables in the SQL editor.
 - **A `history` table** records every insert, update and delete on every table, written by a trigger the app can't bypass. The comment at the bottom of `supabase-schema.sql` has the SQL to rebuild a table as it stood at any moment.
-- **A backup every 15 minutes.** The `Back up the database` action dumps every table as JSON into the `backups` branch, one commit per change. Restore the latest with:
+- **A backup in the `backups` branch.** The `Back up the database` action dumps every table as JSON there, one commit per change. It ran every 15 minutes during the week; with the database locked the schedule is off and it runs by hand from the Actions tab (the cron line to restore is in the workflow file). Restore the latest with:
 
 ```
 git fetch origin backups && git worktree add /tmp/yg-backups backups
