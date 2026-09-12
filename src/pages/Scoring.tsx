@@ -3,7 +3,7 @@
 // in the URL (replace, not push) so refresh restores it and history stays clean.
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
+import { FINAL, R, PL, first, gname, type Hole, type Round } from '../data/trip';
 import {
   bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
   phFor, relPar, shotsOn, teamDrives, teamHoles, teamTally, driveTally, signed, toParStr,
@@ -326,7 +326,8 @@ export function ScoringPage() {
   const myGroup = Math.max(0, myGroupIdx);
   const [group, setGroup] = useState(myGroup);
   const g = groups[group] || groups[0];
-  const canEdit = group === myGroupIdx;
+  // Nobody edits once the week is final — every card is read-only for everyone.
+  const canEdit = !FINAL && group === myGroupIdx;
   const uname = (t: number) => (scramble && r ? flightName(S, r.id, t) : gname(groups[t], t));
 
   const holeN = Number(hole);
@@ -391,7 +392,9 @@ export function ScoringPage() {
         ))}
       </div>
       <p className="swipe-hint small muted">
-        {canEdit
+        {FINAL
+          ? 'The week is over — these scores are final'
+          : canEdit
           ? 'Swipe between holes · − and + set the score against par · hold − for a pickup ✕'
           : myGroupIdx < 0
             ? 'Watching only — scores go in on the players’ phones'

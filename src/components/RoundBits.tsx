@@ -2,7 +2,7 @@
 // scramble result, the round leaderboard, and the live gross/points scorecard.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
+import { FINAL, PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
   groupsFor, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim, fmt1, signed,
@@ -46,7 +46,9 @@ export function PairsBox({ r }: { r: Round }) {
   return (
     <div className="pairs-box">
       <h3>Hidden pairs</h3>
-      {!drawn ? (
+      {!drawn ? FINAL ? (
+        <p className="small muted" style={{ marginTop: 8 }}>Never drawn — no pair points for this round.</p>
+      ) : (
         <>
           <div className="btn-row" style={{ marginTop: 10 }}>
             <button className="btn heather" onClick={() => setDrawing(true)} disabled={out.length > 0}
@@ -62,7 +64,7 @@ export function PairsBox({ r }: { r: Round }) {
       ) : (
         <>
           <PairList rid={r.id} />
-          <div className="btn-row"><button className="btn ghost sm" onClick={redraw}>Redraw</button></div>
+          {!FINAL && <div className="btn-row"><button className="btn ghost sm" onClick={redraw}>Redraw</button></div>}
         </>
       )}
     </div>

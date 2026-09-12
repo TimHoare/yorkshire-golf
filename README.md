@@ -27,6 +27,10 @@ npm run build    # type-check + production build to dist/
 
 Already configured for the trip's Supabase project in `src/config.ts` (public URL + publishable key — safe to commit; access control is the RLS policies). To point at a fresh project: run `supabase-schema.sql` in the Supabase SQL editor, then put the new Project URL and publishable key in `src/config.ts`. Empty values = single-phone localStorage mode.
 
+## After the trip: locking the scores
+
+The 2026 week is locked. `FINAL` in `src/data/trip.ts` is `true`, so every stepper, editor, stake and tee control is read-only and the store drops any write; the lock block at the end of `supabase-schema.sql` drops the insert/update/delete policies so the database refuses writes from any build, offline outbox or script. Reads, realtime, the history table and backups carry on. For the next trip: flip `FINAL` to `false`, delete the lock block, re-run the schema file, and `truncate` the score tables.
+
 ## Backups and recovery
 
 Three layers, so a wiped or mangled database is an inconvenience rather than a disaster:

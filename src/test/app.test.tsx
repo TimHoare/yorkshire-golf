@@ -1,5 +1,9 @@
 // App flow: welcome → trip → round info → scoring, with the real router.
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// These tests exercise scoring as it was during the week; the shipped build
+// has FINAL on (see final.test.tsx for the locked behaviour).
+vi.mock('../data/trip', async (orig) => ({ ...(await orig<typeof import('../data/trip')>()), FINAL: false }));
 import { MemoryRouter } from 'react-router-dom';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { StrictMode } from 'react';

@@ -2,6 +2,10 @@
 // local state dropped, unsent edits kept), every kind of edit reaching its table, realtime
 // application, and the outbox when the network is down.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// These tests exercise scoring as it was during the week; the shipped build
+// has FINAL on (see final.test.tsx for the locked behaviour).
+vi.mock('../data/trip', async (orig) => ({ ...(await orig<typeof import('../data/trip')>()), FINAL: false }));
 import {
   flushOutbox, getSnapshot, initSync, reloadFromStorage, setBonusBall, setDrive, setGross, setGroupDraw, setHoleBits,
   setPairDraw, setStakes, setTeeChoice,

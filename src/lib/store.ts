@@ -5,7 +5,7 @@
 // With no Supabase keys configured everything runs single-phone.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { CONFIG } from '../config';
-import { PLAYERS, R, ROUNDS } from '../data/trip';
+import { FINAL, PLAYERS, R, ROUNDS } from '../data/trip';
 import {
   defaultState, loadState, persistState, migrate, cleanBonusBall, cleanHoleBits, cleanStakes, cleanRoundStakes,
   BIT_KINDS, ME_KEY, OUTBOX_KEY,
@@ -32,9 +32,14 @@ let me = ((): string | null => {
   return m && (m === 'watcher' || PLAYERS.some((p) => p.id === m)) ? m : null;
 })();
 let syncStatus: SyncStatus = hasSync ? 'connecting' : 'local';
-let outbox: Op[] = (() => {
+let outbox: Op[] = loadOutbox();
+// Once the week is final nothing this phone still has queued may land: the
+// database would refuse it anyway, and replaying it on hydrate would show a
+// score the other phones don't have.
+function loadOutbox(): Op[] {
+  if (FINAL) { localStorage.removeItem(OUTBOX_KEY); return []; }
   try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); } catch { return []; }
-})();
+}
 
 let snapshot: Snapshot = { S, me, syncStatus, pending: outbox.length };
 const listeners = new Set<() => void>();
@@ -51,7 +56,7 @@ export const getSnapshot = () => snapshot;
 // Test hook: re-read everything from localStorage (the store is a module singleton).
 export function reloadFromStorage() {
   S = loadState();
-  try { outbox = JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); } catch { outbox = []; }
+  outbox = loadOutbox();
   const m = localStorage.getItem(ME_KEY);
   me = m && (m === 'watcher' || PLAYERS.some((p) => p.id === m)) ? m : null;
   emit();
@@ -62,7 +67,10 @@ function saveOutbox() { localStorage.setItem(OUTBOX_KEY, JSON.stringify(outbox))
 function setSyncStatus(st: SyncStatus) { syncStatus = st; emit(); }
 
 // ---------- Mutations (local + queued push) ----------
+// Every one is a no-op once the week is FINAL. The UI hides the controls too;
+// this is the layer that holds if something still calls through.
 export function setGross(rid: string, target: { pid: string } | { team: number }, holeIdx: number, gross: number | null) {
+  if (FINAL) return;
   // 0 is a pickup (no score on the hole); 1–20 are real gross scores.
   const v = gross === null ? null : Math.min(20, Math.max(0, Math.round(gross)));
   if ('team' in target) {
@@ -83,6 +91,7 @@ export function setGross(rid: string, target: { pid: string } | { team: number }
 
 // Whose tee shot a scramble team used on a hole — null clears it.
 export function setDrive(rid: string, t: number, holeIdx: number, pid: string | null) {
+  if (FINAL) return;
   const v = pid && PLAYERS.some((p) => p.id === pid) ? pid : null;
   S.drives[rid] = S.drives[rid] || {};
   const arr = S.drives[rid][t] || blankDrives();
@@ -93,12 +102,14 @@ export function setDrive(rid: string, t: number, holeIdx: number, pid: string | 
 }
 
 export function setPairDraw(rid: string, draw: PairDraw | null) {
+  if (FINAL) return;
   if (draw) S.pairs[rid] = draw; else delete S.pairs[rid];
   pushOp('pair', [rid], draw);
   save(); emit();
 }
 
 export function setGroupDraw(rid: string, groups: string[][] | null) {
+  if (FINAL) return;
   if (groups) S.groups[rid] = groups; else delete S.groups[rid];
   pushOp('group', [rid], groups);
   save(); emit();
@@ -107,6 +118,7 @@ export function setGroupDraw(rid: string, groups: string[][] | null) {
 // One hole's side-bet log for one kind in one tee group. Empty logs store as
 // null (and upsert an empty row) so clearing syncs like any other edit.
 export function setHoleBits(rid: string, group: number, kind: BitKind, holeIdx: number, hb: HoleBits | null) {
+  if (FINAL) return;
   const v = cleanHoleBits(hb);
   S.bits[rid] = S.bits[rid] || {};
   S.bits[rid][group] = S.bits[rid][group] || {};
@@ -120,6 +132,7 @@ export function setHoleBits(rid: string, group: number, kind: BitKind, holeIdx: 
 // A player's whole bonus-ball record: which hole per round it doubled, and
 // the round it was lost in (null while still in play).
 export function setBonusBall(pid: string, bb: BonusBall) {
+  if (FINAL) return;
   const v = cleanBonusBall(bb);
   S.bonus[pid] = v;
   pushOp('bonus', [pid], v);
@@ -129,6 +142,7 @@ export function setBonusBall(pid: string, bb: BonusBall) {
 // The default stakes (rid absent), or one day's own — null puts that day back
 // on the defaults. Shared: they price everyone's group bets on every phone.
 export function setStakes(stakes: Stakes | null, rid?: string) {
+  if (FINAL) return;
   if (!rid) {
     S.stakes = cleanStakes(stakes);
     pushOp('stake', ['all'], S.stakes);
@@ -156,6 +170,7 @@ function applyStakesRow(rid: string | null, v: unknown) {
 // Which tees a round is played off — null reverts to the round's default.
 // Shared state: it moves everyone's course handicaps, so it syncs like scores.
 export function setTeeChoice(rid: string, tee: string | null) {
+  if (FINAL) return;
   if (tee) S.teeChoice[rid] = tee; else delete S.teeChoice[rid];
   pushOp('tee', [rid], tee);
   save(); emit();
@@ -168,6 +183,7 @@ export function setMe(id: string | null) {
 }
 
 export function importState(json: string) {
+  if (FINAL) return;
   S = migrate(JSON.parse(json));
   save(); emit();
 }
@@ -177,6 +193,7 @@ export const exportState = () => JSON.stringify(S, null, 2);
 // don't allow deleting scores (see supabase-schema.sql), so a stray tap can't
 // take the week out for everyone. With sync on, a reload just hydrates it back.
 export function resetAll() {
+  if (FINAL) return;
   S = defaultState();
   outbox = []; saveOutbox(); save(); emit();
 }
@@ -184,7 +201,7 @@ export function resetAll() {
 // ---------- Outbox ----------
 // One op per (table, key): later writes to the same hole replace the queued one.
 function pushOp(t: Op['t'], k: (string | number)[], v: unknown) {
-  if (!hasSync) return;
+  if (!hasSync || FINAL) return;
   const key = t + '|' + k.join('|');
   outbox = outbox.filter((o) => o.key !== key);
   outbox.push({ t, k, v, key });

@@ -1,4 +1,4 @@
-import { BITS, ORGANISER, R, ROUNDS, pName } from '../data/trip';
+import { BITS, FINAL, ORGANISER, R, ROUNDS, pName } from '../data/trip';
 import { hasSync, setMe, setStakes, setTeeChoice, resetAll } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { RULES } from '../data/trip';
@@ -36,9 +36,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
         <h2 id="sheet-title">You &amp; sharing</h2>
         <p className="small muted">
-          {me && me !== 'watcher' ? <>You're scoring as <b>{pName(me)}</b> on this phone.</> : <>You're <b>just watching</b> on this phone.</>}{' '}
+          {me && me !== 'watcher' ? <>{FINAL ? "You're" : "You're scoring as"} <b>{pName(me)}</b> on this phone.</> : <>You're <b>just watching</b> on this phone.</>}{' '}
           <button className="linklike" onClick={() => { setMe(null); onClose(); }}>Switch</button>
         </p>
+        {FINAL && <p className="notice">The week is over — <b>every score, side bet, stake and tee choice is final</b> and can't be changed from any phone.</p>}
         <p className="small muted">{syncLine}</p>
         <div className="btn-row">
           <button className="btn primary" onClick={share}>Copy app link</button>
@@ -61,7 +62,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 <span><span aria-hidden>{BITS[k].icon}</span> {BITS[k].label}</span>
                 <span className="stake-in">
                   <input
-                    type="number" inputMode="numeric" min={0} max={1000} value={dayStakes[k]}
+                    type="number" inputMode="numeric" min={0} max={1000} value={dayStakes[k]} disabled={FINAL}
                     // Tapping in selects the whole value, so typing replaces it.
                     onFocus={(e) => e.target.select()}
                     onClick={(e) => e.currentTarget.select()}
@@ -77,8 +78,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           {stakeDay && (
             <p className="help">
               {ownStakes
-                ? <>{R(stakeDay)!.short} has its own stakes. <button className="linklike" onClick={() => setStakes(null, stakeDay)}>Use the defaults</button></>
-                : <>{R(stakeDay)!.short} uses the defaults — change a number to give it its own.</>}
+                ? <>{R(stakeDay)!.short} has its own stakes.{!FINAL && <> <button className="linklike" onClick={() => setStakes(null, stakeDay)}>Use the defaults</button></>}</>
+                : <>{R(stakeDay)!.short} uses the defaults{FINAL ? '.' : ' — change a number to give it its own.'}</>}
             </p>
           )}
         </div>
@@ -90,7 +91,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
               <label key={r.id}>
                 <span>{r.short}</span>
                 <select
-                  value={S.teeChoice[r.id] ?? ''}
+                  value={S.teeChoice[r.id] ?? ''} disabled={FINAL}
                   onChange={(e) => setTeeChoice(r.id, e.target.value || null)}
                 >
                   <option value="">{r.tees} (booked)</option>
@@ -106,7 +107,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="course-edit">
           <div className="btn-row">
-            {!hasSync && me === ORGANISER && <button className="btn danger sm" onClick={doReset}>Clear all scores</button>}
+            {!hasSync && !FINAL && me === ORGANISER && <button className="btn danger sm" onClick={doReset}>Clear all scores</button>}
             <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}>Done</button>
           </div>
         </div>

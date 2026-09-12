@@ -101,7 +101,8 @@ create table if not exists stakes (
 );
 
 -- Access model: the app URL is the secret. Anyone with the link can read and
--- write scores (it's a mates' trip, not a bank). RLS is on, so the anon key can't
+-- write scores (it's a mates' trip, not a bank) — until the week is over, when
+-- the lock block at the very end of this file takes the write policies away again. RLS is on, so the anon key can't
 -- touch anything except these tables — and it can't DELETE scores at all. The
 -- app never deletes from the score tables; only clearing a pair draw, group draw
 -- or tee choice removes a row. So a phone (or anyone with the key) can't wipe
@@ -257,3 +258,33 @@ begin
   alter publication supabase_realtime add table tee_choices;
 exception when duplicate_object then null;
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- The week is over: scores are final. Take every write policy away so the
+-- publishable key can only read. The app is locked too (FINAL in
+-- src/data/trip.ts); this is the layer that holds against a phone still
+-- running an old build, an offline outbox catching up, or curl. The history
+-- table and backups keep working — they're read and triggers, not policies.
+-- Runs last so a re-run of this file still ends locked. For the next trip:
+-- delete this block, flip FINAL to false, re-run the file.
+drop policy if exists "add"    on hole_scores;
+drop policy if exists "change" on hole_scores;
+drop policy if exists "add"    on team_scores;
+drop policy if exists "change" on team_scores;
+drop policy if exists "add"    on team_drives;
+drop policy if exists "change" on team_drives;
+drop policy if exists "add"    on bit_events;
+drop policy if exists "change" on bit_events;
+drop policy if exists "add"    on stakes;
+drop policy if exists "change" on stakes;
+drop policy if exists "add"    on bonus_balls;
+drop policy if exists "change" on bonus_balls;
+drop policy if exists "add"    on pair_draws;
+drop policy if exists "change" on pair_draws;
+drop policy if exists "remove" on pair_draws;
+drop policy if exists "add"    on group_draws;
+drop policy if exists "change" on group_draws;
+drop policy if exists "remove" on group_draws;
+drop policy if exists "add"    on tee_choices;
+drop policy if exists "change" on tee_choices;
+drop policy if exists "remove" on tee_choices;
