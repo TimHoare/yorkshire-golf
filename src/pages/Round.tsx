@@ -54,7 +54,7 @@ export function RoundPage() {
           : <button className="btn primary grow" disabled title={`Set the ${scramble ? 'teams' : 'groups'} first`}>Scores</button>}
         <a className="btn ghost" href={mapsUrl} target={android ? undefined : '_blank'} rel="noopener noreferrer">Map ↗</a>
       </div>
-      {!drawn && <p className="small muted" style={{ margin: '0 0 4px' }}>{FINAL ? `No ${scramble ? 'teams' : 'groups'} were set — this round has no scores.` : `Scoring opens once the ${scramble ? 'teams' : 'groups'} are set below.`}</p>}
+      {!drawn && <p className="small muted" style={{ margin: '0 0 4px' }}>Scoring opens once the {scramble ? 'teams' : 'groups'} are set below.</p>}
 
       {playing && (
         <div className="my-ch card">

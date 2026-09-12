@@ -46,9 +46,7 @@ export function PairsBox({ r }: { r: Round }) {
   return (
     <div className="pairs-box">
       <h3>Hidden pairs</h3>
-      {!drawn ? FINAL ? (
-        <p className="small muted" style={{ marginTop: 8 }}>Never drawn — no pair points for this round.</p>
-      ) : (
+      {!drawn ? FINAL ? null : (
         <>
           <div className="btn-row" style={{ marginTop: 10 }}>
             <button className="btn heather" onClick={() => setDrawing(true)} disabled={out.length > 0}

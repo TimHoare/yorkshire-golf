@@ -1,6 +1,6 @@
 // First-open "Who's this?" screen. Picking a name personalises the app and
 // defaults score entry to your group; remembered per phone.
-import { FINAL, PLAYERS, first } from '../data/trip';
+import { PLAYERS, first } from '../data/trip';
 import { fmt1 } from '../lib/scoring';
 import { setMe } from '../lib/store';
 import { toast } from '../lib/toast';
@@ -16,7 +16,7 @@ export function Welcome() {
       <div className="welcome-card">
         <span className="eyebrow">Yorkshire 2026 · Mon 7 – Fri 11 Sept</span>
         <h2>Who's this?</h2>
-        <p className="small muted">{FINAL ? 'Pick your name once — your cards and standings come to the front, and this phone remembers you.' : 'Pick your name once — score entry opens on your group each day, and this phone remembers you.'}</p>
+        <p className="small muted">Pick your name once — score entry opens on your group each day, and this phone remembers you.</p>
         <div className="welcome-list">
           {PLAYERS.map((p) => (
             <button key={p.id} onClick={() => pick(p.id)}>

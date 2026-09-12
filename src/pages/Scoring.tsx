@@ -391,15 +391,13 @@ export function ScoringPage() {
           <button key={h.n} className={chipState(h)} onClick={() => goHole(h.n)}>{h.n}</button>
         ))}
       </div>
-      <p className="swipe-hint small muted">
-        {FINAL
-          ? 'The week is over — these scores are final'
-          : canEdit
+      {!FINAL && <p className="swipe-hint small muted">
+        {canEdit
           ? 'Swipe between holes · − and + set the score against par · hold − for a pickup ✕'
           : myGroupIdx < 0
             ? 'Watching only — scores go in on the players’ phones'
             : `${uname(group)}’s card — you enter scores for your own ${scramble ? 'flight' : 'group'}`}
-      </p>
+      </p>}
       <div className="swipe" ref={swipeRef} onScroll={onScroll}>
         {r.holes.map((h) => <Slide key={h.n} S={S} r={r} group={group} h={h} readOnly={!canEdit} myPh={myPh} />)}
       </div>

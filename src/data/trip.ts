@@ -4,10 +4,9 @@
 // Beverley's are TBC. All groups are placeholders — check the tee sheet.
 import type { BitKind } from '../lib/state';
 
-// The week is over (Mon 7 – Fri 11 Sept 2026): every score, side bet, bonus
-// ball, draw, stake and tee choice is final. With this on, nothing in the app
-// writes — the steppers and editors go read-only and the store drops every
-// mutation — and the database refuses writes too (the lock block at the end of
+// Scoring lock. With this on nothing in the app writes — steppers and editors
+// go read-only, with no message about it, and the store drops every mutation —
+// and the database refuses writes too (the lock block at the end of
 // supabase-schema.sql). Flip to false and delete that block for the next trip.
 export const FINAL = true;
 

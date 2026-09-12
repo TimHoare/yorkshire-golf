@@ -36,10 +36,9 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
         <h2 id="sheet-title">You &amp; sharing</h2>
         <p className="small muted">
-          {me && me !== 'watcher' ? <>{FINAL ? "You're" : "You're scoring as"} <b>{pName(me)}</b> on this phone.</> : <>You're <b>just watching</b> on this phone.</>}{' '}
+          {me && me !== 'watcher' ? <>You're scoring as <b>{pName(me)}</b> on this phone.</> : <>You're <b>just watching</b> on this phone.</>}{' '}
           <button className="linklike" onClick={() => { setMe(null); onClose(); }}>Switch</button>
         </p>
-        {FINAL && <p className="notice">The week is over — <b>every score, side bet, stake and tee choice is final</b> and can't be changed from any phone.</p>}
         <p className="small muted">{syncLine}</p>
         <div className="btn-row">
           <button className="btn primary" onClick={share}>Copy app link</button>
@@ -79,7 +78,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             <p className="help">
               {ownStakes
                 ? <>{R(stakeDay)!.short} has its own stakes.{!FINAL && <> <button className="linklike" onClick={() => setStakes(null, stakeDay)}>Use the defaults</button></>}</>
-                : <>{R(stakeDay)!.short} uses the defaults{FINAL ? '.' : ' — change a number to give it its own.'}</>}
+                : <>{R(stakeDay)!.short} uses the defaults — change a number to give it its own.</>}
             </p>
           )}
         </div>

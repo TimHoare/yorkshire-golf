@@ -29,7 +29,7 @@ Already configured for the trip's Supabase project in `src/config.ts` (public UR
 
 ## After the trip: locking the scores
 
-The 2026 week is locked. `FINAL` in `src/data/trip.ts` is `true`, so every stepper, editor, stake and tee control is read-only and the store drops any write; the lock block at the end of `supabase-schema.sql` drops the insert/update/delete policies so the database refuses writes from any build, offline outbox or script. Reads, realtime, the history table and backups carry on. For the next trip: flip `FINAL` to `false`, delete the lock block, re-run the schema file, and `truncate` the score tables.
+The 2026 week is locked. `FINAL` in `src/data/trip.ts` is `true`, so every stepper, editor, stake and tee control is read-only (silently — no notice in the app) and the store drops any write; the lock block at the end of `supabase-schema.sql` drops the insert/update/delete policies so the database refuses writes from any build, offline outbox or script. Reads, realtime, the history table and backups carry on. For the next trip: flip `FINAL` to `false`, delete the lock block, re-run the schema file, and `truncate` the score tables.
 
 ## Backups and recovery
 

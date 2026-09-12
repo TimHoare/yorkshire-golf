@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FINAL, ROUNDS, first, gname } from '../data/trip';
+import { ROUNDS, first, gname } from '../data/trip';
 import { groupsFor, roundStatus } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { FormatChips } from '../components/RoundBits';
@@ -37,7 +37,7 @@ export function TripPage() {
   const { S } = useStore();
   return (
     <>
-      {FINAL ? <p className="notice green"><b>That's the week.</b> Every score is final — the cards and standings are the record.</p> : <Countdown />}
+      <Countdown />
       <div className="section-title"><h2>Rounds</h2><span className="eyebrow">tap a round for details</span></div>
       <div className="itin">
         {ROUNDS.map((r) => (

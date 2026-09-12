@@ -64,7 +64,7 @@ describe('final week', () => {
     seed();
     setMe('p6');
     const { container } = mount('/round/d1/score/1');
-    expect(screen.getByText('The week is over — these scores are final')).toBeTruthy();
+    expect(container.querySelector('.swipe-hint')).toBeNull();
     expect(container.querySelectorAll('.stepper button')).toHaveLength(0);
     expect(container.querySelectorAll('.stepper.ro').length).toBeGreaterThan(0);
     const slide1 = container.querySelector('.slide[data-slide="1"]')! as HTMLElement;
@@ -82,16 +82,15 @@ describe('final week', () => {
     expect(screen.queryByText('Draw the pairs')).toBeNull();
     expect(screen.queryByText('Redraw')).toBeNull();
     fireEvent.click(screen.getByLabelText('Settings'));
-    expect(screen.getByText(/every score, side bet, stake and tee choice is final/)).toBeTruthy();
     const sheet = screen.getByRole('dialog');
     // every stake box and tee select is off; the only live control picks which day's stakes to look at
     for (const el of sheet.querySelectorAll('input, .stakes:not(.stake-day) select')) expect((el as HTMLInputElement).disabled).toBe(true);
     expect(screen.queryByText('Clear all scores')).toBeNull();
   });
 
-  it('the trip page says so instead of counting down', () => {
+  it('the trip page carries no notice about it', () => {
     setMe('p1');
-    mount('/trip');
-    expect(screen.getByText("That's the week.")).toBeTruthy();
+    const { container } = mount('/trip');
+    expect(container.querySelector('.notice')).toBeNull();
   });
 });
